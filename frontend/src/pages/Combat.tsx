@@ -72,7 +72,7 @@ export const Combat: React.FC = () => {
       setCombat(activeCombat);
       setSelectedEnemy(activeCombat.enemies?.[0] || null);
 
-      const inv = await diceService.getInventory(hero.id);
+      const inv = await diceService.getInventory();
       setInventory(inv);
     } catch (error: any) {
       console.error('Erro ao iniciar combate:', error);
@@ -98,7 +98,7 @@ export const Combat: React.FC = () => {
       setLastRoll(result);
 
       // Atualiza inventário
-      const updatedInventory = await diceService.getInventory(combat.heroId);
+      const updatedInventory = await diceService.getInventory();
       setInventory(updatedInventory);
 
       // Recarrega a sessão de combate para ver os logs

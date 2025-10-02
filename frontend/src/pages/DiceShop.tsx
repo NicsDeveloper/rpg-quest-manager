@@ -25,7 +25,7 @@ export const DiceShop: React.FC = () => {
       setHero(heroData);
 
       const [inventoryData, pricesData] = await Promise.all([
-        diceService.getInventory(heroData.id),
+        diceService.getInventory(),
         diceService.getPrices(),
       ]);
 
@@ -59,7 +59,6 @@ export const DiceShop: React.FC = () => {
     try {
       setPurchasing(true);
       const result = await diceService.purchaseDice({
-        heroId: hero.id,
         diceType,
         quantity,
       });

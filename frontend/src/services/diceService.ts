@@ -1,7 +1,7 @@
 import api from './api';
 
 export interface DiceInventory {
-  heroId: number;
+  userId: number;
   d6Count: number;
   d10Count: number;
   d12Count: number;
@@ -16,7 +16,6 @@ export interface DicePrices {
 }
 
 export interface PurchaseDiceRequest {
-  heroId: number;
   diceType: string; // "D6", "D10", "D12", "D20"
   quantity: number;
 }
@@ -29,8 +28,8 @@ export interface PurchaseDiceResult {
 }
 
 export const diceService = {
-  getInventory: async (heroId: number): Promise<DiceInventory> => {
-    const response = await api.get<DiceInventory>(`/dice/inventory/${heroId}`);
+  getInventory: async (): Promise<DiceInventory> => {
+    const response = await api.get<DiceInventory>('/dice/inventory');
     return response.data;
   },
 

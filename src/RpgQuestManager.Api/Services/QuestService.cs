@@ -1,9 +1,7 @@
 using AutoMapper;
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using RpgQuestManager.Api.Data;
 using RpgQuestManager.Api.DTOs.Quests;
-using RpgQuestManager.Api.Events;
 using RpgQuestManager.Api.Models;
 
 namespace RpgQuestManager.Api.Services;
@@ -12,20 +10,17 @@ public class QuestService : IQuestService
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
-    private readonly IPublishEndpoint _publishEndpoint;
     private readonly INotificationService _notificationService;
     private readonly ILogger<QuestService> _logger;
     
     public QuestService(
         ApplicationDbContext context, 
         IMapper mapper,
-        IPublishEndpoint publishEndpoint,
         INotificationService notificationService,
         ILogger<QuestService> logger)
     {
         _context = context;
         _mapper = mapper;
-        _publishEndpoint = publishEndpoint;
         _notificationService = notificationService;
         _logger = logger;
     }
@@ -125,22 +120,9 @@ public class QuestService : IQuestService
         await _context.SaveChangesAsync();
         
         _logger.LogInformation(
-            "Herói {HeroName} (ID: {HeroId}) completou a quest {QuestName} (ID: {QuestId})",
-            hero.Name, hero.Id, quest.Name, quest.Id
+            "🎉 Quest Completed! Herói {HeroName} (ID: {HeroId}) completou a quest {QuestName} (ID: {QuestId}). XP: {XP}, Ouro: {Gold}, Novo nível: {Level}",
+            hero.Name, hero.Id, quest.Name, quest.Id, quest.ExperienceReward, quest.GoldReward, hero.Level
         );
-        
-        // Publicar evento de conclusão de quest
-        await _publishEndpoint.Publish(new QuestCompletedEvent
-        {
-            HeroId = hero.Id,
-            HeroName = hero.Name,
-            QuestId = quest.Id,
-            QuestName = quest.Name,
-            ExperienceGained = quest.ExperienceReward,
-            GoldGained = quest.GoldReward,
-            NewLevel = hero.Level,
-            CompletedAt = DateTime.UtcNow
-        });
         
         return _mapper.Map<QuestDto>(quest);
     }

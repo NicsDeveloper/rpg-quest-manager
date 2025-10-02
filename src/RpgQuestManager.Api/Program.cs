@@ -1,12 +1,10 @@
 using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using RpgQuestManager.Api.Consumers;
 using RpgQuestManager.Api.Data;
 using RpgQuestManager.Api.Middleware;
 using RpgQuestManager.Api.Services;
@@ -65,23 +63,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-
-// MassTransit with RabbitMQ
-builder.Services.AddMassTransit(x =>
-{
-    x.AddConsumer<QuestCompletedConsumer>();
-    
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        cfg.Host(builder.Configuration["RabbitMQ:Host"], "/", h =>
-        {
-            h.Username(builder.Configuration["RabbitMQ:Username"]!);
-            h.Password(builder.Configuration["RabbitMQ:Password"]!);
-        });
-        
-        cfg.ConfigureEndpoints(context);
-    });
-});
 
 // Application Services
 builder.Services.AddScoped<IAuthService, AuthService>();

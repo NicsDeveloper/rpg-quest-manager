@@ -35,25 +35,6 @@ services:
       timeout: 5s
       retries: 5
 
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: rpg-rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    ports:
-      - "5672:5672"   # RabbitMQ
-      - "15672:15672" # Management UI
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    networks:
-      - rpg-network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
   api:
     build:
       context: .
@@ -67,15 +48,10 @@ services:
       - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=rpgquestmanager;Username=postgres;Password=postgres123
       - ConnectionStrings__Redis=redis:6379
-      - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Username=guest
-      - RabbitMQ__Password=guest
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
     networks:
       - rpg-network
@@ -101,5 +77,4 @@ networks:
 volumes:
   postgres-data:
   redis-data:
-  rabbitmq-data:
 
