@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/Navbar';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -9,7 +8,6 @@ import { diceService, DiceInventory, DicePrices } from '../services/diceService'
 import { profileService, MyHero } from '../services/profileService';
 
 export const DiceShop: React.FC = () => {
-  const { t } = useTranslation();
   const [hero, setHero] = useState<MyHero | null>(null);
   const [inventory, setInventory] = useState<DiceInventory | null>(null);
   const [prices, setPrices] = useState<DicePrices | null>(null);

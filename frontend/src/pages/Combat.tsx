@@ -42,7 +42,7 @@ export const Combat: React.FC = () => {
 
       // Se não existe e foi passado um questId, inicia um novo
       if (!activeCombat && questId > 0) {
-        const newCombat = await combatService.startCombat(hero.id, questId);
+        await combatService.startCombat(hero.id, questId);
         activeCombat = await combatService.getActiveCombat(hero.id);
       }
 

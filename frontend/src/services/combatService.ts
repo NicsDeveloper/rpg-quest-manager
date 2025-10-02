@@ -21,6 +21,7 @@ export interface EnemyInfo {
 export interface CombatLog {
   id: number;
   action: string;
+  enemyId?: number;
   diceUsed?: string;
   diceResult?: number;
   requiredRoll?: number;
