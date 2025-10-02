@@ -80,6 +80,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Difficulty).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
             entity.Property(e => e.RequiredClass).IsRequired().HasMaxLength(50);
+            
+            // Relacionamento com Monster principal
+            entity.HasOne<Monster>()
+                .WithMany()
+                .HasForeignKey(e => e.MainMonsterId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
         
         // Configuração Enemy

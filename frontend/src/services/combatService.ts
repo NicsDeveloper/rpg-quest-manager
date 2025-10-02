@@ -222,6 +222,14 @@ export const combatService = {
     const response = await api.post<UseSpecialAbilityResult>('/combat/use-special-ability', request);
     return response.data;
   },
+
+  clearActiveCombat: async (): Promise<void> => {
+    // Buscar o userId do usuário logado
+    const userResponse = await api.get('/user/me');
+    const userId = userResponse.data.id;
+    
+    await api.post(`/combat/clear-active/${userId}`);
+  },
 };
 
 export interface UseSpecialAbilityRequest {

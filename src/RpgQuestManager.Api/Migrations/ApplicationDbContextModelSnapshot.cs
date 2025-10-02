@@ -969,6 +969,9 @@ namespace RpgQuestManager.Api.Migrations
                     b.Property<int?>("CategoryId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("MainMonsterId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1049,6 +1052,8 @@ namespace RpgQuestManager.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("MainMonsterId");
 
                     b.ToTable("Quests");
                 });
@@ -1507,7 +1512,14 @@ namespace RpgQuestManager.Api.Migrations
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RpgQuestManager.Api.Models.Monster", "MainMonster")
+                        .WithMany()
+                        .HasForeignKey("MainMonsterId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+
                     b.Navigation("Category");
+                    b.Navigation("MainMonster");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.QuestEnemy", b =>

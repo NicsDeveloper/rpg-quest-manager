@@ -61,6 +61,21 @@ public class CombatController : ControllerBase
         }
     }
 
+    [HttpPost("clear-active/{userId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult> ClearActiveCombat(int userId)
+    {
+        try
+        {
+            await _combatService.ClearActiveCombatAsync(userId);
+            return Ok(new { message = "Combate ativo cancelado com sucesso." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
+    }
+
     [HttpPost("roll-dice")]
     [ProducesResponseType(typeof(RollDiceResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

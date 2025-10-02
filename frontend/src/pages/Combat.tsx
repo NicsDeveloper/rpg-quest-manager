@@ -18,6 +18,9 @@ const Combat: React.FC = () => {
   const [rolling, setRolling] = useState(false);
   const [turnTimer, setTurnTimer] = useState(60);
   const [isTimerActive, setIsTimerActive] = useState(false);
+  const [heroCooldowns, setHeroCooldowns] = useState<{ [heroId: number]: number }>({});
+  const [showRewards, setShowRewards] = useState(false);
+  const [combatResult, setCombatResult] = useState<any>(null);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -48,6 +51,43 @@ const Combat: React.FC = () => {
       if (interval) clearInterval(interval);
     };
   }, [isTimerActive, turnTimer, combat]);
+
+  // Timer dos cooldowns das habilidades especiais
+  useEffect(() => {
+    let interval: number;
+    const hasActiveCooldowns = Object.values(heroCooldowns).some(cd => cd > 0);
+    
+    if (hasActiveCooldowns) {
+      interval = setInterval(() => {
+        setHeroCooldowns(prev => {
+          const newCooldowns = { ...prev };
+          Object.keys(newCooldowns).forEach(heroId => {
+            if (newCooldowns[parseInt(heroId)] > 0) {
+              newCooldowns[parseInt(heroId)]--;
+            }
+          });
+          return newCooldowns;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [heroCooldowns]);
+
+  // Detectar fim do combate
+  useEffect(() => {
+    if (combat && combat.status === CombatStatus.Victory) {
+      // Mostrar notificação de vitória
+      console.log('🎉 COMBATE FINALIZADO COM VITÓRIA!');
+      
+      // Mostrar tela de recompensas após 2 segundos
+      setTimeout(() => {
+        setShowRewards(true);
+        setCombatResult(combat);
+      }, 2000);
+    }
+  }, [combat]);
 
   // Auto ataque do inimigo
   useEffect(() => {
@@ -102,7 +142,10 @@ const Combat: React.FC = () => {
       setLoading(true);
       
       const heroIds = heroes.map(h => h.id);
+      console.log('Iniciando combate:', { questId, heroIds });
+      
       const combatDetail = await combatService.startCombat(questId, heroIds);
+      console.log('Combate iniciado:', combatDetail);
       
       setCombat(combatDetail);
       setCurrentArc('combat');
@@ -111,6 +154,26 @@ const Combat: React.FC = () => {
       
     } catch (error: any) {
       console.error('Erro ao iniciar combate:', error);
+      
+      // Se o erro for 400 e mencionar combate ativo, tentar limpar
+      if (error.response?.status === 400 && error.message?.includes('combate ativo')) {
+        try {
+          console.log('Tentando limpar combate ativo...');
+          await combatService.clearActiveCombat();
+          // Tentar iniciar combate novamente
+          const heroIds = heroes.map(h => h.id);
+          const combatDetail = await combatService.startCombat(questId, heroIds);
+          
+          setCombat(combatDetail);
+          setCurrentArc('combat');
+          setTurnTimer(60);
+          setIsTimerActive(true);
+          return;
+        } catch (clearError) {
+          console.error('Erro ao limpar combate ativo:', clearError);
+        }
+      }
+      
       alert(error.message || 'Erro ao iniciar combate');
     } finally {
       setLoading(false);
@@ -119,6 +182,8 @@ const Combat: React.FC = () => {
 
   const handleRollDice = async (diceType: DiceType) => {
     if (!combat || rolling) return;
+
+    console.log('Tentando rolar dados:', { combatId: combat.id, diceType });
 
     try {
       setRolling(true);
@@ -200,6 +265,11 @@ const Combat: React.FC = () => {
   const handleUseSpecialAbility = async (heroId: number) => {
     if (!combat) return;
     
+    // Verificar se está em cooldown
+    if (heroCooldowns[heroId] && heroCooldowns[heroId] > 0) {
+      return;
+    }
+    
     try {
       setRolling(true);
       const result = await combatService.useSpecialAbility({
@@ -207,6 +277,13 @@ const Combat: React.FC = () => {
         heroId: heroId
       });
       setCombat(result.updatedCombatSession);
+      
+      // Definir cooldown de 3 turnos (180 segundos)
+      setHeroCooldowns(prev => ({
+        ...prev,
+        [heroId]: 180
+      }));
+      
     } catch (error) {
       console.error('Erro ao usar habilidade especial:', error);
     } finally {
@@ -326,13 +403,21 @@ const Combat: React.FC = () => {
           <div className="space-y-4">
             {/* Status do Combate */}
             <Card className={`${
-              combat.isHeroTurn 
-                ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-500/50' 
-                : 'bg-gradient-to-r from-red-900/30 to-orange-900/30 border-red-500/30'
+              combat.status === CombatStatus.Victory
+                ? 'bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border-yellow-500/50'
+                : combat.isHeroTurn 
+                  ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-500/50' 
+                  : 'bg-gradient-to-r from-red-900/30 to-orange-900/30 border-red-500/30'
             }`}>
               <div className="text-center">
                 <h3 className="text-lg font-bold mb-2">
-                  {combat.isHeroTurn ? (
+                  {combat.status === CombatStatus.Victory ? (
+                    <span className="text-yellow-400 flex items-center justify-center gap-2 animate-bounce">
+                      <span>🏆</span>
+                      VITÓRIA! - {combat.questName}
+                      <span>🏆</span>
+                    </span>
+                  ) : combat.isHeroTurn ? (
                     <span className="text-green-400 flex items-center justify-center gap-2">
                       <span className="animate-pulse">🛡️</span>
                       SUA VEZ - {combat.questName}
@@ -659,12 +744,21 @@ const Combat: React.FC = () => {
                       {combat.isHeroTurn && (
                         <button
                           onClick={() => handleUseSpecialAbility(hero.id)}
-                          disabled={rolling}
-                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+                          disabled={rolling || (heroCooldowns[hero.id] ?? 0) > 0}
+                          className={`w-full text-white text-xs font-bold py-2 px-3 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed ${
+                            (heroCooldowns[hero.id] ?? 0) > 0
+                              ? 'bg-gradient-to-r from-gray-600 to-gray-700' 
+                              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                          }`}
                         >
                           <div className="flex items-center justify-center gap-1">
                             <span className="text-sm">⚡</span>
-                            <span>ULT</span>
+                            <span>
+                              {(heroCooldowns[hero.id] ?? 0) > 0
+                                ? `ULT (${Math.ceil((heroCooldowns[hero.id] ?? 0) / 60)}T)`
+                                : 'ULT'
+                              }
+                            </span>
                           </div>
                         </button>
                       )}
@@ -826,6 +920,89 @@ const Combat: React.FC = () => {
                 >
                   Voltar ao Menu
                 </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Tela de Recompensas */}
+        {showRewards && combatResult && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <Card className="bg-gradient-to-r from-yellow-900/90 to-orange-900/90 border-yellow-500/50 max-w-md w-full mx-4">
+              <div className="text-center p-6">
+                <div className="text-6xl mb-4">🏆</div>
+                <h2 className="text-2xl font-bold text-yellow-400 mb-4">
+                  VITÓRIA ÉPICA!
+                </h2>
+                
+                <div className="space-y-3 mb-6">
+                  <div className="bg-green-600/30 rounded-lg p-3 border border-green-500/50">
+                    <div className="text-green-300 font-bold">✨ Recompensas Obtidas</div>
+                    <div className="text-sm text-gray-300 mt-1">
+                      {combatResult.questName}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-blue-600/30 rounded-lg p-3 border border-blue-500/50">
+                      <div className="text-blue-300 font-bold">💎 Ouro</div>
+                      <div className="text-xl text-white">
+                        +{combatResult.quest?.goldReward || 100}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-purple-600/30 rounded-lg p-3 border border-purple-500/50">
+                      <div className="text-purple-300 font-bold">⭐ Experiência</div>
+                      <div className="text-xl text-white">
+                        +{combatResult.quest?.experienceReward || 50}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Informações dos Heróis Atualizadas */}
+                  <div className="bg-yellow-600/30 rounded-lg p-3 border border-yellow-500/50">
+                    <div className="text-yellow-300 font-bold mb-2">🦸 Heróis Atualizados</div>
+                    <div className="space-y-1">
+                      {combatResult.heroes?.map((hero: any) => (
+                        <div key={hero.id} className="text-sm text-gray-200">
+                          <span className="font-bold">{hero.name}</span> - 
+                          Nível {hero.level} | 
+                          XP: {hero.experience} | 
+                          Ouro: {hero.gold} | 
+                          STR: {hero.strength} | 
+                          INT: {hero.intelligence} | 
+                          DEX: {hero.dexterity}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Button 
+                    onClick={() => {
+                      setShowRewards(false);
+                      setCombatResult(null);
+                      setCombat(null);
+                      setCurrentArc('preparation');
+                      setIsTimerActive(false);
+                      navigate('/quests');
+                    }}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-6 rounded-lg"
+                  >
+                    Continuar Aventura
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => {
+                      setShowRewards(false);
+                      setCombatResult(null);
+                    }}
+                    className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg"
+                  >
+                    Ver Detalhes do Combate
+                  </Button>
+                </div>
               </div>
             </Card>
           </div>

@@ -36,9 +36,10 @@ public class CombatService : ICombatService
             throw new KeyNotFoundException("Quest não encontrada.");
         }
 
-        if (!quest.QuestEnemies.Any())
+        // Verificar se quest tem monstro principal
+        if (quest.MainMonsterId == 0)
         {
-            throw new InvalidOperationException("Esta quest não possui inimigos.");
+            throw new InvalidOperationException("Esta quest não possui um monstro principal definido.");
         }
 
         // Buscar heróis
@@ -51,8 +52,14 @@ public class CombatService : ICombatService
             throw new InvalidOperationException("Alguns heróis não foram encontrados ou não pertencem ao usuário.");
         }
 
-        // Selecionar primeiro inimigo
-        var firstEnemy = quest.QuestEnemies.First().Enemy;
+        // Buscar monstro principal
+        var mainMonster = await _context.Monsters
+            .FirstOrDefaultAsync(m => m.Id == quest.MainMonsterId);
+
+        if (mainMonster == null)
+        {
+            throw new InvalidOperationException("Monstro principal da quest não encontrado.");
+        }
 
         // Calcular vida máxima dos heróis
         var heroHealths = new Dictionary<int, int>();
@@ -70,11 +77,11 @@ public class CombatService : ICombatService
         {
             UserId = userId,
             QuestId = request.QuestId,
-            CurrentEnemyId = firstEnemy.Id,
+            CurrentEnemyId = mainMonster.Id,
             Status = CombatStatus.Preparing,
             IsHeroTurn = true,
-            CurrentEnemyHealth = firstEnemy.Health,
-            MaxEnemyHealth = firstEnemy.Health,
+            CurrentEnemyHealth = mainMonster.Health,
+            MaxEnemyHealth = mainMonster.Health,
             HeroHealths = System.Text.Json.JsonSerializer.Serialize(heroHealths),
             MaxHeroHealths = System.Text.Json.JsonSerializer.Serialize(maxHeroHealths),
             StartedAt = DateTime.UtcNow
@@ -90,7 +97,7 @@ public class CombatService : ICombatService
         {
             CombatSessionId = combatSession.Id,
             Action = "COMBAT_START",
-            Details = $"Combate iniciado contra {firstEnemy.Name}",
+            Details = $"Combate iniciado contra {mainMonster.Name}",
             Timestamp = DateTime.UtcNow
         };
         _context.CombatLogs.Add(startLog);
@@ -113,6 +120,19 @@ public class CombatService : ICombatService
         if (combatSession == null) return null;
 
         return await GetCombatDetailAsync(combatSession.Id);
+    }
+
+    public async Task ClearActiveCombatAsync(int userId)
+    {
+        var activeCombat = await _context.CombatSessions
+            .FirstOrDefaultAsync(cs => cs.UserId == userId && cs.Status == CombatStatus.InProgress);
+
+        if (activeCombat != null)
+        {
+            activeCombat.Status = CombatStatus.Cancelled;
+            activeCombat.CompletedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
     }
 
     public async Task<RollDiceResult> RollDiceAsync(int combatSessionId, DiceType diceType)
@@ -203,6 +223,9 @@ public class CombatService : ICombatService
                 combatSession.Status = CombatStatus.Victory;
                 combatSession.CompletedAt = DateTime.UtcNow;
                 message += " Inimigo derrotado!";
+                
+                // Processar recompensas automaticamente quando inimigo morre
+                await ProcessQuestRewardsAsync(combatSession);
             }
             else
             {
@@ -414,6 +437,7 @@ public class CombatService : ICombatService
     public async Task<CombatDetailDto> CompleteCombatAsync(int combatSessionId)
     {
         var combatSession = await _context.CombatSessions
+            .Include(cs => cs.Quest)
             .FirstOrDefaultAsync(cs => cs.Id == combatSessionId);
 
         if (combatSession == null)
@@ -424,9 +448,146 @@ public class CombatService : ICombatService
         combatSession.Status = CombatStatus.Victory;
         combatSession.CompletedAt = DateTime.UtcNow;
 
+        // Processar recompensas da missão
+        await ProcessQuestRewardsAsync(combatSession);
+
         await _context.SaveChangesAsync();
 
         return await GetCombatDetailAsync(combatSession.Id);
+    }
+
+    private async Task ProcessQuestRewardsAsync(CombatSession combatSession)
+    {
+        if (combatSession.Quest == null) 
+        {
+            Console.WriteLine("❌ ProcessQuestRewardsAsync: Quest é null!");
+            return;
+        }
+
+        var heroIds = combatSession.GetHeroIdsList();
+        Console.WriteLine($"🎯 ProcessQuestRewardsAsync: HeroIds = [{string.Join(", ", heroIds)}]");
+        
+        var heroes = await _context.Heroes
+            .Where(h => heroIds.Contains(h.Id))
+            .ToListAsync();
+            
+        Console.WriteLine($"🎯 ProcessQuestRewardsAsync: Encontrados {heroes.Count} heróis");
+
+        // Calcular recompensas baseadas na missão
+        var experienceReward = combatSession.Quest.ExperienceReward;
+        var goldReward = combatSession.Quest.GoldReward;
+        
+        Console.WriteLine($"💰 ProcessQuestRewardsAsync: XP Reward = {experienceReward}, Gold Reward = {goldReward}");
+
+        // Aplicar recompensas aos heróis
+        var levelUpLogs = new List<string>();
+        
+        foreach (var hero in heroes)
+        {
+            var oldLevel = hero.Level;
+            var oldExp = hero.Experience;
+            var oldGold = hero.Gold;
+            
+            Console.WriteLine($"🦸 Processando herói {hero.Name}: Nível {oldLevel}, XP {oldExp}, Ouro {oldGold}");
+            
+            hero.Experience += experienceReward;
+            hero.Gold += goldReward;
+            
+            Console.WriteLine($"🦸 Após recompensas: Nível {hero.Level}, XP {hero.Experience}, Ouro {hero.Gold}");
+
+            // Verificar se o herói subiu de nível
+            var newLevel = CalculateHeroLevel(hero.Experience);
+            Console.WriteLine($"📊 Calculado novo nível: {newLevel} (atual: {hero.Level})");
+            
+            if (newLevel > hero.Level)
+            {
+                hero.Level = newLevel;
+                
+                // Subir atributos ao subir de nível (2 pontos por nível)
+                var levelsGained = newLevel - oldLevel;
+                var attributePoints = levelsGained * 2;
+                
+                var oldStrength = hero.Strength;
+                var oldIntelligence = hero.Intelligence;
+                var oldDexterity = hero.Dexterity;
+                
+                // Distribuir pontos aleatoriamente entre os atributos
+                var attributes = new[] { "Strength", "Intelligence", "Dexterity" };
+                for (int i = 0; i < attributePoints; i++)
+                {
+                    var randomAttribute = attributes[new Random().Next(attributes.Length)];
+                    switch (randomAttribute)
+                    {
+                        case "Strength":
+                            hero.Strength++;
+                            break;
+                        case "Intelligence":
+                            hero.Intelligence++;
+                            break;
+                        case "Dexterity":
+                            hero.Dexterity++;
+                            break;
+                    }
+                }
+                
+                // Criar log detalhado de subida de nível
+                var levelUpLog = new CombatLog
+                {
+                    CombatSessionId = combatSession.Id,
+                    Action = "LEVEL_UP",
+                    HeroId = hero.Id,
+                    Details = $"{hero.Name} subiu do nível {oldLevel} para {newLevel}! " +
+                             $"XP: {oldExp} → {hero.Experience} (+{experienceReward}). " +
+                             $"Atributos: STR {oldStrength}→{hero.Strength}, " +
+                             $"INT {oldIntelligence}→{hero.Intelligence}, " +
+                             $"DEX {oldDexterity}→{hero.Dexterity}",
+                    Timestamp = DateTime.UtcNow
+                };
+                
+                _context.CombatLogs.Add(levelUpLog);
+                levelUpLogs.Add($"{hero.Name} subiu para nível {newLevel}!");
+            }
+        }
+
+        // Salvar mudanças dos heróis
+        Console.WriteLine($"💾 Salvando mudanças de {heroes.Count} heróis no banco de dados...");
+        _context.Heroes.UpdateRange(heroes);
+        Console.WriteLine($"✅ Heróis atualizados com sucesso!");
+
+        // Criar log de recompensas
+        var rewardDetails = $"Recompensas da missão: {experienceReward} XP, {goldReward} Ouro";
+        if (levelUpLogs.Any())
+        {
+            rewardDetails += $". Subidas de nível: {string.Join(", ", levelUpLogs)}";
+        }
+        
+        var rewardLog = new CombatLog
+        {
+            CombatSessionId = combatSession.Id,
+            Action = "QUEST_REWARDS",
+            Details = rewardDetails,
+            Timestamp = DateTime.UtcNow
+        };
+
+        _context.CombatLogs.Add(rewardLog);
+    }
+
+    private int CalculateHeroLevel(int experience)
+    {
+        // Fórmula progressiva: 100 XP para nível 2, 200 para nível 3, 300 para nível 4, etc.
+        if (experience < 100) return 1;
+        if (experience < 300) return 2;
+        if (experience < 600) return 3;
+        if (experience < 1000) return 4;
+        if (experience < 1500) return 5;
+        if (experience < 2100) return 6;
+        if (experience < 2800) return 7;
+        if (experience < 3600) return 8;
+        if (experience < 4500) return 9;
+        if (experience < 5500) return 10;
+        
+        // Para níveis acima de 10, usar fórmula: nível = sqrt(experiência / 50)
+        return Math.Max(10, (int)Math.Sqrt(experience / 50.0));
     }
 
     public async Task<bool> CancelCombatAsync(int combatSessionId)
@@ -517,13 +678,12 @@ public class CombatService : ICombatService
             .FirstOrDefaultAsync(m => m.CombatSessionId == combatSession.Id && m.EnemyId.HasValue);
 
         // Buscar status effects
-        var heroStatusEffects = await _context.StatusEffects
-            .Where(se => se.CombatSessionId == combatSession.Id && se.HeroId.HasValue && se.IsActive)
+        var allStatusEffects = await _context.StatusEffects
+            .Where(se => se.CombatSessionId == combatSession.Id)
             .ToListAsync();
             
-        var enemyStatusEffects = await _context.StatusEffects
-            .Where(se => se.CombatSessionId == combatSession.Id && se.EnemyId.HasValue && se.IsActive)
-            .ToListAsync();
+        var heroStatusEffects = allStatusEffects.Where(se => se.HeroId.HasValue).ToList();
+        var enemyStatusEffects = allStatusEffects.Where(se => se.EnemyId.HasValue).ToList();
 
         return new CombatDetailDto
         {
@@ -575,33 +735,37 @@ public class CombatService : ICombatService
             LastAction = combatSession.LastAction,
             
             // Sistema de Status Effects
-            HeroStatusEffects = heroStatusEffects.Select(se => new StatusEffectDto
-            {
-                Id = se.Id,
-                CombatSessionId = se.CombatSessionId,
-                HeroId = se.HeroId,
-                EnemyId = se.EnemyId,
-                Type = se.Type.ToString(),
-                Duration = se.Duration,
-                Intensity = se.Intensity,
-                Description = se.Description,
-                IsActive = se.IsActive,
-                ExpiresAt = se.ExpiresAt ?? DateTime.UtcNow
-            }).ToList(),
+            HeroStatusEffects = heroStatusEffects
+                .Where(se => se.IsActive)
+                .Select(se => new StatusEffectDto
+                {
+                    Id = se.Id,
+                    CombatSessionId = se.CombatSessionId,
+                    HeroId = se.HeroId,
+                    EnemyId = se.EnemyId,
+                    Type = se.Type.ToString(),
+                    Duration = se.Duration,
+                    Intensity = se.Intensity,
+                    Description = se.Description,
+                    IsActive = se.IsActive,
+                    ExpiresAt = se.ExpiresAt ?? DateTime.UtcNow
+                }).ToList(),
             
-            EnemyStatusEffects = enemyStatusEffects.Select(se => new StatusEffectDto
-            {
-                Id = se.Id,
-                CombatSessionId = se.CombatSessionId,
-                HeroId = se.HeroId,
-                EnemyId = se.EnemyId,
-                Type = se.Type.ToString(),
-                Duration = se.Duration,
-                Intensity = se.Intensity,
-                Description = se.Description,
-                IsActive = se.IsActive,
-                ExpiresAt = se.ExpiresAt ?? DateTime.UtcNow
-            }).ToList()
+            EnemyStatusEffects = enemyStatusEffects
+                .Where(se => se.IsActive)
+                .Select(se => new StatusEffectDto
+                {
+                    Id = se.Id,
+                    CombatSessionId = se.CombatSessionId,
+                    HeroId = se.HeroId,
+                    EnemyId = se.EnemyId,
+                    Type = se.Type.ToString(),
+                    Duration = se.Duration,
+                    Intensity = se.Intensity,
+                    Description = se.Description,
+                    IsActive = se.IsActive,
+                    ExpiresAt = se.ExpiresAt ?? DateTime.UtcNow
+                }).ToList()
         };
     }
 
@@ -829,9 +993,12 @@ public class CombatService : ICombatService
         // Verificar se inimigo morreu
         if (combatSession.CurrentEnemyHealth <= 0)
         {
-        combatSession.Status = CombatStatus.Victory;
-        combatSession.CompletedAt = DateTime.UtcNow;
+            combatSession.Status = CombatStatus.Victory;
+            combatSession.CompletedAt = DateTime.UtcNow;
             message += " Inimigo derrotado!";
+            
+            // Processar recompensas automaticamente quando inimigo morre
+            await ProcessQuestRewardsAsync(combatSession);
         }
         else
         {
@@ -885,12 +1052,14 @@ public class CombatService : ICombatService
         }
 
         // Verificar se já existe o mesmo efeito
-        var existingEffect = await _context.StatusEffects
-            .FirstOrDefaultAsync(se => se.CombatSessionId == combatSessionId && 
-                                      se.HeroId == heroId && 
-                                      se.EnemyId == enemyId && 
-                                      se.Type == effectType && 
-                                      se.IsActive);
+        var allEffects = await _context.StatusEffects
+            .Where(se => se.CombatSessionId == combatSessionId && 
+                        se.HeroId == heroId && 
+                        se.EnemyId == enemyId && 
+                        se.Type == effectType)
+            .ToListAsync();
+            
+        var existingEffect = allEffects.FirstOrDefault(se => se.IsActive);
 
         if (existingEffect != null)
         {
@@ -934,9 +1103,11 @@ public class CombatService : ICombatService
 
     public async Task ProcessStatusEffectsAsync(int combatSessionId)
     {
-        var activeEffects = await _context.StatusEffects
-            .Where(se => se.CombatSessionId == combatSessionId && se.IsActive)
+        var allEffects = await _context.StatusEffects
+            .Where(se => se.CombatSessionId == combatSessionId)
             .ToListAsync();
+            
+        var activeEffects = allEffects.Where(se => se.IsActive).ToList();
 
         var combatSession = await _context.CombatSessions
             .Include(cs => cs.Quest)

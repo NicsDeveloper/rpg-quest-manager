@@ -7,6 +7,7 @@ public interface ICombatService
 {
     Task<CombatDetailDto> StartCombatAsync(int userId, StartCombatRequest request);
     Task<CombatDetailDto?> GetActiveCombatAsync(int userId);
+    Task ClearActiveCombatAsync(int userId);
     Task<RollDiceResult> RollDiceAsync(int combatSessionId, DiceType diceType);
     Task<EnemyAttackResult> EnemyAttackAsync(int combatSessionId);
     Task<CombatDetailDto> CompleteCombatAsync(int combatSessionId);

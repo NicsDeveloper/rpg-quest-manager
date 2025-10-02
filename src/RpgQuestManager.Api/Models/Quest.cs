@@ -28,6 +28,7 @@ public class Quest
     // Sistema de Recompensas Avançado
     public string SpecialRewards { get; set; } = "[]"; // JSON string de recompensas especiais
     public int BossId { get; set; } = 0; // ID do boss principal (se houver)
+    public int MainMonsterId { get; set; } = 0; // ID do monstro principal da missão
     public bool IsBossQuest { get; set; } = false;
     public int EstimatedDuration { get; set; } = 30; // Duração estimada em minutos
     

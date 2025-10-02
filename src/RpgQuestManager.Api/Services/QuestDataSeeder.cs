@@ -16,9 +16,32 @@ public class QuestDataSeeder
 
     public async Task SeedAsync()
     {
-        await SeedQuestCategories();
-        await SeedMonsters();
-        await SeedQuests();
+        Console.WriteLine("🌱 Iniciando seed de dados...");
+        
+        try
+        {
+            // Garantir que as tabelas existam
+            Console.WriteLine("🔧 Criando tabelas se necessário...");
+            await _context.Database.EnsureCreatedAsync();
+            Console.WriteLine("✅ Tabelas verificadas!");
+            
+            await SeedQuestCategories();
+            Console.WriteLine("✅ QuestCategories seedado com sucesso!");
+            
+            await SeedMonsters();
+            Console.WriteLine("✅ Monsters seedado com sucesso!");
+            
+            await SeedQuests();
+            Console.WriteLine("✅ Quests seedado com sucesso!");
+            
+            Console.WriteLine("🎉 Seed completo!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Erro no seed: {ex.Message}");
+            Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+            throw;
+        }
     }
 
     private async Task SeedQuestCategories()
@@ -360,6 +383,95 @@ public class QuestDataSeeder
         await _context.SaveChangesAsync();
     }
 
+    private async Task SeedBasicMonsters()
+    {
+        // Verificar se já existem Monsters básicos
+        if (await _context.Monsters.AnyAsync(m => m.Name == "Goblin Raider" || 
+                                                 m.Name == "Lobo Selvagem" || 
+                                                 m.Name == "Orc Guerreiro" || 
+                                                 m.Name == "Troll da Montanha" || 
+                                                 m.Name == "Dragão Ancião" || 
+                                                 m.Name == "Lich Senhor das Trevas"))
+        {
+            Console.WriteLine("✅ Monsters básicos já existem!");
+            return;
+        }
+
+        var basicMonsters = new List<Monster>
+        {
+            new Monster
+            {
+                Name = "Goblin Raider",
+                Type = MonsterType.Goblin,
+                Power = 5,
+                Health = 30,
+                AttackDice = DiceType.D6,
+                AttackBonus = 3,
+                IsBoss = false,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Monster
+            {
+                Name = "Lobo Selvagem",
+                Type = MonsterType.Beast,
+                Power = 8,
+                Health = 40,
+                AttackDice = DiceType.D6,
+                AttackBonus = 4,
+                IsBoss = false,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Monster
+            {
+                Name = "Orc Guerreiro",
+                Type = MonsterType.Orc,
+                Power = 12,
+                Health = 60,
+                AttackDice = DiceType.D10,
+                AttackBonus = 5,
+                IsBoss = false,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Monster
+            {
+                Name = "Troll da Montanha",
+                Type = MonsterType.Troll,
+                Power = 18,
+                Health = 100,
+                AttackDice = DiceType.D12,
+                AttackBonus = 6,
+                IsBoss = false,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Monster
+            {
+                Name = "Dragão Ancião",
+                Type = MonsterType.Dragon,
+                Power = 35,
+                Health = 200,
+                AttackDice = DiceType.D12,
+                AttackBonus = 8,
+                IsBoss = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Monster
+            {
+                Name = "Lich Senhor das Trevas",
+                Type = MonsterType.Undead,
+                Power = 40,
+                Health = 250,
+                AttackDice = DiceType.D12,
+                AttackBonus = 10,
+                IsBoss = true,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        _context.Monsters.AddRange(basicMonsters);
+        await _context.SaveChangesAsync();
+        Console.WriteLine($"✅ Criados {basicMonsters.Count} Monsters básicos!");
+    }
+
     private async Task SeedQuests()
     {
         if (await _context.Quests.AnyAsync()) return;
@@ -367,6 +479,57 @@ public class QuestDataSeeder
         var mainCategory = await _context.QuestCategories.FirstAsync(c => c.Name == "História Principal");
         var bossCategory = await _context.QuestCategories.FirstAsync(c => c.Name == "Boss Fights");
         var dungeonCategory = await _context.QuestCategories.FirstAsync(c => c.Name == "Dungeons");
+
+        // Garantir que existem Monsters antes de criar as quests
+        if (!await _context.Monsters.AnyAsync())
+        {
+            Console.WriteLine("⚠️ Nenhum Monster encontrado, criando Monsters básicos...");
+            await SeedBasicMonsters();
+        }
+
+        // Buscar Monsters específicos que vamos usar nas quests
+        var goblin = await _context.Monsters.FirstOrDefaultAsync(m => m.Name == "Goblin Raider");
+        var wolf = await _context.Monsters.FirstOrDefaultAsync(m => m.Name == "Lobo Selvagem");
+        var orc = await _context.Monsters.FirstOrDefaultAsync(m => m.Name == "Orc Guerreiro");
+        var troll = await _context.Monsters.FirstOrDefaultAsync(m => m.Name == "Troll da Montanha");
+        var dragon = await _context.Monsters.FirstOrDefaultAsync(m => m.Name == "Dragão Ancião");
+        var lich = await _context.Monsters.FirstOrDefaultAsync(m => m.Name == "Lich Senhor das Trevas");
+
+        // Se algum Monster específico não existir, usar o primeiro disponível como fallback
+        var fallbackMonster = await _context.Monsters.FirstAsync();
+        
+        if (goblin == null) 
+        {
+            Console.WriteLine("⚠️ Goblin Raider não encontrado, usando fallback");
+            goblin = fallbackMonster;
+        }
+        if (wolf == null) 
+        {
+            Console.WriteLine("⚠️ Lobo Selvagem não encontrado, usando fallback");
+            wolf = fallbackMonster;
+        }
+        if (orc == null) 
+        {
+            Console.WriteLine("⚠️ Orc Guerreiro não encontrado, usando fallback");
+            orc = fallbackMonster;
+        }
+        if (troll == null) 
+        {
+            Console.WriteLine("⚠️ Troll da Montanha não encontrado, usando fallback");
+            troll = fallbackMonster;
+        }
+        if (dragon == null) 
+        {
+            Console.WriteLine("⚠️ Dragão Ancião não encontrado, usando fallback");
+            dragon = fallbackMonster;
+        }
+        if (lich == null) 
+        {
+            Console.WriteLine("⚠️ Lich Senhor das Trevas não encontrado, usando fallback");
+            lich = fallbackMonster;
+        }
+        
+        Console.WriteLine($"✅ Usando Monsters: Goblin={goblin.Name} (ID: {goblin.Id}), Wolf={wolf.Name} (ID: {wolf.Id}), Orc={orc.Name} (ID: {orc.Id}), Troll={troll.Name} (ID: {troll.Id}), Dragon={dragon.Name} (ID: {dragon.Id}), Lich={lich.Name} (ID: {lich.Id})");
 
         var quests = new List<Quest>
         {
@@ -390,6 +553,7 @@ public class QuestDataSeeder
                 ImmuneEnemyTypes = JsonSerializer.Serialize(new[] { "goblin" }),
                 SpecialRewards = JsonSerializer.Serialize(new[] { "Espada de Iniciante", "Poção de Cura" }),
                 BossId = 0,
+                MainMonsterId = goblin.Id,
                 IsBossQuest = false,
                 EstimatedDuration = 15,
                 StoryOrder = 1,
@@ -417,6 +581,7 @@ public class QuestDataSeeder
                 ImmuneEnemyTypes = JsonSerializer.Serialize(new[] { "lobo" }),
                 SpecialRewards = JsonSerializer.Serialize(new[] { "Armadura de Couro", "Poção de Força" }),
                 BossId = 0,
+                MainMonsterId = wolf.Id,
                 IsBossQuest = false,
                 EstimatedDuration = 25,
                 StoryOrder = 2,
@@ -444,6 +609,7 @@ public class QuestDataSeeder
                 ImmuneEnemyTypes = JsonSerializer.Serialize(new[] { "esqueleto" }),
                 SpecialRewards = JsonSerializer.Serialize(new[] { "Armadura de Aço", "Anel de Proteção" }),
                 BossId = 0,
+                MainMonsterId = orc.Id,
                 IsBossQuest = false,
                 EstimatedDuration = 45,
                 StoryOrder = 3,
@@ -471,6 +637,7 @@ public class QuestDataSeeder
                 ImmuneEnemyTypes = JsonSerializer.Serialize(new[] { "orc" }),
                 SpecialRewards = JsonSerializer.Serialize(new[] { "Machado Berserker", "Armadura de Ferro", "Poção de Fúria" }),
                 BossId = 4, // ID do Orc Berserker
+                MainMonsterId = orc.Id,
                 IsBossQuest = true,
                 EstimatedDuration = 60,
                 StoryOrder = 4,
@@ -498,6 +665,7 @@ public class QuestDataSeeder
                 ImmuneEnemyTypes = JsonSerializer.Serialize(new[] { "dragão" }),
                 SpecialRewards = JsonSerializer.Serialize(new[] { "Espada de Dragão", "Armadura de Escamas", "Anel de Fogo" }),
                 BossId = 6, // ID do Dragão Jovem
+                MainMonsterId = dragon.Id,
                 IsBossQuest = true,
                 EstimatedDuration = 90,
                 StoryOrder = 5,
@@ -525,6 +693,7 @@ public class QuestDataSeeder
                 ImmuneEnemyTypes = JsonSerializer.Serialize(new[] { "lich" }),
                 SpecialRewards = JsonSerializer.Serialize(new[] { "Espada Lendária", "Armadura Divina", "Anel do Poder", "Título de Herói" }),
                 BossId = 7, // ID do Lich Senhor das Trevas
+                MainMonsterId = lich.Id,
                 IsBossQuest = true,
                 EstimatedDuration = 120,
                 StoryOrder = 6,
