@@ -1,77 +1,97 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace RpgQuestManager.Api.Models;
 
-/// <summary>
-/// Sessão de combate ativa (quest em andamento)
-/// </summary>
 public class CombatSession
 {
+    [Key]
     public int Id { get; set; }
-    public string HeroIds { get; set; } = string.Empty; // IDs separados por vírgula (ex: "1,3,5")
+    
+    [Required]
+    public int UserId { get; set; }
+    
+    [Required]
+    public string HeroIds { get; set; } = string.Empty; // JSON array de IDs
+    
+    [Required]
     public int QuestId { get; set; }
-    public int? CurrentEnemyId { get; set; }
     
-    // Sistema de Combos
-    public int? ComboId { get; set; } // Combo detectado
-    public int GroupBonus { get; set; } = 0; // Bônus de força do grupo
-    public int ComboBonus { get; set; } = 0; // Bônus do combo/fraqueza
+    [Required]
+    public int CurrentEnemyId { get; set; }
     
-    public CombatStatus Status { get; set; } = CombatStatus.InProgress;
-    public DateTime StartedAt { get; set; } = DateTime.UtcNow;
+    // Status do combate
+    public CombatStatus Status { get; set; } = CombatStatus.Preparing;
+    
+    // Turno atual
+    public bool IsHeroTurn { get; set; } = true;
+    
+    // Vida atual
+    public int CurrentEnemyHealth { get; set; }
+    public int MaxEnemyHealth { get; set; }
+    
+    // Vida dos heróis (JSON)
+    public string HeroHealths { get; set; } = "{}"; // {heroId: health}
+    public string MaxHeroHealths { get; set; } = "{}"; // {heroId: maxHealth}
+    
+    // Timestamps
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     
-    // Log de ações realizadas
-    public List<CombatLog> CombatLogs { get; set; } = new List<CombatLog>();
+    // Navegação
+    [ForeignKey("UserId")]
+    public User User { get; set; } = null!;
     
-    // Relacionamentos
+    [ForeignKey("QuestId")]
     public Quest Quest { get; set; } = null!;
-    public Enemy? CurrentEnemy { get; set; }
-    public PartyCombo? Combo { get; set; }
     
-    // Helper methods
+    [ForeignKey("CurrentEnemyId")]
+    public Enemy CurrentEnemy { get; set; } = null!;
+    
+    // Logs de combate
+    public virtual ICollection<CombatLog> CombatLogs { get; set; } = new List<CombatLog>();
+    
+    // Métodos auxiliares
     public List<int> GetHeroIdsList()
     {
-        return HeroIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(int.Parse)
-            .ToList();
+        if (string.IsNullOrEmpty(HeroIds)) return new List<int>();
+        return System.Text.Json.JsonSerializer.Deserialize<List<int>>(HeroIds) ?? new List<int>();
     }
     
     public void SetHeroIdsList(List<int> heroIds)
     {
-        HeroIds = string.Join(",", heroIds);
+        HeroIds = System.Text.Json.JsonSerializer.Serialize(heroIds);
+    }
+    
+    public Dictionary<int, int> GetHeroHealths()
+    {
+        if (string.IsNullOrEmpty(HeroHealths)) return new Dictionary<int, int>();
+        return System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, int>>(HeroHealths) ?? new Dictionary<int, int>();
+    }
+    
+    public void SetHeroHealths(Dictionary<int, int> healths)
+    {
+        HeroHealths = System.Text.Json.JsonSerializer.Serialize(healths);
+    }
+    
+    public Dictionary<int, int> GetMaxHeroHealths()
+    {
+        if (string.IsNullOrEmpty(MaxHeroHealths)) return new Dictionary<int, int>();
+        return System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, int>>(MaxHeroHealths) ?? new Dictionary<int, int>();
+    }
+    
+    public void SetMaxHeroHealths(Dictionary<int, int> maxHealths)
+    {
+        MaxHeroHealths = System.Text.Json.JsonSerializer.Serialize(maxHealths);
     }
 }
 
-/// <summary>
-/// Status da sessão de combate
-/// </summary>
 public enum CombatStatus
 {
-    InProgress,    // Em andamento
-    Victory,       // Vitória (todos os bosses derrotados)
-    Fled,          // Fugiu do combate
-    Defeated       // Derrotado
+    Preparing = 0,
+    InProgress = 1,
+    Victory = 2,
+    Defeat = 3,
+    Cancelled = 4
 }
-
-/// <summary>
-/// Log de ações durante o combate
-/// </summary>
-public class CombatLog
-{
-    public int Id { get; set; }
-    public int CombatSessionId { get; set; }
-    public int? EnemyId { get; set; }
-    
-    public string Action { get; set; } = string.Empty; // "ROLL", "VICTORY", "DEFEAT", "FLEE"
-    public DiceType? DiceUsed { get; set; }
-    public int? DiceResult { get; set; }
-    public int? RequiredRoll { get; set; }
-    public bool? Success { get; set; }
-    
-    public string Details { get; set; } = string.Empty;
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    
-    // Relacionamentos
-    public CombatSession CombatSession { get; set; } = null!;
-    public Enemy? Enemy { get; set; }
-}
-

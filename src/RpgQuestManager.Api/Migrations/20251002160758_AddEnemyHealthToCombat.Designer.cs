@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RpgQuestManager.Api.Data;
@@ -11,9 +12,11 @@ using RpgQuestManager.Api.Data;
 namespace RpgQuestManager.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002160758_AddEnemyHealthToCombat")]
+    partial class AddEnemyHealthToCombat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -115,8 +118,7 @@ namespace RpgQuestManager.Api.Migrations
 
                     b.Property<string>("Details")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("DiceResult")
                         .HasColumnType("integer");
@@ -156,55 +158,47 @@ namespace RpgQuestManager.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ComboBonus")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ComboId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CurrentEnemyHealth")
+                    b.Property<int?>("CurrentEnemyHealth")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CurrentEnemyId")
+                    b.Property<int?>("CurrentEnemyId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("HeroHealths")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("GroupBonus")
+                        .HasColumnType("integer");
 
                     b.Property<string>("HeroIds")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsHeroTurn")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("MaxEnemyHealth")
+                    b.Property<int?>("MaxEnemyHealth")
                         .HasColumnType("integer");
-
-                    b.Property<string>("MaxHeroHealths")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<int>("QuestId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("StartedAt")
+                    b.Property<DateTime>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("ComboId");
 
                     b.HasIndex("CurrentEnemyId");
 
                     b.HasIndex("QuestId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("CombatSessions");
                 });
@@ -384,9 +378,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("CurrentHealth")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -409,9 +400,6 @@ namespace RpgQuestManager.Api.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MaxHealth")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -895,11 +883,15 @@ namespace RpgQuestManager.Api.Migrations
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.CombatSession", b =>
                 {
+                    b.HasOne("RpgQuestManager.Api.Models.PartyCombo", "Combo")
+                        .WithMany()
+                        .HasForeignKey("ComboId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("RpgQuestManager.Api.Models.Enemy", "CurrentEnemy")
                         .WithMany()
                         .HasForeignKey("CurrentEnemyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("RpgQuestManager.Api.Models.Quest", "Quest")
                         .WithMany()
@@ -907,17 +899,11 @@ namespace RpgQuestManager.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RpgQuestManager.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Combo");
 
                     b.Navigation("CurrentEnemy");
 
                     b.Navigation("Quest");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.ComboDiscovery", b =>

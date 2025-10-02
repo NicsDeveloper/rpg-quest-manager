@@ -25,6 +25,10 @@ public class Hero
     public int Gold { get; set; } = 0;
     public int UnallocatedAttributePoints { get; set; } = 0; // Pontos de atributo não alocados
     
+    // Sistema de Vida
+    public int MaxHealth { get; set; } = 100; // Vida máxima
+    public int CurrentHealth { get; set; } = 100; // Vida atual
+    
     // Atributos base da classe (não editáveis)
     public int BaseStrength { get; set; } = 10;
     public int BaseIntelligence { get; set; } = 10;
@@ -72,13 +76,31 @@ public class Hero
     }
     
     /// <summary>
-    /// Calcula o ataque total do herói (baseado em Strength + bônus de itens equipados)
+    /// Calcula o ataque total do herói (baseado em Strength + bônus de armas equipadas)
     /// </summary>
     public int GetTotalAttack()
     {
         var equippedItems = HeroItems.Where(hi => hi.IsEquipped);
-        var itemBonus = equippedItems.Sum(hi => hi.Item.BonusStrength);
-        return Strength + itemBonus;
+        var weaponBonus = 0;
+        
+        foreach (var item in equippedItems)
+        {
+            var itemType = item.Item.Type.ToLower();
+            
+            // Armas: bônus de força para dano
+            if (itemType.Contains("espada") || itemType.Contains("sword") ||
+                itemType.Contains("arco") || itemType.Contains("bow") ||
+                itemType.Contains("cajado") || itemType.Contains("staff") ||
+                itemType.Contains("chicote") || itemType.Contains("whip") ||
+                itemType.Contains("foice") || itemType.Contains("scythe") ||
+                itemType.Contains("açoite") || itemType.Contains("flail") ||
+                itemType.Contains("lâmina") || itemType.Contains("blade"))
+            {
+                weaponBonus += item.Item.BonusStrength;
+            }
+        }
+        
+        return Strength + weaponBonus;
     }
     
     /// <summary>
@@ -123,6 +145,84 @@ public class Hero
     public int GetBaseMagic()
     {
         return BaseIntelligence + BonusIntelligence;
+    }
+
+    /// <summary>
+    /// Calcula a vida máxima baseada no nível, atributos e itens equipados
+    /// </summary>
+    public int CalculateMaxHealth()
+    {
+        // Vida base: 100 + (nível * 10) + (força * 2)
+        var baseHealth = 100 + (Level * 10) + (Strength * 2);
+        
+        // Bônus de itens equipados
+        var equippedItems = HeroItems.Where(hi => hi.IsEquipped);
+        var armorBonus = 0;
+        var accessoryBonus = 0;
+        
+        foreach (var item in equippedItems)
+        {
+            var itemType = item.Item.Type.ToLower();
+            
+            // Armaduras: 2x o bônus de força para vida
+            if (itemType.Contains("armadura") || itemType.Contains("armor") || 
+                itemType.Contains("cota") || itemType.Contains("mail") ||
+                itemType.Contains("escama") || itemType.Contains("scale") ||
+                itemType.Contains("manto") || itemType.Contains("cloak") ||
+                itemType.Contains("capacete") || itemType.Contains("helmet"))
+            {
+                armorBonus += item.Item.BonusStrength * 2;
+            }
+            // Acessórios: 1x o bônus de força para vida
+            else if (itemType.Contains("amuleto") || itemType.Contains("amulet") ||
+                     itemType.Contains("anel") || itemType.Contains("ring") ||
+                     itemType.Contains("coração") || itemType.Contains("heart") ||
+                     itemType.Contains("coroa") || itemType.Contains("crown"))
+            {
+                accessoryBonus += item.Item.BonusStrength;
+            }
+        }
+        
+        return baseHealth + armorBonus + accessoryBonus;
+    }
+
+    /// <summary>
+    /// Atualiza a vida máxima baseada nos atributos atuais
+    /// </summary>
+    public void UpdateMaxHealth()
+    {
+        var newMaxHealth = CalculateMaxHealth();
+        MaxHealth = newMaxHealth;
+        
+        // Se a vida atual for maior que a nova vida máxima, ajusta
+        if (CurrentHealth > MaxHealth)
+        {
+            CurrentHealth = MaxHealth;
+        }
+    }
+
+    /// <summary>
+    /// Aplica dano ao herói
+    /// </summary>
+    public void TakeDamage(int damage)
+    {
+        CurrentHealth = Math.Max(0, CurrentHealth - damage);
+    }
+
+    /// <summary>
+    /// Cura o herói
+    /// </summary>
+    public void Heal(int healing)
+    {
+        CurrentHealth = Math.Min(MaxHealth, CurrentHealth + healing);
+    }
+
+    /// <summary>
+    /// Verifica se o herói está vivo
+    /// </summary>
+    public bool IsAlive()
+    {
+        return CurrentHealth > 0;
     }
 
     /// <summary>
@@ -185,6 +285,9 @@ public class Hero
         // MUDANÇA: Ao invés de aplicar atributos automaticamente, dá pontos não alocados
         var attributePoints = GetLevelUpAttributeBonus();
         UnallocatedAttributePoints += attributePoints;
+        
+        // Atualiza a vida máxima baseada no novo nível
+        UpdateMaxHealth();
         
         // Recompensa de ouro escalada
         Gold += GetLevelUpGoldReward();
@@ -276,6 +379,10 @@ public class Hero
         
         // Atualiza os atributos totais
         UpdateTotalAttributes();
+        
+        // Inicializa a vida baseada nos atributos
+        UpdateMaxHealth();
+        CurrentHealth = MaxHealth; // Começa com vida cheia
     }
     
     /// <summary>

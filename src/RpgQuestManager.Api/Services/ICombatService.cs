@@ -5,10 +5,10 @@ namespace RpgQuestManager.Api.Services;
 
 public interface ICombatService
 {
-    Task<CombatSessionDto> StartCombatAsync(int userId, List<int> heroIds, int questId);
-    Task<CombatSessionDetailDto> GetActiveCombatSessionAsync(int userId, int combatSessionId);
-    Task<CombatSessionDetailDto?> GetActiveCombatByHeroIdAsync(int userId, int heroId);
-    Task<RollDiceResultDto> RollDiceAsync(int userId, int combatSessionId, DiceType diceType);
-    Task<CompleteCombatResultDto> CompleteCombatAsync(int userId, int combatSessionId);
-    Task FleeCombatAsync(int userId, int combatSessionId);
+    Task<CombatDetailDto> StartCombatAsync(int userId, StartCombatRequest request);
+    Task<CombatDetailDto?> GetActiveCombatAsync(int userId);
+    Task<RollDiceResult> RollDiceAsync(int combatSessionId, DiceType diceType);
+    Task<EnemyAttackResult> EnemyAttackAsync(int combatSessionId);
+    Task<CombatDetailDto> CompleteCombatAsync(int combatSessionId);
+    Task<bool> CancelCombatAsync(int combatSessionId);
 }

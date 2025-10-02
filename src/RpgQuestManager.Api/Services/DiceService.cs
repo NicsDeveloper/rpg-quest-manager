@@ -27,7 +27,7 @@ public class DiceService : IDiceService
             {
                 UserId = userId,
                 D6Count = 3, // Começa com 3 dados D6
-                D10Count = 0,
+                D10Count = 1, // Começa com 1 dado D10
                 D12Count = 0,
                 D20Count = 0
             };

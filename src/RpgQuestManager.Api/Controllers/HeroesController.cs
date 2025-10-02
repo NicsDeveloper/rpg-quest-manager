@@ -180,10 +180,9 @@ public class HeroesController : ControllerBase
     {
         var hero = _mapper.Map<Hero>(request);
         
-        // ⚠️ FORÇAR: Todo herói começa no nível 1 com 0 XP e 100 gold inicial
+        // ⚠️ FORÇAR: Todo herói começa no nível 1 com 0 XP
         hero.Level = 1;
         hero.Experience = 0;
-        hero.Gold = 100; // Um pouco de ouro inicial para começar
         
         // Configurar atributos baseados na classe
         hero.ConfigureInitialAttributes();
@@ -339,7 +338,19 @@ public class HeroesController : ControllerBase
             return NotFound("Item não encontrado no inventário do herói");
         }
         
+        
         heroItem.IsEquipped = !heroItem.IsEquipped;
+        
+        // Atualiza a vida máxima do herói se estiver equipando/desequipando
+        if (heroItem.IsEquipped)
+        {
+            heroItem.Hero.UpdateMaxHealth();
+        }
+        else
+        {
+            heroItem.Hero.UpdateMaxHealth();
+        }
+        
         await _context.SaveChangesAsync();
         
         _logger.LogInformation(

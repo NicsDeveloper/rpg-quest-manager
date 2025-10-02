@@ -12,7 +12,7 @@ import { Quests } from './pages/Quests';
 import { QuestCatalog } from './pages/QuestCatalog';
 import { Items } from './pages/Items';
 import { Enemies } from './pages/Enemies';
-import { Combat } from './pages/Combat';
+import Combat from './pages/Combat';
 import { DiceShop } from './pages/DiceShop';
 import { Bestiary } from './pages/Bestiary';
 import { FreeDice } from './pages/FreeDice';

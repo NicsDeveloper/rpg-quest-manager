@@ -22,11 +22,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<HeroTraining> HeroTrainings { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     
-    // Sistema de Combate e Dados
+    // Sistema de Dados
     public DbSet<DiceInventory> DiceInventories { get; set; }
+    public DbSet<BossDropTable> BossDropTables { get; set; }
+    
+    // Sistema de Combate
     public DbSet<CombatSession> CombatSessions { get; set; }
     public DbSet<CombatLog> CombatLogs { get; set; }
-    public DbSet<BossDropTable> BossDropTables { get; set; }
     
     // Sistema de Combos e Party
     public DbSet<PartyCombo> PartyCombos { get; set; }
@@ -183,6 +185,12 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.HeroIds).IsRequired();
+            entity.Property(e => e.HeroHealths).IsRequired();
+            entity.Property(e => e.MaxHeroHealths).IsRequired();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Quest)
                 .WithMany()
                 .HasForeignKey(e => e.QuestId)
@@ -190,11 +198,7 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(e => e.CurrentEnemy)
                 .WithMany()
                 .HasForeignKey(e => e.CurrentEnemyId)
-                .OnDelete(DeleteBehavior.SetNull);
-            entity.HasOne(e => e.Combo)
-                .WithMany()
-                .HasForeignKey(e => e.ComboId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
         });
         
         // Configuração CombatLog
@@ -202,6 +206,7 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Action).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Details).HasMaxLength(1000);
             entity.HasOne(e => e.CombatSession)
                 .WithMany(cs => cs.CombatLogs)
                 .HasForeignKey(e => e.CombatSessionId)

@@ -41,7 +41,6 @@ export const QuestCatalog: React.FC = () => {
   const handleAcceptQuest = async (questId: number) => {
     try {
       await questService.accept(questId);
-      alert('✅ Missão aceita com sucesso!');
       loadQuests();
     } catch (error: any) {
       alert(error.response?.data?.message || 'Erro ao aceitar missão');

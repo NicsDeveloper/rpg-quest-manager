@@ -105,6 +105,13 @@ public class ShopController : ControllerBase
     public async Task<ActionResult<ShopPurchaseResultDto>> BuyDice(string diceType, [FromQuery] int quantity = 1)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _context.Users.FindAsync(userId);
+        
+        if (user == null)
+        {
+            return BadRequest(new { message = "Usuário não encontrado." });
+        }
+        
         var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
         
         if (hero == null)
@@ -136,13 +143,13 @@ public class ShopController : ControllerBase
         var pricePerDice = dicePrices[diceType];
         var totalCost = pricePerDice * quantity;
         
-        if (hero.Gold < totalCost)
+        if (user.Gold < totalCost)
         {
-            return BadRequest(new { message = $"Ouro insuficiente. Necessário: {totalCost}, Disponível: {hero.Gold}" });
+            return BadRequest(new { message = $"Ouro insuficiente. Necessário: {totalCost}, Disponível: {user.Gold}" });
         }
         
-        // Deduzir ouro
-        hero.Gold -= totalCost;
+        // Deduzir ouro do usuário
+        user.Gold -= totalCost;
         
         // Adicionar dados ao inventário
         switch (diceType)
@@ -173,7 +180,7 @@ public class ShopController : ControllerBase
             ItemName = $"{quantity}x {diceType}",
             Quantity = quantity,
             TotalCost = totalCost,
-            RemainingGold = hero.Gold
+            RemainingGold = user.Gold
         });
     }
     
@@ -184,6 +191,13 @@ public class ShopController : ControllerBase
     public async Task<ActionResult<ShopPurchaseResultDto>> BuyItem(int itemId, [FromQuery] int quantity = 1)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _context.Users.FindAsync(userId);
+        
+        if (user == null)
+        {
+            return BadRequest(new { message = "Usuário não encontrado." });
+        }
+        
         var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
         
         if (hero == null)
@@ -204,13 +218,13 @@ public class ShopController : ControllerBase
         
         var totalCost = item.Value * quantity;
         
-        if (hero.Gold < totalCost)
+        if (user.Gold < totalCost)
         {
-            return BadRequest(new { message = $"Ouro insuficiente. Necessário: {totalCost}, Disponível: {hero.Gold}" });
+            return BadRequest(new { message = $"Ouro insuficiente. Necessário: {totalCost}, Disponível: {user.Gold}" });
         }
         
-        // Deduzir ouro
-        hero.Gold -= totalCost;
+        // Deduzir ouro do usuário
+        user.Gold -= totalCost;
         
         // Adicionar item ao inventário
         var existingHeroItem = await _context.HeroItems
@@ -245,7 +259,7 @@ public class ShopController : ControllerBase
             ItemName = item.Name,
             Quantity = quantity,
             TotalCost = totalCost,
-            RemainingGold = hero.Gold
+            RemainingGold = user.Gold
         });
     }
     

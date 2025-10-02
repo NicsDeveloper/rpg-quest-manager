@@ -1,121 +1,161 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Navbar } from '../components/Navbar';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { Loading } from '../components/Loading';
-import { HeroWidget } from '../components/HeroWidget';
-import {
-  combatService,
-  CombatSessionDetail,
-  RollDiceResult,
-  CompleteCombatResult,
-  EnemyInfo,
-} from '../services/combatService';
-import { diceService, DiceInventory } from '../services/diceService';
-import { profileService } from '../services/profileService';
-import api from '../services/api';
+import { combatService, CombatDetail, CombatStatus, DiceType } from '../services/combatService';
+import { heroService } from '../services/heroService';
+import { diceService } from '../services/diceService';
 
-interface Hero {
-  id: number;
-  name: string;
-  class: string;
-  level: number;
-  strength: number;
-  intelligence: number;
-  dexterity: number;
-}
+type CombatArc = 'preparation' | 'combat' | 'consequence';
 
-export const Combat: React.FC = () => {
+const Combat: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const questId = parseInt(searchParams.get('questId') || '0');
-
-  const [combat, setCombat] = useState<CombatSessionDetail | null>(null);
-  const [inventory, setInventory] = useState<DiceInventory | null>(null);
-  const [activeParty, setActiveParty] = useState<Hero[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [currentArc, setCurrentArc] = useState<CombatArc>('preparation');
+  const [combat, setCombat] = useState<CombatDetail | null>(null);
+  const [heroes, setHeroes] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const [rolling, setRolling] = useState(false);
-  const [selectedEnemy, setSelectedEnemy] = useState<EnemyInfo | null>(null);
-  const [lastRoll, setLastRoll] = useState<RollDiceResult | null>(null);
-  const [completionResult, setCompletionResult] = useState<CompleteCombatResult | null>(null);
-  const [showDiscoveries, setShowDiscoveries] = useState(false);
+  const [turnTimer, setTurnTimer] = useState(60);
+  const [isTimerActive, setIsTimerActive] = useState(false);
 
+  // Carregar dados iniciais
   useEffect(() => {
-    initCombat();
+    loadInitialData();
   }, []);
 
-  const initCombat = async () => {
+  // Timer do turno
+  useEffect(() => {
+    let interval: number;
+    
+    if (isTimerActive && turnTimer > 0 && combat?.isHeroTurn && combat?.status === CombatStatus.InProgress) {
+      interval = setInterval(() => {
+        setTurnTimer(prev => {
+          if (prev <= 1) {
+            setIsTimerActive(false);
+            // Auto ataque do inimigo se tempo esgotar
+            if (combat) {
+              handleEnemyAttack();
+            }
+            return 60; // Reset timer
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTimerActive, turnTimer, combat]);
+
+  // Auto ataque do inimigo
+  useEffect(() => {
+    if (combat && !combat.isHeroTurn && combat.status === CombatStatus.InProgress) {
+      const enemyAttackDelay = setTimeout(() => {
+        handleEnemyAttack();
+      }, 3000); // 3 segundos para inimigo atacar
+
+      return () => clearTimeout(enemyAttackDelay);
+    }
+  }, [combat?.isHeroTurn, combat?.status]);
+
+  const loadInitialData = async () => {
     try {
       setLoading(true);
-      const hero = await profileService.getMyHero();
-
-      // Carrega party ativa
-      const party = await api.get('/profile/active-party');
-      setActiveParty(party.data);
-
-      // Verifica se já existe combate ativo
-      let activeCombat = await combatService.getActiveCombat(hero.id);
-
-      // Se não existe e foi passado um questId, inicia um novo
-      if (!activeCombat && questId > 0) {
-        await combatService.startCombat(hero.id, questId);
-        activeCombat = await combatService.getActiveCombat(hero.id);
-      }
-
-      if (!activeCombat) {
-        alert('Nenhum combate ativo encontrado. Aceite uma quest primeiro!');
-        navigate('/quests/catalog');
+      
+      // Buscar party ativa
+      const activeParty = await heroService.getAll();
+      
+      if (!activeParty || activeParty.length === 0) {
+        navigate('/heroes');
         return;
       }
 
-      setCombat(activeCombat);
-      setSelectedEnemy(activeCombat.enemies?.[0] || null);
-
-      const inv = await diceService.getInventory();
-      setInventory(inv);
-    } catch (error: any) {
-      console.error('Erro ao iniciar combate:', error);
-      alert(error.response?.data?.message || error.message || 'Erro ao carregar combate');
-      navigate('/quests/catalog');
+      setHeroes(activeParty);
+      
+      // Buscar inventário de dados
+      const inventoryResponse = await diceService.getInventory();
+      setInventory(inventoryResponse);
+      
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRollDice = async (diceType: string) => {
-    if (!combat || !selectedEnemy || !inventory) return;
+  const handleStartCombat = async (questId: number) => {
+    try {
+      setLoading(true);
+      
+      const heroIds = heroes.map(h => h.id);
+      const combatDetail = await combatService.startCombat(questId, heroIds);
+      
+      setCombat(combatDetail);
+      setCurrentArc('combat');
+      setTurnTimer(60);
+      setIsTimerActive(true);
+      
+    } catch (error: any) {
+      console.error('Erro ao iniciar combate:', error);
+      alert(error.message || 'Erro ao iniciar combate');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRollDice = async (diceType: DiceType) => {
+    if (!combat || rolling) return;
 
     try {
       setRolling(true);
-      setLastRoll(null);
-
+      
       const result = await combatService.rollDice({
         combatSessionId: combat.id,
-        diceType,
+        diceType
       });
-
-      setLastRoll(result);
-
-      // Atualiza inventário
-      const updatedInventory = await diceService.getInventory();
-      setInventory(updatedInventory);
-
-      // Usa o combate atualizado que já vem na resposta
-      if (result.updatedCombatSession) {
-        setCombat(result.updatedCombatSession);
-      }
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.message || error.message || 'Erro ao rolar dado';
-      alert(errorMsg);
       
-      // Se o combate já terminou, tenta recarregar a página do catálogo
-      if (errorMsg.includes('concluído com VITÓRIA')) {
-        alert('🎉 Combate já foi concluído! Redirecionando...');
-        navigate('/quests/catalog');
+      setCombat(result.updatedCombatSession);
+      
+      // Atualizar timer baseado no resultado
+      if (result.updatedCombatSession.isHeroTurn) {
+        setTurnTimer(60);
+        setIsTimerActive(true);
+      } else {
+        setIsTimerActive(false);
       }
+      
+    } catch (error: any) {
+      console.error('Erro ao rolar dados:', error);
+      alert(error.message || 'Erro ao rolar dados');
     } finally {
       setRolling(false);
+    }
+  };
+
+  const handleEnemyAttack = async () => {
+    if (!combat) return;
+
+    try {
+      const result = await combatService.enemyAttack({
+        combatSessionId: combat.id
+      });
+      
+      setCombat(result.updatedCombatSession);
+      
+      // Verificar se combate terminou
+      if (result.updatedCombatSession.status === CombatStatus.Victory || 
+          result.updatedCombatSession.status === CombatStatus.Defeat) {
+        setCurrentArc('consequence');
+        setIsTimerActive(false);
+      } else if (result.updatedCombatSession.isHeroTurn) {
+        setTurnTimer(60);
+        setIsTimerActive(true);
+      }
+      
+    } catch (error: any) {
+      console.error('Erro no ataque do inimigo:', error);
     }
   };
 
@@ -124,542 +164,470 @@ export const Combat: React.FC = () => {
 
     try {
       const result = await combatService.completeCombat(combat.id);
-      setCompletionResult(result);
+      setCombat(result);
+      setCurrentArc('consequence');
+      setIsTimerActive(false);
     } catch (error: any) {
-      alert(error.response?.data?.message || error.message || 'Erro ao completar combate');
+      console.error('Erro ao finalizar combate:', error);
     }
   };
 
-  const handleFlee = async () => {
+  const handleCancelCombat = async () => {
     if (!combat) return;
 
-    if (!confirm('Tem certeza que deseja fugir do combate? Você não receberá recompensas.')) {
-      return;
-    }
-
     try {
-      await combatService.flee(combat.id);
-      alert('Você fugiu do combate!');
-      navigate('/quests/catalog');
+      await combatService.cancelCombat(combat.id);
+      setCombat(null);
+      setCurrentArc('preparation');
+      setIsTimerActive(false);
     } catch (error: any) {
-      alert(error.response?.data?.message || error.message || 'Erro ao fugir');
+      console.error('Erro ao cancelar combate:', error);
     }
   };
 
-  const getDiceCount = (diceType: string): number => {
-    if (!inventory) return 0;
-    switch (diceType) {
-      case 'D6':
-        return inventory.d6Count;
-      case 'D10':
-        return inventory.d10Count;
-      case 'D12':
-        return inventory.d12Count;
-      case 'D20':
-        return inventory.d20Count;
-      default:
-        return 0;
-    }
-  };
+  // Verificar se há combate ativo
+  useEffect(() => {
+    const checkActiveCombat = async () => {
+      try {
+        const activeCombat = await combatService.getActiveCombat(1); // TODO: Get from auth context
+        if (activeCombat) {
+          setCombat(activeCombat);
+          setCurrentArc('combat');
+          if (activeCombat.isHeroTurn && activeCombat.status === CombatStatus.InProgress) {
+            setTurnTimer(60);
+            setIsTimerActive(true);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar combate ativo:', error);
+      }
+    };
 
-  const getDiceIcon = (diceType: string): string => {
-    switch (diceType) {
-      case 'D6':
-        return '🎲';
-      case 'D10':
-        return '🎯';
-      case 'D12':
-        return '⚡';
-      case 'D20':
-        return '👑';
-      default:
-        return '🎲';
-    }
-  };
-
-  const getEnemyDefeated = (enemyId: number): boolean => {
-    if (!combat) return false;
-    return combat.combatLogs.some(
-      (log) => log.enemyId === enemyId && log.success === true
-    );
-  };
-
-  const getPartyPower = (): number => {
-    return activeParty.reduce((sum, hero) => sum + hero.strength + hero.intelligence + hero.dexterity, 0);
-  };
-
-  const getPartyBonus = (): string => {
-    const power = getPartyPower();
-    if (power >= 150) return '+3 em todas as rolagens';
-    if (power >= 100) return '+2 em todas as rolagens';
-    if (power >= 50) return '+1 em todas as rolagens';
-    return 'Sem bônus';
-  };
-
-  const getRewardPenalty = (): string => {
-    if (activeParty.length === 3) return '-30% de recompensas';
-    if (activeParty.length === 2) return '-15% de recompensas';
-    return 'Sem penalidade';
-  };
+    checkActiveCombat();
+  }, []);
 
   if (loading) {
     return (
-      <>
-        <HeroWidget />
-        <Navbar />
-        <div className="container mx-auto px-6 py-8">
-          <Loading />
-        </div>
-      </>
-    );
-  }
-
-  if (completionResult) {
-    return (
-      <>
-        <HeroWidget />
-        <Navbar />
-        <div className="container mx-auto px-6 py-8 max-w-4xl">
-          <Card className="bg-gradient-to-br from-yellow-900/30 to-yellow-700/30 border-yellow-500/50">
-            <div className="text-center mb-6">
-              <div className="text-8xl mb-4 animate-bounce">
-                {completionResult.status === 'Victory' ? '🎉' : '💀'}
-              </div>
-              <h1 className="text-5xl font-bold text-gradient mb-4 animate-float">
-                {completionResult.status === 'Victory' ? '⚔️ VITÓRIA ÉPICA! ⚔️' : '💀 DERROTA 💀'}
-              </h1>
-              <p className="text-2xl text-gray-300 mb-4">{completionResult.message}</p>
-              
-              {activeParty.length > 1 && (
-                <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-4 mb-4">
-                  <p className="text-amber-300">
-                    🛡️ Sua party de <strong>{activeParty.length} heróis</strong> lutou bravamente!
-                  </p>
-                  <p className="text-sm text-amber-400">{getRewardPenalty()}</p>
-                </div>
-              )}
-            </div>
-
-            {completionResult.droppedItems.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-3xl font-bold text-yellow-400 mb-4 flex items-center justify-center gap-2">
-                  <span className="animate-bounce">🎁</span>
-                  Tesouros Obtidos
-                  <span className="animate-bounce">🎁</span>
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {completionResult.droppedItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-gradient-to-br from-gray-800/50 to-gray-900/70 rounded-lg p-5 border-2 border-yellow-500/30 hover:border-yellow-500 hover:scale-105 transition-all shadow-lg shadow-yellow-500/20"
-                    >
-                      <h3 className="text-2xl font-bold text-yellow-300 mb-2 flex items-center gap-2">
-                        ✨ {item.name}
-                      </h3>
-                      <p className="text-sm text-gray-400 mb-3">{item.description}</p>
-                      <div className="flex justify-between text-sm mb-3">
-                        <span className={`font-bold ${
-                          item.rarity === 'Legendary' ? 'text-purple-400' :
-                          item.rarity === 'Epic' ? 'text-orange-400' :
-                          item.rarity === 'Rare' ? 'text-blue-400' : 'text-gray-400'
-                        }`}>
-                          {item.rarity === 'Legendary' && '👑 '}
-                          {item.rarity === 'Epic' && '💎 '}
-                          {item.rarity === 'Rare' && '⭐ '}
-                          {item.rarity}
-                        </span>
-                        <span className="text-blue-400">{item.type}</span>
-                      </div>
-                      {(item.bonusStrength > 0 ||
-                        item.bonusIntelligence > 0 ||
-                        item.bonusDexterity > 0) && (
-                        <div className="bg-green-900/30 rounded-lg p-2 text-center">
-                          <p className="text-sm font-bold text-green-400">
-                            {item.bonusStrength > 0 && `⚔️ +${item.bonusStrength} FOR `}
-                            {item.bonusIntelligence > 0 && `🧠 +${item.bonusIntelligence} INT `}
-                            {item.bonusDexterity > 0 && `🎯 +${item.bonusDexterity} DEX`}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-4">
-              <Button variant="primary" onClick={() => navigate('/profile')} className="flex-1">
-                📊 Ver Perfil
-              </Button>
-              <Button variant="secondary" onClick={() => navigate('/quests/catalog')} className="flex-1">
-                🎯 Próximas Missões
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </>
-    );
-  }
-
-  if (!combat || !inventory) {
-    return (
-      <>
-        <HeroWidget />
-        <Navbar />
-        <div className="container mx-auto px-6 py-8">
-          <Card>
-            <p className="text-red-400">Erro ao carregar combate.</p>
-          </Card>
-        </div>
-      </>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-white text-xl">Carregando...</div>
+      </div>
     );
   }
 
   return (
-    <>
-      <HeroWidget />
-      <Navbar />
-      <div className="container mx-auto px-6 py-8">
-        {/* Header Épico */}
-        <div className="mb-8 text-center">
-          <h1 className="text-6xl font-black mb-3 text-gradient animate-float">
-            ⚔️ {combat.questName} ⚔️
-          </h1>
-          <p className="text-xl text-gray-400 mb-4">Prepare-se para a batalha!</p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Arcos da Batalha */}
+        <Card className="mb-6 bg-gradient-to-r from-gray-800/50 to-gray-900/50 border-gray-700/50">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white mb-4">Arcos da Batalha</h2>
+            {combat && (
+              <div className="text-sm text-gray-400">
+                {combat.status === CombatStatus.InProgress ? 'Combate Ativo' : 
+                 combat.status === CombatStatus.Victory ? 'Batalha Finalizada' : 
+                 combat.status === CombatStatus.Defeat ? 'Batalha Perdida' : 'Preparação'}
+              </div>
+            )}
+          </div>
           
-          {/* Party Composition */}
-          {activeParty.length > 0 && (
-            <Card className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 border-purple-500/30 max-w-4xl mx-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-purple-400 flex items-center gap-2">
-                  🛡️ Sua Party ({activeParty.length}/3)
-                </h3>
-                <div className="text-right">
-                  <p className="text-sm text-purple-300">Poder Total: <span className="font-bold text-2xl">{getPartyPower()}</span></p>
-                  <p className="text-xs text-green-400">{getPartyBonus()}</p>
-                  {activeParty.length > 1 && (
-                    <p className="text-xs text-amber-400">{getRewardPenalty()}</p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {activeParty.map((hero) => (
-                  <div key={hero.id} className="bg-gray-800/50 rounded-lg p-4 border-2 border-purple-500/50 hover:border-purple-400 hover:scale-105 transition-all">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
-                        {hero.name.charAt(0)}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-purple-300 text-lg">{hero.name}</h4>
-                        <p className="text-xs text-gray-400">{hero.class} - Nv. {hero.level}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                      <div className="bg-red-900/30 rounded py-1">
-                        <p className="text-red-400 font-bold">{hero.strength}</p>
-                        <p className="text-gray-500">FOR</p>
-                        {combat.heroes && combat.heroes.find(h => h.id === hero.id)?.totalAttack !== hero.strength && (
-                          <p className="text-green-400 text-xs">+{(combat.heroes.find(h => h.id === hero.id)?.totalAttack || 0) - hero.strength}</p>
-                        )}
-                      </div>
-                      <div className="bg-blue-900/30 rounded py-1">
-                        <p className="text-blue-400 font-bold">{hero.intelligence}</p>
-                        <p className="text-gray-500">INT</p>
-                        {combat.heroes && combat.heroes.find(h => h.id === hero.id)?.totalMagic !== hero.intelligence && (
-                          <p className="text-green-400 text-xs">+{(combat.heroes.find(h => h.id === hero.id)?.totalMagic || 0) - hero.intelligence}</p>
-                        )}
-                      </div>
-                      <div className="bg-green-900/30 rounded py-1">
-                        <p className="text-green-400 font-bold">{hero.dexterity}</p>
-                        <p className="text-gray-500">DEX</p>
-                        {combat.heroes && combat.heroes.find(h => h.id === hero.id)?.totalDefense !== hero.dexterity && (
-                          <p className="text-green-400 text-xs">+{(combat.heroes.find(h => h.id === hero.id)?.totalDefense || 0) - hero.dexterity}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Área de Inimigos e Descobertas */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Botão de Descobertas */}
-            <div 
-              className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-2 border-blue-500/30 rounded-2xl p-6 text-center cursor-pointer hover:scale-105 transition-all shadow-lg"
-              onClick={() => setShowDiscoveries(!showDiscoveries)}
-            >
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-4xl">🔍</span>
-                <div>
-                  <h3 className="text-2xl font-bold text-blue-400">Explorar Área</h3>
-                  <p className="text-sm text-gray-400">Clique para descobrir segredos e tesouros</p>
-                </div>
-                <span className="text-4xl">🗺️</span>
+          <div className="flex items-center space-x-4">
+            <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
+              currentArc === 'preparation' ? 'bg-blue-500/20 border border-blue-400/50' : 'bg-gray-700/30'
+            }`}>
+              <span className="text-2xl">⚔️</span>
+              <div>
+                <div className="font-bold text-white">Preparação</div>
+                <div className="text-sm text-gray-400">Configure sua party e equipamentos</div>
               </div>
             </div>
+            
+            <div className="text-gray-500">→</div>
+            
+            <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
+              currentArc === 'combat' ? 'bg-orange-500/20 border border-orange-400/50' : 'bg-gray-700/30'
+            }`}>
+              <span className="text-2xl">⚡</span>
+              <div>
+                <div className="font-bold text-white">Combate</div>
+                <div className="text-sm text-gray-400">Batalhe contra os inimigos</div>
+                {currentArc === 'combat' && (
+                  <div className="text-xs text-orange-400 font-bold mt-1">ATIVO</div>
+                )}
+              </div>
+            </div>
+            
+            <div className="text-gray-500">→</div>
+            
+            <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
+              currentArc === 'consequence' ? 'bg-green-500/20 border border-green-400/50' : 'bg-gray-700/30'
+            }`}>
+              <span className="text-2xl">🏆</span>
+              <div>
+                <div className="font-bold text-white">Consequência</div>
+                <div className="text-sm text-gray-400">Veja os resultados e recompensas</div>
+              </div>
+            </div>
+          </div>
+        </Card>
 
-            {showDiscoveries && (
-              <Card className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-500/30 animate-fadeIn">
-                <h3 className="text-2xl font-bold text-green-400 mb-4">🌟 Descobertas</h3>
-                <div className="space-y-3">
-                  <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
-                    <p className="text-green-300">✨ Você encontrou um baú antigo com poções e artefatos mágicos!</p>
+        {/* Arco de Preparação */}
+        {currentArc === 'preparation' && (
+          <div className="space-y-6">
+            <Card className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border-blue-500/50">
+              <h3 className="text-xl font-bold text-white mb-4">Selecionar Missão</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Lista de missões aqui */}
+                <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/30">
+                  <h4 className="font-bold text-white mb-2">Missão de Exemplo</h4>
+                  <p className="text-sm text-gray-400 mb-3">Uma missão de teste</p>
+                  <Button 
+                    onClick={() => handleStartCombat(1)}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    Iniciar Combate
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Arco de Combate */}
+        {currentArc === 'combat' && combat && (
+          <div className="space-y-4">
+            {/* Status do Combate */}
+            <Card className={`${
+              combat.isHeroTurn 
+                ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-500/50' 
+                : 'bg-gradient-to-r from-red-900/30 to-orange-900/30 border-red-500/30'
+            }`}>
+              <div className="text-center">
+                <h3 className="text-lg font-bold mb-2">
+                  {combat.isHeroTurn ? (
+                    <span className="text-green-400 flex items-center justify-center gap-2">
+                      <span className="animate-pulse">🛡️</span>
+                      SUA VEZ - {combat.questName}
+                      <span className="animate-pulse">🛡️</span>
+                    </span>
+                  ) : (
+                    <span className="text-red-400 flex items-center justify-center gap-2">
+                      <span className="animate-pulse">👹</span>
+                      VEZ DO INIMIGO - {combat.questName}
+                      <span className="animate-pulse">👹</span>
+                    </span>
+                  )}
+                </h3>
+                
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${
+                  combat.isHeroTurn 
+                    ? 'bg-green-500/20 text-green-300 border border-green-400/50' 
+                    : 'bg-red-500/20 text-red-300 border border-red-400/50'
+                }`}>
+                  {combat.isHeroTurn ? (
+                    <>
+                      <span className="animate-bounce">⚡</span>
+                      SUA VEZ DE AGIR!
+                      <span className="animate-bounce">⚡</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="animate-pulse">⏳</span>
+                      AGUARDE O INIMIGO...
+                      <span className="animate-pulse">⏳</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Timer */}
+                {combat.isHeroTurn && (
+                  <div className="mt-3">
+                    <div className={`text-2xl font-bold ${
+                      turnTimer <= 10 ? 'text-red-400 animate-pulse' : 
+                      turnTimer <= 20 ? 'text-yellow-400' : 'text-green-400'
+                    }`}>
+                      {turnTimer}s
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">Tempo para sua ação</div>
+                    <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-1000 ${
+                          turnTimer <= 15 ? 'bg-red-500' : 
+                          turnTimer <= 30 ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}
+                        style={{ width: `${(turnTimer / 60) * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
-                    <p className="text-blue-300">📜 Inscrições antigas revelam a fraqueza do boss...</p>
+                )}
+              </div>
+            </Card>
+
+            {/* Informações do Inimigo */}
+            <Card className="bg-gradient-to-r from-red-900/30 to-orange-900/30 border-red-500/50">
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-white mb-2 flex items-center justify-center gap-2">
+                  <span className="text-red-400">👹</span>
+                  {combat.currentEnemy.name}
+                  <span className="text-red-400">👹</span>
+                </h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="bg-gray-700/30 rounded p-2">
+                    <div className="text-red-400 font-bold">{combat.currentEnemy.power}</div>
+                    <div className="text-gray-400">Poder</div>
                   </div>
-                  <div className="bg-purple-900/30 border border-purple-500/50 rounded-lg p-4">
-                    <p className="text-purple-300">🔮 Uma aura mágica fortalece sua party (+1 bônus temporário)</p>
+                  <div className="bg-gray-700/30 rounded p-2">
+                    <div className="text-blue-400 font-bold">{combat.currentEnemy.requiredDiceType}</div>
+                    <div className="text-gray-400">Dado Necessário</div>
+                  </div>
+                  <div className="bg-gray-700/30 rounded p-2">
+                    <div className="text-yellow-400 font-bold">{combat.currentEnemy.minimumRoll}+</div>
+                    <div className="text-gray-400">Roll Mínimo</div>
+                  </div>
+                  <div className="bg-gray-700/30 rounded p-2">
+                    <div className="text-green-400 font-bold">{combat.currentEnemy.type}</div>
+                    <div className="text-gray-400">Tipo</div>
                   </div>
                 </div>
-              </Card>
-            )}
 
-            {/* Inimigos */}
-            <Card className="bg-gradient-to-br from-red-900/20 to-orange-900/20 border-red-500/30">
-              <h2 className="text-3xl font-bold text-red-400 mb-4 flex items-center gap-2">
-                <span className="animate-pulse">👹</span>
-                Inimigos na Área
-                <span className="animate-pulse">👹</span>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {combat.enemies?.map((enemy) => {
-                  const defeated = getEnemyDefeated(enemy.id);
+                {/* Vida do Inimigo */}
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-300">Vida</span>
+                    <span className="text-white font-bold">{combat.currentEnemyHealth}/{combat.maxEnemyHealth}</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-3">
+                    <div 
+                      className="h-3 bg-red-500 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.max(0, (combat.currentEnemyHealth / combat.maxEnemyHealth) * 100)}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-center text-sm text-gray-400 mt-1">
+                    {Math.round(Math.max(0, (combat.currentEnemyHealth / combat.maxEnemyHealth) * 100))}% de vida
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Informações dos Heróis */}
+            <Card className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border-blue-500/50">
+              <div className="mb-3">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <span className="text-blue-400">🛡️</span>
+                  Seus Heróis
+                </h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {combat.heroes.map((hero) => {
+                  const heroHealth = combat.heroHealths[hero.id] || 0;
+                  const maxHeroHealth = combat.maxHeroHealths[hero.id] || 100;
+                  const healthPercentage = maxHeroHealth > 0 ? (heroHealth / maxHeroHealth) * 100 : 0;
+                  
                   return (
-                    <div
-                      key={enemy.id}
-                      className={`p-5 rounded-xl border-2 cursor-pointer transition-all transform hover:scale-105 ${
-                        defeated
-                          ? 'bg-gray-800/30 border-gray-600 opacity-40 grayscale'
-                          : selectedEnemy?.id === enemy.id
-                          ? 'bg-gradient-to-br from-red-900/50 to-red-800/50 border-red-500 shadow-lg shadow-red-500/50 scale-105'
-                          : 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700 hover:border-red-500/70 shadow-lg'
-                      }`}
-                      onClick={() => !defeated && setSelectedEnemy(enemy)}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="text-2xl font-bold text-red-300 flex items-center gap-2">
-                            {defeated && '✅ '}
-                            {enemy.name}
-                          </h3>
-                          {enemy.isBoss && (
-                            <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded-full text-yellow-400 text-sm font-bold animate-pulse">
-                              👑 BOSS
-                            </span>
-                          )}
+                    <div key={hero.id} className="bg-gray-700/30 rounded-lg p-3 border border-gray-600/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">⚔️</span>
+                          <div>
+                            <h4 className="font-bold text-white text-base">{hero.name}</h4>
+                            <p className="text-xs text-gray-400">{hero.class}</p>
+                          </div>
                         </div>
-                      </div>
-                      <p className="text-sm text-gray-400 mb-4">{enemy.type}</p>
-                      
-                      <div className="bg-gray-900/50 rounded-lg p-3 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-400">Dado Necessário:</span>
-                          <span className="text-xl font-bold flex items-center gap-1">
-                            {getDiceIcon(enemy.requiredDiceType)} {enemy.requiredDiceType}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-400">Tipo de Combate:</span>
-                          <span className="text-sm font-bold text-blue-400">
-                            {enemy.combatType === 'Physical' && '⚔️ Físico'}
-                            {enemy.combatType === 'Magical' && '🔮 Mágico'}
-                            {enemy.combatType === 'Agile' && '🏃 Ágil'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-400">Rolagem Mínima:</span>
-                          <span className="text-2xl font-bold text-yellow-400">{enemy.minimumRoll}+</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-400">Poder:</span>
-                          <span className="text-sm font-bold text-red-400">{enemy.power}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-400">Vida:</span>
-                          <span className="text-sm font-bold text-green-400">{enemy.health}</span>
+                        <div className="text-right">
+                          <div className="text-xs text-gray-400">Nível {hero.level}</div>
+                          <div className="text-xs text-gray-500">XP: {hero.experience}</div>
                         </div>
                       </div>
                       
-                      {selectedEnemy?.id === enemy.id && !defeated && (
-                        <div className="mt-3 text-center">
-                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full text-red-400 text-sm font-bold animate-pulse">
-                            🎯 ALVO SELECIONADO
-                          </span>
+                      {/* Vida do Herói */}
+                      <div className="mb-2">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-300">Vida</span>
+                          <span className="text-white font-bold">{heroHealth}/{maxHeroHealth}</span>
                         </div>
-                      )}
+                        <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full transition-all duration-500 ${
+                              healthPercentage <= 25 ? 'bg-red-500' : 
+                              healthPercentage <= 50 ? 'bg-yellow-500' : 'bg-green-500'
+                            }`}
+                            style={{ width: `${Math.max(0, healthPercentage)}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-center text-xs text-gray-400 mt-1">
+                          {Math.round(healthPercentage)}% de vida
+                        </div>
+                      </div>
+                      
+                      {/* Atributos */}
+                      <div className="grid grid-cols-3 gap-1 text-xs">
+                        <div className="bg-gray-600/30 rounded p-1 text-center">
+                          <div className="text-red-400 font-bold">{hero.strength}</div>
+                          <div className="text-gray-400">Força</div>
+                        </div>
+                        <div className="bg-gray-600/30 rounded p-1 text-center">
+                          <div className="text-blue-400 font-bold">{hero.intelligence}</div>
+                          <div className="text-gray-400">Inteligência</div>
+                        </div>
+                        <div className="bg-gray-600/30 rounded p-1 text-center">
+                          <div className="text-green-400 font-bold">{hero.dexterity}</div>
+                          <div className="text-gray-400">Destreza</div>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </Card>
 
-            {/* Log de Combate */}
-            {combat.combatLogs.length > 0 && (
-              <Card className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 border-gray-700">
-                <h2 className="text-2xl font-bold text-blue-400 mb-4 flex items-center gap-2">
-                  📜 Histórico de Batalha
-                </h2>
-                <div className="space-y-2 max-h-80 overflow-y-auto scrollbar-thin pr-2">
-                  {combat.combatLogs
-                    .slice()
-                    .reverse()
-                    .map((log, index) => (
-                      <div
-                        key={log.id}
-                        className={`p-4 rounded-lg border-2 transform transition-all hover:scale-102 ${
-                          log.success === true
-                            ? 'bg-gradient-to-r from-green-900/30 to-green-800/30 border-green-500/50 shadow-lg shadow-green-500/20'
-                            : log.success === false
-                            ? 'bg-gradient-to-r from-red-900/30 to-red-800/30 border-red-500/50 shadow-lg shadow-red-500/20'
-                            : 'bg-gray-800/50 border-gray-700'
-                        } ${index === 0 ? 'animate-fadeIn' : ''}`}
+            {/* Painel de Ação - Vez do Jogador */}
+            {combat.isHeroTurn && inventory && (
+              <Card className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-500/50">
+                <div className="text-center mb-3">
+                  <div className="text-lg font-bold text-green-400 mb-2 flex items-center justify-center gap-2">
+                    <span className="animate-bounce">🎲</span>
+                    SUA VEZ - USE SEUS DADOS
+                    <span className="animate-bounce">🎲</span>
+                  </div>
+                  <div className="text-xs text-green-300 bg-green-500/20 px-2 py-1 rounded-full inline-block">
+                    ⚡ Clique em um dado para atacar! ⚡
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {inventory && Object.entries(inventory).map(([diceType, count]) => {
+                    if (diceType === 'userId' || diceType === 'id') return null;
+                    
+                    const diceTypeEnum = parseInt(diceType.replace('d', '')) as DiceType;
+                    const isDisabled = (count as number) === 0 || rolling || !combat.isHeroTurn;
+                    
+                    return (
+                      <Button
+                        key={diceType}
+                        onClick={() => handleRollDice(diceTypeEnum)}
+                        disabled={isDisabled}
+                        className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 py-2 px-3 font-bold disabled:opacity-50"
                       >
-                        <p className="text-sm text-gray-200 font-semibold">{log.details}</p>
-                        <p className="text-xs text-gray-500 mt-2">
-                          🕐 {new Date(log.timestamp).toLocaleTimeString('pt-BR')}
-                        </p>
-                      </div>
-                    ))}
+                        <div className="text-base">🎲</div>
+                        <div className="text-xs">{diceTypeEnum}</div>
+                        <div className="text-xs">({count as number})</div>
+                      </Button>
+                    );
+                  })}
                 </div>
               </Card>
             )}
-          </div>
 
-          {/* Painel de Ação - Dados */}
-          <div>
-            <Card className="sticky top-6 bg-gradient-to-br from-yellow-900/30 to-amber-900/30 border-yellow-500/30 shadow-2xl">
-              <h2 className="text-3xl font-bold text-yellow-400 mb-4 flex items-center gap-2 justify-center">
-                <span className="animate-bounce">🎲</span>
-                Seus Dados
-                <span className="animate-bounce">🎲</span>
-              </h2>
-
-              {selectedEnemy ? (
-                <>
-                  <div className="bg-red-900/30 border-2 border-red-500/50 rounded-xl p-4 mb-4 shadow-lg shadow-red-500/30">
-                    <p className="text-sm text-gray-400 mb-1">🎯 Alvo Selecionado:</p>
-                    <p className="text-2xl font-bold text-red-300 mb-3">{selectedEnemy.name}</p>
-                    <div className="bg-gray-900/50 rounded-lg p-3">
-                      <p className="text-sm text-gray-400 text-center mb-2">
-                        Você precisa rolar <span className="text-yellow-400 font-bold text-lg">{combat.requiredRoll}+</span>
-                      </p>
-                      <p className="text-sm text-gray-400 text-center mb-2">
-                        no dado <span className="text-yellow-400 font-bold">{selectedEnemy.requiredDiceType}</span>
-                      </p>
-                      <p className="text-xs text-blue-400 text-center">
-                        {combat.combatTypeDescription}
-                      </p>
-                    </div>
-                  </div>
-
-                  {lastRoll && (
-                    <div
-                      className={`mb-4 p-5 rounded-xl border-2 shadow-2xl animate-fadeIn ${
-                        lastRoll.success
-                          ? 'bg-gradient-to-br from-green-900/50 to-green-800/50 border-green-500 shadow-green-500/50'
-                          : 'bg-gradient-to-br from-red-900/50 to-red-800/50 border-red-500 shadow-red-500/50'
-                      }`}
-                    >
-                      <p className="text-sm text-gray-300 text-center mb-2">Resultado:</p>
-                      <p className="text-6xl font-black text-center my-4 animate-bounce">{lastRoll.roll}</p>
-                      <p
-                        className={`text-lg font-bold text-center ${
-                          lastRoll.success ? 'text-green-300' : 'text-red-300'
-                        }`}
-                      >
-                        {lastRoll.message}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Bônus de Atributos */}
-                  {combat.heroBonuses && combat.heroBonuses.length > 0 && (
-                    <div className="mb-4 p-4 bg-gradient-to-r from-purple-900/30 to-indigo-900/30 border border-purple-500/30 rounded-lg">
-                      <h3 className="text-lg font-bold text-purple-400 mb-3 flex items-center gap-2">
-                        ⚡ Bônus de Atributos
-                      </h3>
-                      <div className="space-y-2">
-                        {combat.heroBonuses.map((bonus) => (
-                          <div key={bonus.heroId} className="flex justify-between items-center text-sm">
-                            <span className="text-gray-300">{bonus.heroName}:</span>
-                            <div className="flex gap-2">
-                              <span className={`px-2 py-1 rounded text-xs ${
-                                bonus.combatBonus < 0 ? 'bg-green-900/50 text-green-400' : 'bg-gray-700 text-gray-400'
+            {/* Histórico de Combate */}
+            {combat.combatLogs && combat.combatLogs.length > 0 && (
+              <Card className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 border-gray-700/50">
+                <div className="mb-4">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <span className="text-yellow-400">📜</span>
+                    Histórico da Batalha
+                  </h3>
+                </div>
+                
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {combat.combatLogs
+                    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                    .map((log, index) => (
+                    <div key={log.id || index} className="bg-gray-700/30 rounded-lg p-3 border border-gray-600/30">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-lg">
+                              {log.action === 'HERO_ATTACK' ? '🎲' : 
+                               log.action === 'ENEMY_ATTACK' ? '⚔️' : 
+                               '📝'}
+                            </span>
+                            <span className="font-bold text-white">
+                              {log.action === 'HERO_ATTACK' ? 'Herói atacou' :
+                               log.action === 'ENEMY_ATTACK' ? 'Inimigo atacou' :
+                               log.action}
+                            </span>
+                            {log.success !== undefined && (
+                              <span className={`text-xs px-2 py-1 rounded ${
+                                log.success ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
                               }`}>
-                                {bonus.combatBonus < 0 ? `+${Math.abs(bonus.combatBonus)}` : bonus.combatBonus} {bonus.relevantStat}
+                                {log.success ? 'SUCESSO' : 'FALHOU'}
                               </span>
-                            </div>
+                            )}
                           </div>
-                        ))}
+                          
+                          <div className="text-sm text-gray-300 mb-1">
+                            {log.details}
+                          </div>
+                          
+                          {log.diceUsed && (
+                            <div className="text-xs text-gray-400">
+                              Dado: {log.diceUsed} | Resultado: {log.diceResult}
+                              {log.requiredRoll && log.requiredRoll > 0 && ` | Necessário: ${log.requiredRoll}`}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="text-xs text-gray-500 ml-2">
+                          {new Date(log.timestamp).toLocaleTimeString('pt-BR')}
+                        </div>
                       </div>
                     </div>
-                  )}
-
-                  <div className="space-y-3 mb-6">
-                    {['D6', 'D10', 'D12', 'D20'].map((diceType) => {
-                      const count = getDiceCount(diceType);
-                      const isRecommended = diceType === selectedEnemy.requiredDiceType;
-                      return (
-                        <button
-                          key={diceType}
-                          onClick={() => handleRollDice(diceType)}
-                          disabled={rolling || count === 0}
-                          className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg ${
-                            isRecommended && count > 0
-                              ? 'bg-gradient-to-r from-yellow-600 to-orange-600 text-white border-2 border-yellow-400 animate-pulse shadow-yellow-500/50'
-                              : count > 0
-                              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-2 border-blue-400 hover:from-blue-700 hover:to-blue-800 shadow-blue-500/30'
-                              : 'bg-gray-700 text-gray-500 border-2 border-gray-600'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-3xl">{getDiceIcon(diceType)}</span>
-                            <span>{diceType}</span>
-                            <span className="px-3 py-1 bg-black/30 rounded-full">{count}x</span>
-                          </div>
-                          {isRecommended && count > 0 && (
-                            <p className="text-xs mt-2 text-yellow-200">⚡ Recomendado para este inimigo!</p>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="border-t-2 border-gray-700 pt-4 space-y-3">
-                    <Button
-                      variant="success"
-                      onClick={handleCompleteCombat}
-                      disabled={rolling}
-                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 py-4 text-lg font-bold shadow-lg shadow-green-500/30"
-                    >
-                      ✅ Finalizar Combate
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={handleFlee}
-                      disabled={rolling}
-                      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 py-4 text-lg font-bold shadow-lg shadow-red-500/30"
-                    >
-                      🏃 Fugir da Batalha
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4 animate-bounce">⚔️</div>
-                  <p className="text-gray-400 text-lg">Selecione um inimigo para começar a batalha!</p>
+                  ))}
                 </div>
-              )}
+              </Card>
+            )}
+
+            {/* Botões de Ação */}
+            <div className="flex gap-4 justify-center">
+              <Button 
+                onClick={handleCompleteCombat}
+                className="bg-green-600 hover:bg-green-700"
+                disabled={combat.status !== CombatStatus.Victory}
+              >
+                Finalizar Combate
+              </Button>
+              <Button 
+                onClick={handleCancelCombat}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Cancelar Combate
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Arco de Consequência */}
+        {currentArc === 'consequence' && combat && (
+          <div className="space-y-6">
+            <Card className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-500/50">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  {combat.status === CombatStatus.Victory ? '🏆 VITÓRIA! 🏆' : '💀 DERROTA! 💀'}
+                </h3>
+                <p className="text-lg text-gray-300 mb-6">
+                  {combat.status === CombatStatus.Victory 
+                    ? 'Parabéns! Você derrotou todos os inimigos!'
+                    : 'Você foi derrotado, mas não desista!'
+                  }
+                </p>
+                <Button 
+                  onClick={() => {
+                    setCombat(null);
+                    setCurrentArc('preparation');
+                    setIsTimerActive(false);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Voltar ao Menu
+                </Button>
+              </div>
             </Card>
           </div>
-        </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
+
+export default Combat;

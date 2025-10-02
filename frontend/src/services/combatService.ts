@@ -1,37 +1,44 @@
 import api from './api';
 
+// Enums
+export enum CombatStatus {
+  Preparing = 0,
+  InProgress = 1,
+  Victory = 2,
+  Defeat = 3,
+  Cancelled = 4
+}
+
+export enum DiceType {
+  D6 = 6,
+  D10 = 10,
+  D12 = 12,
+  D20 = 20
+}
+
+// Interfaces
+export interface StartCombatRequest {
+  questId: number;
+  heroIds: number[];
+}
+
 export interface CombatSession {
   id: number;
-  heroId: number;
+  userId: number;
+  heroIds: number[];
   questId: number;
-  status: string;
-  startedAt: string;
-  message?: string;
-}
-
-export interface EnemyInfo {
-  id: number;
-  name: string;
-  type: string;
-  power: number;
-  health: number;
-  requiredDiceType: string;
-  minimumRoll: number;
-  combatType: string;
-  isBoss: boolean;
+  questName: string;
+  currentEnemyId: number;
+  currentEnemyName: string;
+  status: CombatStatus;
+  isHeroTurn: boolean;
+  currentEnemyHealth: number;
+  maxEnemyHealth: number;
+  heroHealths: { [heroId: number]: number };
+  maxHeroHealths: { [heroId: number]: number };
   createdAt: string;
-}
-
-export interface CombatLog {
-  id: number;
-  action: string;
-  enemyId?: number;
-  diceUsed?: string;
-  diceResult?: number;
-  requiredRoll?: number;
-  success?: boolean;
-  details: string;
-  timestamp: string;
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface HeroCombatInfo {
@@ -43,94 +50,99 @@ export interface HeroCombatInfo {
   strength: number;
   intelligence: number;
   dexterity: number;
-  gold: number;
-  createdAt: string;
+  health: number;
+  maxHealth: number;
   totalAttack: number;
   totalDefense: number;
   totalMagic: number;
 }
 
-export interface CombatBonus {
-  heroId: number;
-  heroName: string;
-  attackBonus: number;
-  defenseBonus: number;
-  magicBonus: number;
-  combatBonus: number;
-  relevantStat: string;
+export interface EnemyCombatInfo {
+  id: number;
+  name: string;
+  type: string;
+  power: number;
+  health: number;
+  requiredDiceType: DiceType;
+  minimumRoll: number;
+  combatType: number;
+  isBoss: boolean;
 }
 
-export interface CombatSessionDetail {
+export interface CombatLog {
   id: number;
-  heroId: number;
+  action: string;
+  enemyName: string;
+  diceUsed?: DiceType;
+  diceResult?: number;
+  requiredRoll?: number;
+  success?: boolean;
+  damageDealt?: number;
+  enemyHealthAfter?: number;
+  details: string;
+  timestamp: string;
+}
+
+export interface CombatDetail {
+  id: number;
+  userId: number;
   heroIds: number[];
   heroes: HeroCombatInfo[];
   questId: number;
   questName: string;
-  status: string;
-  startedAt: string;
-  enemies?: EnemyInfo[]; // Legacy - mapeado de remainingEnemies
-  remainingEnemies: EnemyInfo[];
+  currentEnemy: EnemyCombatInfo;
+  status: CombatStatus;
+  isHeroTurn: boolean;
+  currentEnemyHealth: number;
+  maxEnemyHealth: number;
+  heroHealths: { [heroId: number]: number };
+  maxHeroHealths: { [heroId: number]: number };
   combatLogs: CombatLog[];
-  requiredRoll: number;
-  combatTypeDescription: string;
-  heroBonuses: CombatBonus[];
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface RollDiceRequest {
   combatSessionId: number;
-  diceType: string; // "D6", "D10", "D12", "D20"
+  diceType: DiceType;
 }
 
 export interface RollDiceResult {
   roll: number;
   requiredRoll: number;
   success: boolean;
+  damageDealt: number;
+  enemyHealthAfter: number;
   message: string;
-  updatedCombatSession: CombatSessionDetail;
+  updatedCombatSession: CombatDetail;
 }
 
-export interface DroppedItem {
-  id: number;
-  name: string;
-  description: string;
-  rarity: string;
-  type: string;
-  bonusStrength: number;
-  bonusIntelligence: number;
-  bonusDexterity: number;
+export interface EnemyAttackRequest {
+  combatSessionId: number;
 }
 
-export interface CompleteCombatResult {
-  status: string; // "Victory", "Fled", "Defeated"
-  droppedItems: DroppedItem[];
+export interface EnemyAttackResult {
+  enemyRoll: number;
+  enemyPower: number;
+  totalDamage: number;
+  heroDefense: number;
+  finalDamage: number;
   message: string;
+  allHeroesDead: boolean;
+  updatedCombatSession: CombatDetail;
 }
 
 export const combatService = {
-  startCombat: async (_heroId: number, questId: number): Promise<CombatSession> => {
-    // Busca a party ativa (usa todos os heróis da party, não apenas um)
-    const partyResponse = await api.get('/profile/active-party');
-    const activeParty = partyResponse.data;
-    
-    if (!activeParty || activeParty.length === 0) {
-      throw new Error('Você precisa ter pelo menos um herói na party ativa para combater!');
-    }
-    
-    const heroIds = activeParty.map((h: any) => h.id);
-    const response = await api.post<CombatSession>('/combat/start', { heroIds, questId });
+  startCombat: async (questId: number, heroIds: number[]): Promise<CombatDetail> => {
+    const response = await api.post<CombatDetail>('/combat/start', { questId, heroIds });
     return response.data;
   },
 
-  getActiveCombat: async (heroId: number): Promise<CombatSessionDetail | null> => {
+  getActiveCombat: async (userId: number): Promise<CombatDetail | null> => {
     try {
-      const response = await api.get<CombatSessionDetail>(`/combat/active/${heroId}`);
-      const data = response.data;
-      // Mapeia remainingEnemies para enemies (compatibilidade)
-      if (!data.enemies && data.remainingEnemies) {
-        data.enemies = data.remainingEnemies;
-      }
-      return data;
+      const response = await api.get<CombatDetail>(`/combat/active/${userId}`);
+      return response.data;
     } catch (error: any) {
       if (error.response?.status === 404) {
         return null;
@@ -139,18 +151,22 @@ export const combatService = {
     }
   },
 
-  rollDice: async (data: RollDiceRequest): Promise<RollDiceResult> => {
-    const response = await api.post<RollDiceResult>('/combat/roll-dice', data);
+  rollDice: async (request: RollDiceRequest): Promise<RollDiceResult> => {
+    const response = await api.post<RollDiceResult>('/combat/roll-dice', request);
     return response.data;
   },
 
-  completeCombat: async (combatSessionId: number): Promise<CompleteCombatResult> => {
-    const response = await api.post<CompleteCombatResult>('/combat/complete', { combatSessionId });
+  enemyAttack: async (request: EnemyAttackRequest): Promise<EnemyAttackResult> => {
+    const response = await api.post<EnemyAttackResult>('/combat/enemy-attack', request);
     return response.data;
   },
 
-  flee: async (combatSessionId: number): Promise<void> => {
-    await api.post('/combat/flee', { combatSessionId });
+  completeCombat: async (combatSessionId: number): Promise<CombatDetail> => {
+    const response = await api.post<CombatDetail>(`/combat/${combatSessionId}/complete`);
+    return response.data;
+  },
+
+  cancelCombat: async (combatSessionId: number): Promise<void> => {
+    await api.post(`/combat/${combatSessionId}/cancel`);
   },
 };
-

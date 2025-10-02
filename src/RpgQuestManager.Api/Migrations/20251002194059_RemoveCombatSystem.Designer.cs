@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RpgQuestManager.Api.Data;
@@ -11,9 +12,11 @@ using RpgQuestManager.Api.Data;
 namespace RpgQuestManager.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002194059_RemoveCombatSystem")]
+    partial class RemoveCombatSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -92,121 +95,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.HasIndex("EnemyId");
 
                     b.ToTable("BossWeaknesses");
-                });
-
-            modelBuilder.Entity("RpgQuestManager.Api.Models.CombatLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<int>("CombatSessionId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("DamageDealt")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Details")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<int?>("DiceResult")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("DiceUsed")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("EnemyHealthAfter")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("EnemyId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("RequiredRoll")
-                        .HasColumnType("integer");
-
-                    b.Property<bool?>("Success")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CombatSessionId");
-
-                    b.HasIndex("EnemyId");
-
-                    b.ToTable("CombatLogs");
-                });
-
-            modelBuilder.Entity("RpgQuestManager.Api.Models.CombatSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CurrentEnemyHealth")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CurrentEnemyId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("HeroHealths")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("HeroIds")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsHeroTurn")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("MaxEnemyHealth")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("MaxHeroHealths")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("QuestId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("StartedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CurrentEnemyId");
-
-                    b.HasIndex("QuestId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("CombatSessions");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.ComboDiscovery", b =>
@@ -875,51 +763,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Navigation("Enemy");
                 });
 
-            modelBuilder.Entity("RpgQuestManager.Api.Models.CombatLog", b =>
-                {
-                    b.HasOne("RpgQuestManager.Api.Models.CombatSession", "CombatSession")
-                        .WithMany("CombatLogs")
-                        .HasForeignKey("CombatSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("RpgQuestManager.Api.Models.Enemy", "Enemy")
-                        .WithMany()
-                        .HasForeignKey("EnemyId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("CombatSession");
-
-                    b.Navigation("Enemy");
-                });
-
-            modelBuilder.Entity("RpgQuestManager.Api.Models.CombatSession", b =>
-                {
-                    b.HasOne("RpgQuestManager.Api.Models.Enemy", "CurrentEnemy")
-                        .WithMany()
-                        .HasForeignKey("CurrentEnemyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RpgQuestManager.Api.Models.Quest", "Quest")
-                        .WithMany()
-                        .HasForeignKey("QuestId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RpgQuestManager.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CurrentEnemy");
-
-                    b.Navigation("Quest");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("RpgQuestManager.Api.Models.ComboDiscovery", b =>
                 {
                     b.HasOne("RpgQuestManager.Api.Models.PartyCombo", "Combo")
@@ -1074,11 +917,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Navigation("Item");
 
                     b.Navigation("Quest");
-                });
-
-            modelBuilder.Entity("RpgQuestManager.Api.Models.CombatSession", b =>
-                {
-                    b.Navigation("CombatLogs");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.Enemy", b =>
