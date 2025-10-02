@@ -7,6 +7,7 @@ import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Profile } from './pages/Profile';
 import { Heroes } from './pages/Heroes';
+import { HeroRecovery } from './pages/HeroRecovery';
 import { Quests } from './pages/Quests';
 import { QuestCatalog } from './pages/QuestCatalog';
 import { Items } from './pages/Items';
@@ -47,6 +48,15 @@ const App: React.FC = () => {
             element={
               <PrivateRoute>
                 <Heroes />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/hero-recovery"
+            element={
+              <PrivateRoute>
+                <HeroRecovery />
               </PrivateRoute>
             }
           />

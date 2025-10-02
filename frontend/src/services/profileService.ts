@@ -69,5 +69,10 @@ export const profileService = {
     const response = await api.get<MyHero[]>('/profile/my-heroes');
     return response.data;
   },
+
+  getActiveParty: async (): Promise<MyHero[]> => {
+    const response = await api.get<MyHero[]>('/profile/active-party');
+    return response.data;
+  },
 };
 

@@ -198,7 +198,7 @@ export const Quests: React.FC = () => {
                 <div className="bg-gray-700 rounded p-3 mb-4">
                   <p className="text-sm text-amber-500 font-semibold mb-2">{t('quests.rewards')}:</p>
                   <div className="flex gap-4 text-sm">
-                    <span>🪙 {quest.goldReward}</span>
+                    <span>💰 {quest.goldReward}</span>
                     <span>⭐ {quest.experienceReward} XP</span>
                   </div>
                   {quest.rewards && quest.rewards.length > 0 && quest.rewards[0].item && (
@@ -352,7 +352,7 @@ export const Quests: React.FC = () => {
           {selectedQuest && (
             <div className="bg-gray-700 rounded p-4">
               <p className="text-amber-500 font-semibold mb-2">{t('quests.rewards')}:</p>
-              <p>🪙 {selectedQuest.goldReward} ouro</p>
+              <p>💰 {selectedQuest.goldReward} ouro</p>
               <p>⭐ {selectedQuest.experienceReward} XP</p>
               {selectedQuest.rewards && selectedQuest.rewards.length > 0 && selectedQuest.rewards[0].item && (
                 <p>📦 {selectedQuest.rewards[0].item.name} x{selectedQuest.rewards[0].itemQuantity}</p>

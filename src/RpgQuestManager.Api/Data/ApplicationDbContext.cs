@@ -160,9 +160,9 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<DiceInventory>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasOne(e => e.Hero)
+            entity.HasOne(e => e.User)
                 .WithOne()
-                .HasForeignKey<DiceInventory>(e => e.HeroId)
+                .HasForeignKey<DiceInventory>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
         

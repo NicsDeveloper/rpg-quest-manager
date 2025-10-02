@@ -36,17 +36,22 @@ public class ProfileController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // Busca o primeiro herói da party ativa (PartySlot == 1)
+        // Busca o herói principal: primeiro da party ativa, ou qualquer herói do player (não deletado)
         var hero = await _context.Heroes
+            .Include(h => h.User) // Precisa incluir User para pegar o Gold
             .Include(h => h.HeroItems)
                 .ThenInclude(hi => hi.Item)
             .Include(h => h.HeroQuests)
                 .ThenInclude(hq => hq.Quest)
-            .FirstOrDefaultAsync(h => h.UserId == userId && h.IsInActiveParty && h.PartySlot == 1);
+            .Where(h => h.UserId == userId && !h.IsDeleted)
+            .OrderByDescending(h => h.IsInActiveParty)
+            .ThenBy(h => h.PartySlot)
+            .ThenByDescending(h => h.Level)
+            .FirstOrDefaultAsync();
 
         if (hero == null)
         {
-            return NotFound("Nenhum herói na party ativa. Adicione um herói à party primeiro.");
+            return NotFound("Você ainda não tem um herói! Crie um herói para começar sua aventura.");
         }
 
         var heroProfile = new HeroProfileDto
@@ -59,7 +64,7 @@ public class ProfileController : ControllerBase
             Strength = hero.Strength,
             Intelligence = hero.Intelligence,
             Dexterity = hero.Dexterity,
-            Gold = hero.Gold,
+            Gold = hero.User?.Gold ?? 0, // Ouro vem do User, não do Hero
             CreatedAt = hero.CreatedAt,
             Items = hero.HeroItems.Select(hi => new HeroItemDto
             {
@@ -93,6 +98,106 @@ public class ProfileController : ControllerBase
     }
 
     /// <summary>
+    /// Obtém estatísticas do perfil do usuário
+    /// </summary>
+    [HttpGet("stats")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetMyStats()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var heroes = await _context.Heroes
+            .Include(h => h.HeroQuests)
+            .Include(h => h.HeroItems)
+            .Include(h => h.User)
+            .Where(h => h.UserId == userId && !h.IsDeleted)
+            .ToListAsync();
+
+        if (!heroes.Any())
+        {
+            return Ok(new
+            {
+                totalQuests = 0,
+                completedQuests = 0,
+                totalItems = 0,
+                uniqueItems = 0,
+                equippedItems = 0,
+                totalGold = 0,
+                currentLevel = 0,
+                totalExperience = 0,
+                experienceForNextLevel = 0,
+                playDays = 0,
+                powerRating = 0
+            });
+        }
+
+        var mainHero = heroes.OrderByDescending(h => h.IsInActiveParty).ThenByDescending(h => h.Level).First();
+        var user = await _context.Users.FindAsync(userId);
+
+        var stats = new
+        {
+            totalQuests = heroes.Sum(h => h.HeroQuests.Count),
+            completedQuests = heroes.Sum(h => h.HeroQuests.Count(hq => hq.IsCompleted)),
+            totalItems = heroes.Sum(h => h.HeroItems.Sum(hi => hi.Quantity)),
+            uniqueItems = heroes.SelectMany(h => h.HeroItems).Select(hi => hi.ItemId).Distinct().Count(),
+            equippedItems = heroes.Sum(h => h.HeroItems.Count(hi => hi.IsEquipped)),
+            totalGold = user?.Gold ?? 0, // Ouro vem do User
+            currentLevel = mainHero.Level,
+            totalExperience = heroes.Sum(h => h.Experience),
+            experienceForNextLevel = mainHero.GetExperienceForNextLevel(),
+            playDays = (DateTime.UtcNow - (user?.CreatedAt ?? DateTime.UtcNow)).Days,
+            powerRating = heroes.Sum(h => h.Strength + h.Intelligence + h.Dexterity + (h.Level * 10))
+        };
+
+        return Ok(stats);
+    }
+
+    /// <summary>
+    /// Obtém todas as quests do usuário (de todos os heróis)
+    /// </summary>
+    [HttpGet("my-quests")]
+    [ProducesResponseType(typeof(List<object>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetMyQuests()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var heroQuests = await _context.HeroQuests
+            .Include(hq => hq.Quest)
+                .ThenInclude(q => q.Rewards)
+                    .ThenInclude(r => r.Item)
+            .Include(hq => hq.Hero)
+            .Where(hq => hq.Hero.UserId == userId)
+            .OrderByDescending(hq => hq.StartedAt)
+            .Select(hq => new
+            {
+                id = hq.Id,
+                quest = new
+                {
+                    id = hq.Quest.Id,
+                    name = hq.Quest.Name,
+                    description = hq.Quest.Description,
+                    difficulty = hq.Quest.Difficulty,
+                    goldReward = hq.Quest.GoldReward,
+                    experienceReward = hq.Quest.ExperienceReward,
+                    rewards = hq.Quest.Rewards.Select(r => new
+                    {
+                        id = r.Id,
+                        itemId = r.ItemId,
+                        itemName = r.Item != null ? r.Item.Name : null,
+                        gold = r.Gold,
+                        experience = r.Experience
+                    }).ToList()
+                },
+                isCompleted = hq.IsCompleted,
+                startedAt = hq.StartedAt,
+                completedAt = hq.CompletedAt
+            })
+            .ToListAsync();
+
+        return Ok(heroQuests);
+    }
+
+    /// <summary>
     /// Cria um novo herói para o usuário logado
     /// </summary>
     /// <remarks>
@@ -105,8 +210,8 @@ public class ProfileController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // Verifica se já tem pelo menos um herói nível 5+
-        var heroes = await _context.Heroes.Where(h => h.UserId == userId).ToListAsync();
+        // Verifica se já tem pelo menos um herói nível 5+ (não deletado)
+        var heroes = await _context.Heroes.Where(h => h.UserId == userId && !h.IsDeleted).ToListAsync();
         
         // Se já tem heróis, verifica se algum está nível 5+
         if (heroes.Count > 0)
@@ -122,12 +227,12 @@ public class ProfileController : ControllerBase
         {
             Name = request.Name,
             Class = request.Class,
-            Level = 1,
+            Level = 0,
             Experience = 0,
             Strength = request.Strength,
             Intelligence = request.Intelligence,
             Dexterity = request.Dexterity,
-            Gold = 0,
+            Gold = 0, // Ouro está no player, não no herói
             UserId = userId,
             IsInActiveParty = false, // Criado fora da party
             PartySlot = null,
@@ -136,6 +241,20 @@ public class ProfileController : ControllerBase
 
         _context.Heroes.Add(hero);
         await _context.SaveChangesAsync();
+
+        // Se é o primeiro herói, adiciona automaticamente à party no slot 1
+        var heroCount = await _context.Heroes.CountAsync(h => h.UserId == userId);
+        if (heroCount == 1)
+        {
+            hero.IsInActiveParty = true;
+            hero.PartySlot = 1;
+            _logger.LogInformation("Primeiro herói {HeroName} adicionado automaticamente à party no slot 1", hero.Name);
+        }
+
+        await _context.SaveChangesAsync();
+        
+        // O inventário de dados é criado automaticamente quando o player compra/usa dados pela primeira vez
+        // (já é compartilhado entre todos os heróis do player)
 
         _logger.LogInformation("Novo herói {HeroName} criado para o usuário {UserId}", hero.Name, userId);
 
@@ -166,7 +285,7 @@ public class ProfileController : ControllerBase
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var heroes = await _context.Heroes
-            .Where(h => h.UserId == userId)
+            .Where(h => h.UserId == userId && !h.IsDeleted)
             .OrderByDescending(h => h.IsInActiveParty)
             .ThenBy(h => h.PartySlot)
             .ThenByDescending(h => h.Level)
@@ -198,7 +317,7 @@ public class ProfileController : ControllerBase
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var partyHeroes = await _context.Heroes
-            .Where(h => h.UserId == userId && h.IsInActiveParty)
+            .Where(h => h.UserId == userId && h.IsInActiveParty && !h.IsDeleted)
             .OrderBy(h => h.PartySlot)
             .Select(h => new HeroDto
             {
@@ -230,7 +349,7 @@ public class ProfileController : ControllerBase
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var hero = await _context.Heroes.FindAsync(heroId);
-        if (hero == null || hero.UserId != userId)
+        if (hero == null || hero.UserId != userId || hero.IsDeleted)
         {
             return NotFound("Herói não encontrado.");
         }
@@ -247,6 +366,18 @@ public class ProfileController : ControllerBase
         if (partyCount >= 3)
         {
             return BadRequest("A party já está cheia! Máximo de 3 heróis. Remova um herói primeiro.");
+        }
+
+        // Se já tem 1+ herói na party, precisa ter pelo menos 1 herói nível 5+
+        if (partyCount >= 1)
+        {
+            var hasLevel5Hero = await _context.Heroes
+                .AnyAsync(h => h.UserId == userId && h.Level >= 5);
+
+            if (!hasLevel5Hero)
+            {
+                return BadRequest("Você precisa ter pelo menos um herói nível 5 ou superior para adicionar mais heróis à party.");
+            }
         }
 
         // Encontra o próximo slot disponível (1, 2 ou 3)
@@ -298,5 +429,133 @@ public class ProfileController : ControllerBase
         _logger.LogInformation("Herói {HeroName} (ID: {HeroId}) removido da party", hero.Name, heroId);
 
         return Ok(new { message = $"Herói {hero.Name} removido da party." });
+    }
+
+    /// <summary>
+    /// Soft delete de um herói (recuperável por 7 dias)
+    /// </summary>
+    [HttpDelete("delete-hero/{heroId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> DeleteHero(int heroId)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        
+        var hero = await _context.Heroes
+            .Where(h => h.Id == heroId && h.UserId == userId && !h.IsDeleted)
+            .FirstOrDefaultAsync();
+            
+        if (hero == null)
+        {
+            return NotFound("Herói não encontrado.");
+        }
+
+        // Remove da party se estiver nela
+        if (hero.IsInActiveParty)
+        {
+            hero.IsInActiveParty = false;
+            hero.PartySlot = null;
+        }
+
+        // Soft delete
+        hero.IsDeleted = true;
+        hero.DeletedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Herói {HeroName} (ID: {HeroId}) marcado como deletado (soft delete)", hero.Name, heroId);
+
+        return Ok(new { 
+            message = $"Herói {hero.Name} foi deletado. Você tem 7 dias para recuperá-lo na área de recuperação.",
+            heroId = hero.Id,
+            deletedAt = hero.DeletedAt,
+            recoveryDeadline = hero.DeletedAt.Value.AddDays(7)
+        });
+    }
+
+    /// <summary>
+    /// Lista heróis deletados (área de recuperação)
+    /// </summary>
+    [HttpGet("deleted-heroes")]
+    [ProducesResponseType(typeof(List<object>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetDeletedHeroes()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        
+        var deletedHeroes = await _context.Heroes
+            .Where(h => h.UserId == userId && h.IsDeleted)
+            .OrderByDescending(h => h.DeletedAt)
+            .Select(h => new
+            {
+                id = h.Id,
+                name = h.Name,
+                @class = h.Class,
+                level = h.Level,
+                experience = h.Experience,
+                strength = h.Strength,
+                intelligence = h.Intelligence,
+                dexterity = h.Dexterity,
+                deletedAt = h.DeletedAt,
+                daysUntilPermanentDeletion = h.DeletedAt.HasValue 
+                    ? Math.Max(0, 7 - (int)(DateTime.UtcNow - h.DeletedAt.Value).TotalDays)
+                    : 0,
+                canRecover = h.DeletedAt.HasValue && (DateTime.UtcNow - h.DeletedAt.Value).TotalDays < 7
+            })
+            .ToListAsync();
+
+        return Ok(deletedHeroes);
+    }
+
+    /// <summary>
+    /// Restaura um herói deletado
+    /// </summary>
+    [HttpPost("restore-hero/{heroId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> RestoreHero(int heroId)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        
+        var hero = await _context.Heroes
+            .Where(h => h.Id == heroId && h.UserId == userId && h.IsDeleted)
+            .FirstOrDefaultAsync();
+            
+        if (hero == null)
+        {
+            return NotFound("Herói deletado não encontrado.");
+        }
+
+        // Verifica se ainda está dentro do período de 7 dias
+        if (hero.DeletedAt.HasValue && (DateTime.UtcNow - hero.DeletedAt.Value).TotalDays >= 7)
+        {
+            return BadRequest("O período de recuperação de 7 dias expirou. Este herói não pode mais ser restaurado.");
+        }
+
+        // Restaura o herói
+        hero.IsDeleted = false;
+        hero.DeletedAt = null;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Herói {HeroName} (ID: {HeroId}) restaurado com sucesso", hero.Name, heroId);
+
+        return Ok(new { 
+            message = $"Herói {hero.Name} restaurado com sucesso!",
+            hero = new HeroDto
+            {
+                Id = hero.Id,
+                Name = hero.Name,
+                Class = hero.Class,
+                Level = hero.Level,
+                Experience = hero.Experience,
+                Strength = hero.Strength,
+                Intelligence = hero.Intelligence,
+                Dexterity = hero.Dexterity,
+                Gold = hero.Gold,
+                CreatedAt = hero.CreatedAt
+            }
+        });
     }
 }

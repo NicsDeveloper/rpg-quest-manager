@@ -14,6 +14,17 @@ import {
 } from '../services/combatService';
 import { diceService, DiceInventory } from '../services/diceService';
 import { profileService } from '../services/profileService';
+import api from '../services/api';
+
+interface Hero {
+  id: number;
+  name: string;
+  class: string;
+  level: number;
+  strength: number;
+  intelligence: number;
+  dexterity: number;
+}
 
 export const Combat: React.FC = () => {
   const navigate = useNavigate();
@@ -22,11 +33,13 @@ export const Combat: React.FC = () => {
 
   const [combat, setCombat] = useState<CombatSessionDetail | null>(null);
   const [inventory, setInventory] = useState<DiceInventory | null>(null);
+  const [activeParty, setActiveParty] = useState<Hero[]>([]);
   const [loading, setLoading] = useState(true);
   const [rolling, setRolling] = useState(false);
   const [selectedEnemy, setSelectedEnemy] = useState<EnemyInfo | null>(null);
   const [lastRoll, setLastRoll] = useState<RollDiceResult | null>(null);
   const [completionResult, setCompletionResult] = useState<CompleteCombatResult | null>(null);
+  const [showDiscoveries, setShowDiscoveries] = useState(false);
 
   useEffect(() => {
     initCombat();
@@ -36,6 +49,10 @@ export const Combat: React.FC = () => {
     try {
       setLoading(true);
       const hero = await profileService.getMyHero();
+
+      // Carrega party ativa
+      const party = await api.get('/profile/active-party');
+      setActiveParty(party.data);
 
       // Verifica se já existe combate ativo
       let activeCombat = await combatService.getActiveCombat(hero.id);
@@ -53,13 +70,13 @@ export const Combat: React.FC = () => {
       }
 
       setCombat(activeCombat);
-      setSelectedEnemy(activeCombat.enemies[0] || null);
+      setSelectedEnemy(activeCombat.enemies?.[0] || null);
 
       const inv = await diceService.getInventory(hero.id);
       setInventory(inv);
     } catch (error: any) {
       console.error('Erro ao iniciar combate:', error);
-      alert(error.response?.data || 'Erro ao carregar combate');
+      alert(error.response?.data?.message || error.message || 'Erro ao carregar combate');
       navigate('/quests/catalog');
     } finally {
       setLoading(false);
@@ -75,7 +92,6 @@ export const Combat: React.FC = () => {
 
       const result = await combatService.rollDice({
         combatSessionId: combat.id,
-        enemyId: selectedEnemy.id,
         diceType,
       });
 
@@ -91,7 +107,7 @@ export const Combat: React.FC = () => {
         setCombat(updatedCombat);
       }
     } catch (error: any) {
-      alert(error.response?.data || 'Erro ao rolar dado');
+      alert(error.response?.data?.message || error.message || 'Erro ao rolar dado');
     } finally {
       setRolling(false);
     }
@@ -104,7 +120,7 @@ export const Combat: React.FC = () => {
       const result = await combatService.completeCombat(combat.id);
       setCompletionResult(result);
     } catch (error: any) {
-      alert(error.response?.data || 'Erro ao completar combate');
+      alert(error.response?.data?.message || error.message || 'Erro ao completar combate');
     }
   };
 
@@ -120,7 +136,7 @@ export const Combat: React.FC = () => {
       alert('Você fugiu do combate!');
       navigate('/quests/catalog');
     } catch (error: any) {
-      alert(error.response?.data || 'Erro ao fugir');
+      alert(error.response?.data?.message || error.message || 'Erro ao fugir');
     }
   };
 
@@ -129,8 +145,8 @@ export const Combat: React.FC = () => {
     switch (diceType) {
       case 'D6':
         return inventory.d6Count;
-      case 'D8':
-        return inventory.d8Count;
+      case 'D10':
+        return inventory.d10Count;
       case 'D12':
         return inventory.d12Count;
       case 'D20':
@@ -144,7 +160,7 @@ export const Combat: React.FC = () => {
     switch (diceType) {
       case 'D6':
         return '🎲';
-      case 'D8':
+      case 'D10':
         return '🎯';
       case 'D12':
         return '⚡';
@@ -160,6 +176,24 @@ export const Combat: React.FC = () => {
     return combat.combatLogs.some(
       (log) => log.enemyId === enemyId && log.success === true
     );
+  };
+
+  const getPartyPower = (): number => {
+    return activeParty.reduce((sum, hero) => sum + hero.strength + hero.intelligence + hero.dexterity, 0);
+  };
+
+  const getPartyBonus = (): string => {
+    const power = getPartyPower();
+    if (power >= 150) return '+3 em todas as rolagens';
+    if (power >= 100) return '+2 em todas as rolagens';
+    if (power >= 50) return '+1 em todas as rolagens';
+    return 'Sem bônus';
+  };
+
+  const getRewardPenalty = (): string => {
+    if (activeParty.length === 3) return '-30% de recompensas';
+    if (activeParty.length === 2) return '-15% de recompensas';
+    return 'Sem penalidade';
   };
 
   if (loading) {
@@ -182,37 +216,63 @@ export const Combat: React.FC = () => {
         <div className="container mx-auto px-6 py-8 max-w-4xl">
           <Card className="bg-gradient-to-br from-yellow-900/30 to-yellow-700/30 border-yellow-500/50">
             <div className="text-center mb-6">
-              <div className="text-8xl mb-4">
+              <div className="text-8xl mb-4 animate-bounce">
                 {completionResult.status === 'Victory' ? '🎉' : '💀'}
               </div>
-              <h1 className="text-4xl font-bold text-yellow-400 mb-2">
-                {completionResult.status === 'Victory' ? 'VITÓRIA!' : 'DERROTA'}
+              <h1 className="text-5xl font-bold text-gradient mb-4 animate-float">
+                {completionResult.status === 'Victory' ? '⚔️ VITÓRIA ÉPICA! ⚔️' : '💀 DERROTA 💀'}
               </h1>
-              <p className="text-xl text-gray-300">{completionResult.message}</p>
+              <p className="text-2xl text-gray-300 mb-4">{completionResult.message}</p>
+              
+              {activeParty.length > 1 && (
+                <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-4 mb-4">
+                  <p className="text-amber-300">
+                    🛡️ Sua party de <strong>{activeParty.length} heróis</strong> lutou bravamente!
+                  </p>
+                  <p className="text-sm text-amber-400">{getRewardPenalty()}</p>
+                </div>
+              )}
             </div>
 
             {completionResult.droppedItems.length > 0 && (
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-yellow-400 mb-4">🎁 Itens Obtidos:</h2>
+                <h2 className="text-3xl font-bold text-yellow-400 mb-4 flex items-center justify-center gap-2">
+                  <span className="animate-bounce">🎁</span>
+                  Tesouros Obtidos
+                  <span className="animate-bounce">🎁</span>
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {completionResult.droppedItems.map((item) => (
                     <div
                       key={item.id}
-                      className="bg-gray-800/50 rounded-lg p-4 border-2 border-yellow-500/30"
+                      className="bg-gradient-to-br from-gray-800/50 to-gray-900/70 rounded-lg p-5 border-2 border-yellow-500/30 hover:border-yellow-500 hover:scale-105 transition-all shadow-lg shadow-yellow-500/20"
                     >
-                      <h3 className="text-xl font-bold text-yellow-300 mb-2">{item.name}</h3>
-                      <p className="text-sm text-gray-400 mb-2">{item.description}</p>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-purple-400">{item.rarity}</span>
+                      <h3 className="text-2xl font-bold text-yellow-300 mb-2 flex items-center gap-2">
+                        ✨ {item.name}
+                      </h3>
+                      <p className="text-sm text-gray-400 mb-3">{item.description}</p>
+                      <div className="flex justify-between text-sm mb-3">
+                        <span className={`font-bold ${
+                          item.rarity === 'Legendary' ? 'text-purple-400' :
+                          item.rarity === 'Epic' ? 'text-orange-400' :
+                          item.rarity === 'Rare' ? 'text-blue-400' : 'text-gray-400'
+                        }`}>
+                          {item.rarity === 'Legendary' && '👑 '}
+                          {item.rarity === 'Epic' && '💎 '}
+                          {item.rarity === 'Rare' && '⭐ '}
+                          {item.rarity}
+                        </span>
                         <span className="text-blue-400">{item.type}</span>
                       </div>
                       {(item.bonusStrength > 0 ||
                         item.bonusIntelligence > 0 ||
                         item.bonusDexterity > 0) && (
-                        <div className="mt-2 text-sm text-green-400">
-                          {item.bonusStrength > 0 && `+${item.bonusStrength} STR `}
-                          {item.bonusIntelligence > 0 && `+${item.bonusIntelligence} INT `}
-                          {item.bonusDexterity > 0 && `+${item.bonusDexterity} DEX`}
+                        <div className="bg-green-900/30 rounded-lg p-2 text-center">
+                          <p className="text-sm font-bold text-green-400">
+                            {item.bonusStrength > 0 && `⚔️ +${item.bonusStrength} FOR `}
+                            {item.bonusIntelligence > 0 && `🧠 +${item.bonusIntelligence} INT `}
+                            {item.bonusDexterity > 0 && `🎯 +${item.bonusDexterity} DEX`}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -223,10 +283,10 @@ export const Combat: React.FC = () => {
 
             <div className="flex gap-4">
               <Button variant="primary" onClick={() => navigate('/profile')} className="flex-1">
-                Ver Perfil
+                📊 Ver Perfil
               </Button>
               <Button variant="secondary" onClick={() => navigate('/quests/catalog')} className="flex-1">
-                Voltar às Missões
+                🎯 Próximas Missões
               </Button>
             </div>
           </Card>
@@ -254,47 +314,154 @@ export const Combat: React.FC = () => {
       <HeroWidget />
       <Navbar />
       <div className="container mx-auto px-6 py-8">
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-red-400 mb-2">⚔️ Combate: {combat.questName}</h1>
-          <p className="text-gray-400">Role os dados para derrotar seus inimigos!</p>
+        {/* Header Épico */}
+        <div className="mb-8 text-center">
+          <h1 className="text-6xl font-black mb-3 text-gradient animate-float">
+            ⚔️ {combat.questName} ⚔️
+          </h1>
+          <p className="text-xl text-gray-400 mb-4">Prepare-se para a batalha!</p>
+          
+          {/* Party Composition */}
+          {activeParty.length > 0 && (
+            <Card className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 border-purple-500/30 max-w-4xl mx-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-2xl font-bold text-purple-400 flex items-center gap-2">
+                  🛡️ Sua Party ({activeParty.length}/3)
+                </h3>
+                <div className="text-right">
+                  <p className="text-sm text-purple-300">Poder Total: <span className="font-bold text-2xl">{getPartyPower()}</span></p>
+                  <p className="text-xs text-green-400">{getPartyBonus()}</p>
+                  {activeParty.length > 1 && (
+                    <p className="text-xs text-amber-400">{getRewardPenalty()}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {activeParty.map((hero) => (
+                  <div key={hero.id} className="bg-gray-800/50 rounded-lg p-4 border-2 border-purple-500/50 hover:border-purple-400 hover:scale-105 transition-all">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                        {hero.name.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-purple-300 text-lg">{hero.name}</h4>
+                        <p className="text-xs text-gray-400">{hero.class} - Nv. {hero.level}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="bg-red-900/30 rounded py-1">
+                        <p className="text-red-400 font-bold">{hero.strength}</p>
+                        <p className="text-gray-500">FOR</p>
+                      </div>
+                      <div className="bg-blue-900/30 rounded py-1">
+                        <p className="text-blue-400 font-bold">{hero.intelligence}</p>
+                        <p className="text-gray-500">INT</p>
+                      </div>
+                      <div className="bg-green-900/30 rounded py-1">
+                        <p className="text-green-400 font-bold">{hero.dexterity}</p>
+                        <p className="text-gray-500">DEX</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Inimigos */}
-          <div className="lg:col-span-2">
-            <Card>
-              <h2 className="text-2xl font-bold text-red-400 mb-4">👹 Inimigos</h2>
+          {/* Área de Inimigos e Descobertas */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Botão de Descobertas */}
+            <div 
+              className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-2 border-blue-500/30 rounded-2xl p-6 text-center cursor-pointer hover:scale-105 transition-all shadow-lg"
+              onClick={() => setShowDiscoveries(!showDiscoveries)}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-4xl">🔍</span>
+                <div>
+                  <h3 className="text-2xl font-bold text-blue-400">Explorar Área</h3>
+                  <p className="text-sm text-gray-400">Clique para descobrir segredos e tesouros</p>
+                </div>
+                <span className="text-4xl">🗺️</span>
+              </div>
+            </div>
+
+            {showDiscoveries && (
+              <Card className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-500/30 animate-fadeIn">
+                <h3 className="text-2xl font-bold text-green-400 mb-4">🌟 Descobertas</h3>
+                <div className="space-y-3">
+                  <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
+                    <p className="text-green-300">✨ Você encontrou um baú antigo com poções e artefatos mágicos!</p>
+                  </div>
+                  <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
+                    <p className="text-blue-300">📜 Inscrições antigas revelam a fraqueza do boss...</p>
+                  </div>
+                  <div className="bg-purple-900/30 border border-purple-500/50 rounded-lg p-4">
+                    <p className="text-purple-300">🔮 Uma aura mágica fortalece sua party (+1 bônus temporário)</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Inimigos */}
+            <Card className="bg-gradient-to-br from-red-900/20 to-orange-900/20 border-red-500/30">
+              <h2 className="text-3xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <span className="animate-pulse">👹</span>
+                Inimigos na Área
+                <span className="animate-pulse">👹</span>
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {combat.enemies.map((enemy) => {
+                {combat.enemies?.map((enemy) => {
                   const defeated = getEnemyDefeated(enemy.id);
                   return (
                     <div
                       key={enemy.id}
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      className={`p-5 rounded-xl border-2 cursor-pointer transition-all transform hover:scale-105 ${
                         defeated
-                          ? 'bg-gray-800/50 border-gray-600 opacity-50'
+                          ? 'bg-gray-800/30 border-gray-600 opacity-40 grayscale'
                           : selectedEnemy?.id === enemy.id
-                          ? 'bg-red-900/30 border-red-500'
-                          : 'bg-gray-800/30 border-gray-700 hover:border-red-500/50'
+                          ? 'bg-gradient-to-br from-red-900/50 to-red-800/50 border-red-500 shadow-lg shadow-red-500/50 scale-105'
+                          : 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700 hover:border-red-500/70 shadow-lg'
                       }`}
                       onClick={() => !defeated && setSelectedEnemy(enemy)}
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-xl font-bold text-red-300">
-                          {defeated && '✅ '}
-                          {enemy.name}
-                        </h3>
-                        {enemy.isBoss && <span className="text-yellow-400 text-2xl">👑</span>}
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="text-2xl font-bold text-red-300 flex items-center gap-2">
+                            {defeated && '✅ '}
+                            {enemy.name}
+                          </h3>
+                          {enemy.isBoss && (
+                            <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded-full text-yellow-400 text-sm font-bold animate-pulse">
+                              👑 BOSS
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-400 mb-2">{enemy.type}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-400">
-                          Necessário: {getDiceIcon(enemy.requiredDiceType)} {enemy.requiredDiceType}
-                        </span>
-                        <span className="text-sm font-bold text-yellow-400">
-                          {enemy.minimumRoll}+
-                        </span>
+                      <p className="text-sm text-gray-400 mb-4">{enemy.type}</p>
+                      
+                      <div className="bg-gray-900/50 rounded-lg p-3 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-400">Dado Necessário:</span>
+                          <span className="text-xl font-bold flex items-center gap-1">
+                            {getDiceIcon(enemy.requiredDiceType)} {enemy.requiredDiceType}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-400">Rolagem Mínima:</span>
+                          <span className="text-2xl font-bold text-yellow-400">{enemy.minimumRoll}+</span>
+                        </div>
                       </div>
+                      
+                      {selectedEnemy?.id === enemy.id && !defeated && (
+                        <div className="mt-3 text-center">
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full text-red-400 text-sm font-bold animate-pulse">
+                            🎯 ALVO SELECIONADO
+                          </span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -303,26 +470,28 @@ export const Combat: React.FC = () => {
 
             {/* Log de Combate */}
             {combat.combatLogs.length > 0 && (
-              <Card className="mt-6">
-                <h2 className="text-2xl font-bold text-blue-400 mb-4">📜 Histórico</h2>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
+              <Card className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 border-gray-700">
+                <h2 className="text-2xl font-bold text-blue-400 mb-4 flex items-center gap-2">
+                  📜 Histórico de Batalha
+                </h2>
+                <div className="space-y-2 max-h-80 overflow-y-auto scrollbar-thin pr-2">
                   {combat.combatLogs
                     .slice()
                     .reverse()
-                    .map((log) => (
+                    .map((log, index) => (
                       <div
                         key={log.id}
-                        className={`p-3 rounded-lg ${
+                        className={`p-4 rounded-lg border-2 transform transition-all hover:scale-102 ${
                           log.success === true
-                            ? 'bg-green-900/20 border border-green-500/30'
+                            ? 'bg-gradient-to-r from-green-900/30 to-green-800/30 border-green-500/50 shadow-lg shadow-green-500/20'
                             : log.success === false
-                            ? 'bg-red-900/20 border border-red-500/30'
-                            : 'bg-gray-800/30 border border-gray-700'
-                        }`}
+                            ? 'bg-gradient-to-r from-red-900/30 to-red-800/30 border-red-500/50 shadow-lg shadow-red-500/20'
+                            : 'bg-gray-800/50 border-gray-700'
+                        } ${index === 0 ? 'animate-fadeIn' : ''}`}
                       >
-                        <p className="text-sm text-gray-300">{log.details}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(log.timestamp).toLocaleTimeString()}
+                        <p className="text-sm text-gray-200 font-semibold">{log.details}</p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          🕐 {new Date(log.timestamp).toLocaleTimeString('pt-BR')}
                         </p>
                       </div>
                     ))}
@@ -331,34 +500,43 @@ export const Combat: React.FC = () => {
             )}
           </div>
 
-          {/* Painel de Dados */}
+          {/* Painel de Ação - Dados */}
           <div>
-            <Card className="sticky top-6">
-              <h2 className="text-2xl font-bold text-yellow-400 mb-4">🎲 Seus Dados</h2>
+            <Card className="sticky top-6 bg-gradient-to-br from-yellow-900/30 to-amber-900/30 border-yellow-500/30 shadow-2xl">
+              <h2 className="text-3xl font-bold text-yellow-400 mb-4 flex items-center gap-2 justify-center">
+                <span className="animate-bounce">🎲</span>
+                Seus Dados
+                <span className="animate-bounce">🎲</span>
+              </h2>
 
               {selectedEnemy ? (
                 <>
-                  <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-4">
-                    <p className="text-sm text-gray-400">Alvo Selecionado:</p>
-                    <p className="text-lg font-bold text-red-300">{selectedEnemy.name}</p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      Você precisa rolar {selectedEnemy.minimumRoll}+ no {selectedEnemy.requiredDiceType}
-                    </p>
+                  <div className="bg-red-900/30 border-2 border-red-500/50 rounded-xl p-4 mb-4 shadow-lg shadow-red-500/30">
+                    <p className="text-sm text-gray-400 mb-1">🎯 Alvo Selecionado:</p>
+                    <p className="text-2xl font-bold text-red-300 mb-3">{selectedEnemy.name}</p>
+                    <div className="bg-gray-900/50 rounded-lg p-3">
+                      <p className="text-sm text-gray-400 text-center">
+                        Você precisa rolar <span className="text-yellow-400 font-bold text-lg">{selectedEnemy.minimumRoll}+</span>
+                      </p>
+                      <p className="text-sm text-gray-400 text-center">
+                        no dado <span className="text-yellow-400 font-bold">{selectedEnemy.requiredDiceType}</span>
+                      </p>
+                    </div>
                   </div>
 
                   {lastRoll && (
                     <div
-                      className={`mb-4 p-4 rounded-lg border-2 ${
+                      className={`mb-4 p-5 rounded-xl border-2 shadow-2xl animate-fadeIn ${
                         lastRoll.success
-                          ? 'bg-green-900/20 border-green-500'
-                          : 'bg-red-900/20 border-red-500'
+                          ? 'bg-gradient-to-br from-green-900/50 to-green-800/50 border-green-500 shadow-green-500/50'
+                          : 'bg-gradient-to-br from-red-900/50 to-red-800/50 border-red-500 shadow-red-500/50'
                       }`}
                     >
-                      <p className="text-sm text-gray-400">Último Roll:</p>
-                      <p className="text-3xl font-bold text-center my-2">{lastRoll.rollResult}</p>
+                      <p className="text-sm text-gray-300 text-center mb-2">Resultado:</p>
+                      <p className="text-6xl font-black text-center my-4 animate-bounce">{lastRoll.rollResult}</p>
                       <p
-                        className={`text-sm text-center ${
-                          lastRoll.success ? 'text-green-400' : 'text-red-400'
+                        className={`text-lg font-bold text-center ${
+                          lastRoll.success ? 'text-green-300' : 'text-red-300'
                         }`}
                       >
                         {lastRoll.message}
@@ -366,39 +544,60 @@ export const Combat: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="space-y-3 mb-4">
-                    {['D6', 'D8', 'D12', 'D20'].map((diceType) => {
+                  <div className="space-y-3 mb-6">
+                    {['D6', 'D10', 'D12', 'D20'].map((diceType) => {
                       const count = getDiceCount(diceType);
+                      const isRecommended = diceType === selectedEnemy.requiredDiceType;
                       return (
-                        <Button
+                        <button
                           key={diceType}
-                          variant={count > 0 ? 'primary' : 'secondary'}
                           onClick={() => handleRollDice(diceType)}
                           disabled={rolling || count === 0}
-                          className="w-full"
+                          className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg ${
+                            isRecommended && count > 0
+                              ? 'bg-gradient-to-r from-yellow-600 to-orange-600 text-white border-2 border-yellow-400 animate-pulse shadow-yellow-500/50'
+                              : count > 0
+                              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-2 border-blue-400 hover:from-blue-700 hover:to-blue-800 shadow-blue-500/30'
+                              : 'bg-gray-700 text-gray-500 border-2 border-gray-600'
+                          }`}
                         >
-                          {getDiceIcon(diceType)} {diceType} ({count}x)
-                        </Button>
+                          <div className="flex items-center justify-between">
+                            <span className="text-3xl">{getDiceIcon(diceType)}</span>
+                            <span>{diceType}</span>
+                            <span className="px-3 py-1 bg-black/30 rounded-full">{count}x</span>
+                          </div>
+                          {isRecommended && count > 0 && (
+                            <p className="text-xs mt-2 text-yellow-200">⚡ Recomendado para este inimigo!</p>
+                          )}
+                        </button>
                       );
                     })}
                   </div>
 
-                  <div className="border-t border-gray-700 pt-4 space-y-2">
+                  <div className="border-t-2 border-gray-700 pt-4 space-y-3">
                     <Button
                       variant="success"
                       onClick={handleCompleteCombat}
                       disabled={rolling}
-                      className="w-full"
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 py-4 text-lg font-bold shadow-lg shadow-green-500/30"
                     >
                       ✅ Finalizar Combate
                     </Button>
-                    <Button variant="danger" onClick={handleFlee} disabled={rolling} className="w-full">
-                      🏃 Fugir
+                    <Button
+                      variant="danger"
+                      onClick={handleFlee}
+                      disabled={rolling}
+                      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 py-4 text-lg font-bold shadow-lg shadow-red-500/30"
+                    >
+                      🏃 Fugir da Batalha
                     </Button>
                   </div>
                 </>
               ) : (
-                <p className="text-gray-400 text-center">Selecione um inimigo para começar!</p>
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4 animate-bounce">⚔️</div>
+                  <p className="text-gray-400 text-lg">Selecione um inimigo para começar a batalha!</p>
+                </div>
               )}
             </Card>
           </div>
@@ -407,4 +606,3 @@ export const Combat: React.FC = () => {
     </>
   );
 };
-

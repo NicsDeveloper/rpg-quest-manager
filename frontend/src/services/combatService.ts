@@ -33,18 +33,19 @@ export interface CombatLog {
 export interface CombatSessionDetail {
   id: number;
   heroId: number;
+  heroIds: number[];
   questId: number;
   questName: string;
   status: string;
   startedAt: string;
-  enemies: EnemyInfo[];
+  enemies?: EnemyInfo[]; // Legacy - mapeado de remainingEnemies
+  remainingEnemies: EnemyInfo[];
   combatLogs: CombatLog[];
 }
 
 export interface RollDiceRequest {
   combatSessionId: number;
-  enemyId: number;
-  diceType: string; // "D6", "D8", "D12", "D20"
+  diceType: string; // "D6", "D10", "D12", "D20"
 }
 
 export interface RollDiceResult {
@@ -72,15 +73,29 @@ export interface CompleteCombatResult {
 }
 
 export const combatService = {
-  startCombat: async (heroId: number, questId: number): Promise<CombatSession> => {
-    const response = await api.post<CombatSession>('/combat/start', { heroId, questId });
+  startCombat: async (_heroId: number, questId: number): Promise<CombatSession> => {
+    // Busca a party ativa (usa todos os heróis da party, não apenas um)
+    const partyResponse = await api.get('/profile/active-party');
+    const activeParty = partyResponse.data;
+    
+    if (!activeParty || activeParty.length === 0) {
+      throw new Error('Você precisa ter pelo menos um herói na party ativa para combater!');
+    }
+    
+    const heroIds = activeParty.map((h: any) => h.id);
+    const response = await api.post<CombatSession>('/combat/start', { heroIds, questId });
     return response.data;
   },
 
   getActiveCombat: async (heroId: number): Promise<CombatSessionDetail | null> => {
     try {
       const response = await api.get<CombatSessionDetail>(`/combat/active/${heroId}`);
-      return response.data;
+      const data = response.data;
+      // Mapeia remainingEnemies para enemies (compatibilidade)
+      if (!data.enemies && data.remainingEnemies) {
+        data.enemies = data.remainingEnemies;
+      }
+      return data;
     } catch (error: any) {
       if (error.response?.status === 404) {
         return null;

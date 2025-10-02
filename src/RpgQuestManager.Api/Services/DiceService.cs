@@ -16,18 +16,18 @@ public class DiceService : IDiceService
         _logger = logger;
     }
 
-    public async Task<DiceInventory> GetOrCreateInventoryAsync(int heroId)
+    public async Task<DiceInventory> GetOrCreateInventoryAsync(int userId)
     {
         var inventory = await _context.DiceInventories
-            .FirstOrDefaultAsync(di => di.HeroId == heroId);
+            .FirstOrDefaultAsync(di => di.UserId == userId);
 
         if (inventory == null)
         {
             inventory = new DiceInventory
             {
-                HeroId = heroId,
+                UserId = userId,
                 D6Count = 3, // Começa com 3 dados D6
-                D8Count = 0,
+                D10Count = 0,
                 D12Count = 0,
                 D20Count = 0
             };
@@ -35,50 +35,52 @@ public class DiceService : IDiceService
             _context.DiceInventories.Add(inventory);
             await _context.SaveChangesAsync();
             
-            _logger.LogInformation("Inventário de dados criado para herói {HeroId}", heroId);
+            _logger.LogInformation("Inventário de dados criado para player {UserId}", userId);
         }
 
         return inventory;
     }
 
-    public async Task<bool> PurchaseDiceAsync(int heroId, DiceType diceType, int quantity)
+    public async Task<bool> PurchaseDiceAsync(int userId, DiceType diceType, int quantity)
     {
-        var hero = await _context.Heroes.FindAsync(heroId);
-        if (hero == null) return false;
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null) return false;
 
         var price = GetDicePriceAsync(diceType).Result * quantity;
         
-        if (hero.Gold < price)
+        // Ouro está no player
+        if (user.Gold < price)
         {
-            _logger.LogWarning("Herói {HeroId} não tem ouro suficiente para comprar {Quantity}x {DiceType}", 
-                heroId, quantity, diceType);
+            _logger.LogWarning("Player {UserId} não tem ouro suficiente para comprar {Quantity}x {DiceType}", 
+                userId, quantity, diceType);
             return false;
         }
 
-        var inventory = await GetOrCreateInventoryAsync(heroId);
+        var inventory = await GetOrCreateInventoryAsync(userId);
         
-        // Deduz o ouro
-        hero.Gold -= price;
+        // Deduz o ouro do player
+        user.Gold -= price;
         
         // Adiciona os dados
         inventory.AddDice(diceType, quantity);
         
         await _context.SaveChangesAsync();
         
-        _logger.LogInformation("Herói {HeroId} comprou {Quantity}x {DiceType} por {Price} ouro", 
-            heroId, quantity, diceType, price);
+        _logger.LogInformation("Player {UserId} comprou {Quantity}x {DiceType} por {Price} ouro", 
+            userId, quantity, diceType, price);
         
         return true;
     }
 
-    public async Task<bool> UseDiceAsync(int heroId, DiceType diceType)
+    public async Task<bool> UseDiceAsync(int userId, DiceType diceType)
     {
-        var inventory = await GetOrCreateInventoryAsync(heroId);
+        var inventory = await GetOrCreateInventoryAsync(userId);
         
         if (!inventory.HasDice(diceType))
         {
-            _logger.LogWarning("Herói {HeroId} não tem dados do tipo {DiceType} disponíveis", 
-                heroId, diceType);
+            _logger.LogWarning("Player {UserId} não tem dados do tipo {DiceType} disponíveis", 
+                userId, diceType);
             return false;
         }
 
@@ -87,7 +89,7 @@ public class DiceService : IDiceService
         if (success)
         {
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Herói {HeroId} usou um dado {DiceType}", heroId, diceType);
+            _logger.LogInformation("Player {UserId} usou um dado {DiceType}", userId, diceType);
         }
 
         return success;
@@ -106,7 +108,7 @@ public class DiceService : IDiceService
         var price = diceType switch
         {
             DiceType.D6 => 50,
-            DiceType.D8 => 100,
+            DiceType.D10 => 100,
             DiceType.D12 => 200,
             DiceType.D20 => 500,
             _ => 0

@@ -189,6 +189,15 @@ public class QuestsController : ControllerBase
             return BadRequest(new { message = "Você não possui um herói." });
         }
 
+        // ⚠️ NOVO: Verificar se já tem uma quest ativa (não completada)
+        var hasActiveQuest = await _context.HeroQuests
+            .AnyAsync(hq => hq.HeroId == hero.Id && !hq.IsCompleted);
+        
+        if (hasActiveQuest)
+        {
+            return BadRequest(new { message = "Você já tem uma missão ativa! Complete-a antes de aceitar outra." });
+        }
+
         var quest = await _context.Quests.FindAsync(id);
         
         if (quest == null)

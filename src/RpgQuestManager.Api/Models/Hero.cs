@@ -19,11 +19,14 @@ public class Hero
     public bool IsInActiveParty { get; set; } = false; // Se está na party ativa (máx 3)
     public int? PartySlot { get; set; } // Slot na party: 1, 2, 3 ou null
     
+    // Soft Delete (Recuperação de 7 dias)
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     // Relacionamentos
     public User? User { get; set; }
-    public DiceInventory? DiceInventory { get; set; } // Inventário de dados
     public ICollection<HeroQuest> HeroQuests { get; set; } = new List<HeroQuest>();
     public ICollection<HeroItem> HeroItems { get; set; } = new List<HeroItem>();
     

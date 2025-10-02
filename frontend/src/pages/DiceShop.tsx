@@ -66,7 +66,7 @@ export const DiceShop: React.FC = () => {
 
       setInventory(result.updatedInventory);
       setHero({ ...hero, gold: result.remainingGold });
-      alert(result.message);
+      alert(`✅ ${result.message}\n\n💰 Ouro restante: ${result.remainingGold}`);
     } catch (error: any) {
       alert(error.response?.data || 'Erro ao comprar dados');
     } finally {
@@ -111,12 +111,12 @@ export const DiceShop: React.FC = () => {
       gradient: 'from-green-600 to-green-800',
     },
     {
-      type: 'D8',
-      name: 'Dado D8',
-      description: 'Dado de 8 lados - Para desafios médios',
+      type: 'D10',
+      name: 'Dado D10',
+      description: 'Dado de 10 lados - Para desafios médios',
       icon: '🎯',
-      price: prices.d8,
-      count: inventory.d8Count,
+      price: prices.d10,
+      count: inventory.d10Count,
       gradient: 'from-blue-600 to-blue-800',
     },
     {
@@ -162,14 +162,27 @@ export const DiceShop: React.FC = () => {
 
               <p className="text-gray-300 text-center mb-4">{dice.description}</p>
 
-              <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-400">Preço:</span>
-                  <span className="text-yellow-400 font-bold text-xl">💰 {dice.price}</span>
-                </div>
+              <div className="bg-gray-800 rounded-lg p-4 mb-4 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Inventário:</span>
-                  <span className="text-blue-400 font-bold text-xl">{dice.count}x</span>
+                  <span className="text-gray-400">💰 Preço:</span>
+                  <span className="text-yellow-400 font-bold text-xl">{dice.price} ouro</span>
+                </div>
+                <div className="border-t border-gray-700 pt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">📦 Você tem:</span>
+                    <span className={`font-bold text-2xl ${dice.count > 0 ? 'text-green-400 animate-pulse' : 'text-red-400'}`}>
+                      {dice.count}x
+                    </span>
+                  </div>
+                  {dice.count === 0 && (
+                    <p className="text-xs text-red-400 text-center mt-1">⚠️ Sem dados deste tipo!</p>
+                  )}
+                  {dice.count > 0 && dice.count < 3 && (
+                    <p className="text-xs text-yellow-400 text-center mt-1">⚡ Estoque baixo!</p>
+                  )}
+                  {dice.count >= 3 && (
+                    <p className="text-xs text-green-400 text-center mt-1">✓ Bem abastecido</p>
+                  )}
                 </div>
               </div>
 

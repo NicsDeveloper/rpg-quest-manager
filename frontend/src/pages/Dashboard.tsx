@@ -167,7 +167,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <div className="badge badge-primary mb-1">Nv. {hero.level}</div>
-                      <p className="text-sm text-gray-400">{hero.gold} 🪙</p>
+                      <p className="text-sm text-gray-400">{hero.gold} 💰</p>
                     </div>
                   </div>
                 ))}
@@ -203,7 +203,7 @@ export const Dashboard: React.FC = () => {
                       <span className="badge badge-info text-xs">{quest.difficulty}</span>
                     </div>
                     <div className="text-right">
-                      <p className="text-amber-400 font-bold text-lg">{quest.goldReward} 🪙</p>
+                      <p className="text-amber-400 font-bold text-lg">{quest.goldReward} 💰</p>
                       <p className="text-sm text-gray-400">{quest.experienceReward} XP</p>
                     </div>
                   </div>

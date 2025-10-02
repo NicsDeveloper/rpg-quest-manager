@@ -234,6 +234,88 @@ public class CombatService : ICombatService
         return dto;
     }
 
+    public async Task<CombatSessionDetailDto?> GetActiveCombatByHeroIdAsync(int userId, int heroId)
+    {
+        // Verifica se o herói pertence ao usuário
+        var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.Id == heroId && h.UserId == userId);
+        if (hero == null)
+        {
+            throw new UnauthorizedAccessException("Este herói não pertence a você.");
+        }
+
+        // Busca sessão de combate ativa que contenha este herói
+        var activeSessions = await _context.CombatSessions
+            .Include(cs => cs.Quest)
+                .ThenInclude(q => q.QuestEnemies)
+                    .ThenInclude(qe => qe.Enemy)
+            .Include(cs => cs.CurrentEnemy)
+            .Include(cs => cs.Combo)
+            .Include(cs => cs.CombatLogs)
+                .ThenInclude(cl => cl.Enemy)
+            .Where(cs => cs.Status == CombatStatus.InProgress)
+            .ToListAsync();
+
+        // Filtra por sessões que contenham o heroId no campo HeroIds
+        var combatSession = activeSessions.FirstOrDefault(cs => cs.GetHeroIdsList().Contains(heroId));
+
+        if (combatSession == null)
+        {
+            return null;
+        }
+
+        // Retorna os detalhes da sessão
+        var heroIds = combatSession.GetHeroIdsList();
+        var heroes = await _context.Heroes
+            .Where(h => heroIds.Contains(h.Id))
+            .ToListAsync();
+
+        var allQuestEnemies = combatSession.Quest.QuestEnemies.Select(qe => qe.Enemy).ToList();
+        var defeatedEnemyIds = combatSession.CombatLogs
+            .Where(cl => cl.Success == true && cl.EnemyId.HasValue)
+            .Select(cl => cl.EnemyId!.Value)
+            .Distinct()
+            .ToList();
+
+        var remainingEnemies = allQuestEnemies
+            .Where(e => !defeatedEnemyIds.Contains(e.Id))
+            .OrderBy(e => e.Id)
+            .ToList();
+
+        var dto = new CombatSessionDetailDto
+        {
+            Id = combatSession.Id,
+            HeroIds = heroIds,
+            Heroes = _mapper.Map<List<HeroDto>>(heroes),
+            QuestId = combatSession.QuestId,
+            QuestName = combatSession.Quest.Name,
+            CurrentEnemy = combatSession.CurrentEnemy != null ? _mapper.Map<EnemyDto>(combatSession.CurrentEnemy) : null,
+            ComboId = combatSession.ComboId,
+            ComboName = combatSession.Combo?.Name,
+            ComboDescription = combatSession.Combo?.Description,
+            GroupBonus = combatSession.GroupBonus,
+            ComboBonus = combatSession.ComboBonus,
+            Status = combatSession.Status,
+            StartedAt = combatSession.StartedAt,
+            CompletedAt = combatSession.CompletedAt,
+            CombatLogs = combatSession.CombatLogs.Select(cl => new CombatLogDto
+            {
+                Id = cl.Id,
+                Action = cl.Action,
+                EnemyId = cl.EnemyId,
+                EnemyName = cl.Enemy?.Name,
+                DiceUsed = cl.DiceUsed,
+                DiceResult = cl.DiceResult,
+                RequiredRoll = cl.RequiredRoll,
+                Success = cl.Success,
+                Details = cl.Details,
+                Timestamp = cl.Timestamp
+            }).ToList(),
+            RemainingEnemies = _mapper.Map<List<EnemyDto>>(remainingEnemies)
+        };
+
+        return dto;
+    }
+
     public async Task<RollDiceResultDto> RollDiceAsync(int userId, int combatSessionId, DiceType diceType)
     {
         var combatSession = await _context.CombatSessions
@@ -257,8 +339,7 @@ public class CombatService : ICombatService
 
         var heroIds = combatSession.GetHeroIdsList();
         var heroes = await _context.Heroes
-            .Include(h => h.DiceInventory)
-            .Where(h => h.UserId == userId && heroIds.Contains(h.Id))
+            .Where(h => h.UserId == userId && heroIds.Contains(h.Id) && !h.IsDeleted)
             .ToListAsync();
 
         if (!heroes.Any())
@@ -266,20 +347,13 @@ public class CombatService : ICombatService
             throw new UnauthorizedAccessException("Esta sessão de combate não pertence a você.");
         }
 
-        // Usa o dado do primeiro herói que tiver (ou qualquer herói)
-        Hero? heroWithDice = null;
-        foreach (var hero in heroes)
-        {
-            if (hero.DiceInventory?.HasDice(diceType) == true)
-            {
-                heroWithDice = hero;
-                break;
-            }
-        }
+        // Busca o inventário de dados do player (compartilhado entre todos os heróis)
+        var inventory = await _context.DiceInventories
+            .FirstOrDefaultAsync(di => di.UserId == userId);
 
-        if (heroWithDice == null)
+        if (inventory == null || !inventory.HasDice(diceType))
         {
-            throw new InvalidOperationException($"Nenhum herói da party possui dados do tipo {diceType}.");
+            throw new InvalidOperationException($"Você não possui dados do tipo {diceType}.");
         }
 
         if (combatSession.CurrentEnemy.RequiredDiceType != diceType)
@@ -287,8 +361,8 @@ public class CombatService : ICombatService
             throw new InvalidOperationException($"O inimigo {combatSession.CurrentEnemy.Name} requer um dado do tipo {combatSession.CurrentEnemy.RequiredDiceType}, mas foi usado {diceType}.");
         }
 
-        // Usa o dado
-        heroWithDice.DiceInventory!.UseDice(diceType);
+        // Usa o dado do inventário do player
+        inventory.UseDice(diceType);
 
         // Rola o dado
         var rollResult = _random.Next(1, (int)diceType + 1);

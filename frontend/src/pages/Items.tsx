@@ -142,7 +142,7 @@ export const Items: React.FC = () => {
                     <span className="text-gray-400">{t('items.type')}:</span> {item.type}
                   </p>
                   <p className="text-sm">
-                    <span className="text-gray-400">{t('items.value')}:</span> {item.value} 🪙
+                    <span className="text-gray-400">{t('items.value')}:</span> {item.value} 💰
                   </p>
                 </div>
 

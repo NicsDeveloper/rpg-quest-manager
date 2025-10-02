@@ -38,6 +38,7 @@ public class UserController : ControllerBase
             user.Email,
             user.Role,
             user.HasSeenTutorial,
+            user.Gold,
             user.CreatedAt
         });
     }

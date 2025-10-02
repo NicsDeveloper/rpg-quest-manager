@@ -40,7 +40,7 @@ public class FreeDiceGrant
         return diceType switch
         {
             DiceType.D6 => 24,   // 1 dia
-            DiceType.D8 => 48,   // 2 dias
+            DiceType.D10 => 48,   // 2 dias
             DiceType.D12 => 168, // 7 dias
             DiceType.D20 => 336, // 14 dias
             _ => 24

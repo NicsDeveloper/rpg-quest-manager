@@ -61,7 +61,7 @@ export const FreeDice: React.FC = () => {
     switch (diceType) {
       case 'D6':
         return '🎲';
-      case 'D8':
+      case 'D10':
         return '🎯';
       case 'D12':
         return '⭐';
@@ -76,7 +76,7 @@ export const FreeDice: React.FC = () => {
     switch (diceType) {
       case 'D6':
         return 'from-gray-800 to-gray-700 border-gray-600';
-      case 'D8':
+      case 'D10':
         return 'from-green-900 to-green-800 border-green-600';
       case 'D12':
         return 'from-blue-900 to-blue-800 border-blue-600';

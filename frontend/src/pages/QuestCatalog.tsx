@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -10,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 export const QuestCatalog: React.FC = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'catalog' | 'my-quests'>('catalog');
   const [catalogQuests, setCatalogQuests] = useState<Quest[]>([]);
   const [myQuests, setMyQuests] = useState<Quest[]>([]);
@@ -159,7 +161,7 @@ export const QuestCatalog: React.FC = () => {
               <p className="text-xs text-amber-500 font-semibold mb-2">🎁 Recompensas</p>
               <div className="flex gap-4 text-sm">
                 <span className="flex items-center gap-1 text-amber-400 font-bold">
-                  <span>🪙</span> {quest.goldReward}
+                  <span>💰</span> {quest.goldReward}
                 </span>
                 <span className="flex items-center gap-1 text-purple-400 font-bold">
                   <span>⭐</span> {quest.experienceReward} XP
@@ -168,11 +170,18 @@ export const QuestCatalog: React.FC = () => {
             </div>
 
             {activeTab === 'catalog' && !isAdmin && (
-              <div>
+              <div className="space-y-2">
                 {quest.isAccepted ? (
-                  <Button variant="secondary" className="w-full" disabled>
-                    ✓ Já Aceita
-                  </Button>
+                  <>
+                    <Button 
+                      variant="primary" 
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 font-bold shadow-lg shadow-green-500/30 animate-pulse"
+                      onClick={() => navigate(`/combat?questId=${quest.id}`)}
+                    >
+                      ⚔️ Ir para Missão
+                    </Button>
+                    <p className="text-xs text-center text-green-400">✓ Missão aceita e pronta para combate</p>
+                  </>
                 ) : quest.canAccept ? (
                   <Button 
                     variant="primary" 
@@ -187,6 +196,16 @@ export const QuestCatalog: React.FC = () => {
                   </Button>
                 )}
               </div>
+            )}
+            
+            {activeTab === 'my-quests' && !isAdmin && (
+              <Button 
+                variant="primary" 
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 font-bold shadow-lg shadow-green-500/30"
+                onClick={() => navigate(`/combat?questId=${quest.id}`)}
+              >
+                ⚔️ Ir para Missão
+              </Button>
             )}
           </Card>
         ))}

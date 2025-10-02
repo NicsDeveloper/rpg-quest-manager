@@ -3,21 +3,21 @@ import api from './api';
 export interface DiceInventory {
   heroId: number;
   d6Count: number;
-  d8Count: number;
+  d10Count: number;
   d12Count: number;
   d20Count: number;
 }
 
 export interface DicePrices {
   d6: number;
-  d8: number;
+  d10: number;
   d12: number;
   d20: number;
 }
 
 export interface PurchaseDiceRequest {
   heroId: number;
-  diceType: string; // "D6", "D8", "D12", "D20"
+  diceType: string; // "D6", "D10", "D12", "D20"
   quantity: number;
 }
 

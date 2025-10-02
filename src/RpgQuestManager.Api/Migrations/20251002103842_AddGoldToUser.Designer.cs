@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RpgQuestManager.Api.Data;
@@ -11,9 +12,11 @@ using RpgQuestManager.Api.Data;
 namespace RpgQuestManager.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002103842_AddGoldToUser")]
+    partial class AddGoldToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -234,9 +237,6 @@ namespace RpgQuestManager.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("D10Count")
-                        .HasColumnType("integer");
-
                     b.Property<int>("D12Count")
                         .HasColumnType("integer");
 
@@ -244,6 +244,9 @@ namespace RpgQuestManager.Api.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("D6Count")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("D8Count")
                         .HasColumnType("integer");
 
                     b.Property<int>("HeroId")
@@ -348,9 +351,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("Dexterity")
                         .HasColumnType("integer");
 
@@ -362,9 +362,6 @@ namespace RpgQuestManager.Api.Migrations
 
                     b.Property<int>("Intelligence")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsInActiveParty")
                         .HasColumnType("boolean");

@@ -4,6 +4,7 @@ import { Card } from '../components/Card';
 import { Loading } from '../components/Loading';
 import { HeroWidget } from '../components/HeroWidget';
 import { profileService, MyHero, MyQuest, MyStats } from '../services/profileService';
+import api from '../services/api';
 
 const getExperienceForNextLevel = (level: number): number => {
   return level * 100;
@@ -15,6 +16,7 @@ export const Profile: React.FC = () => {
   const [stats, setStats] = useState<MyStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
 
   useEffect(() => {
     loadProfile();
@@ -34,6 +36,34 @@ export const Profile: React.FC = () => {
       setError(err.response?.data?.message || 'Erro ao carregar perfil');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEquipItem = async (heroItemId: number) => {
+    if (!hero) return;
+    try {
+      setActionLoading(heroItemId);
+      await api.post(`/profile/equip-item/${heroItemId}`);
+      await loadProfile();
+      alert('✅ Item equipado com sucesso!');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Erro ao equipar item');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnequipItem = async (heroItemId: number) => {
+    if (!hero) return;
+    try {
+      setActionLoading(heroItemId);
+      await api.post(`/profile/unequip-item/${heroItemId}`);
+      await loadProfile();
+      alert('✅ Item desequipado com sucesso!');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Erro ao desequipar item');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -135,7 +165,7 @@ export const Profile: React.FC = () => {
 
             <div className="flex items-center justify-between bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-2xl p-6 border border-amber-700/30">
               <div className="flex items-center gap-3">
-                <div className="text-6xl animate-bounce">🪙</div>
+                <div className="text-6xl animate-bounce">💰</div>
                 <span className="text-2xl font-bold text-gray-300">Ouro</span>
               </div>
               <span className="text-5xl font-black text-gradient">{hero.gold}</span>
@@ -197,21 +227,48 @@ export const Profile: React.FC = () => {
                 {hero.heroItems.map((heroItem) => (
                   <div
                     key={heroItem.id}
-                    className="group flex items-center justify-between p-4 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/30 hover:border-green-500/50 transition-all hover:scale-[1.02]"
+                    className="group p-4 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/30 hover:border-green-500/50 transition-all"
                   >
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="text-3xl">📦</div>
-                      <div>
-                        <p className="font-bold text-green-400 group-hover:text-green-300">{heroItem.item.name}</p>
-                        <p className="text-sm text-gray-400">{heroItem.item.type}</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="text-3xl">📦</div>
+                        <div>
+                          <p className="font-bold text-green-400 group-hover:text-green-300">{heroItem.item.name}</p>
+                          <p className="text-sm text-gray-400">{heroItem.item.type}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
                       <span className="badge badge-info">x{heroItem.quantity}</span>
-                      {heroItem.isEquipped && (
-                        <span className="badge badge-success animate-pulse">✓ Equipado</span>
+                    </div>
+                    
+                    <p className="text-xs text-gray-400 mb-3 px-2">💫 {heroItem.item.description}</p>
+                    
+                    <div className="flex gap-2">
+                      {heroItem.isEquipped ? (
+                        <button
+                          onClick={() => handleUnequipItem(heroItem.id)}
+                          disabled={actionLoading === heroItem.id}
+                          className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-2 px-4 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {actionLoading === heroItem.id ? '⌛ Desequipando...' : '❌ Desequipar'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleEquipItem(heroItem.id)}
+                          disabled={actionLoading === heroItem.id}
+                          className="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white py-2 px-4 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-500/30 animate-pulse"
+                        >
+                          {actionLoading === heroItem.id ? '⌛ Equipando...' : '⚔️ Equipar'}
+                        </button>
                       )}
                     </div>
+                    
+                    {heroItem.isEquipped && (
+                      <div className="mt-2 text-center">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/20 border border-green-500/50 rounded-full text-green-400 text-xs font-bold animate-pulse">
+                          ✓ EQUIPADO
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -249,7 +306,7 @@ export const Profile: React.FC = () => {
                     </div>
                     <div className="flex gap-4 text-sm">
                       <span className="flex items-center gap-1 text-amber-400 font-semibold">
-                        <span>🪙</span>
+                        <span>💰</span>
                         {heroQuest.quest.goldReward}
                       </span>
                       <span className="flex items-center gap-1 text-purple-400 font-semibold">

@@ -36,14 +36,22 @@ public class DatabaseSeeder
         await SeedQuestEnemiesAsync();
         await SeedHeroItemsAsync();
         await SeedHeroQuestsAsync();
-        await SeedBossDropTableAsync(); // Novo
-        await SeedDiceInventoriesAsync(); // Novo
+        await SeedBossDropTableAsync();
+        await SeedDiceInventoriesAsync();
+        await SeedPartyComboWeaknessesAsync(); // Sistema de Party Combos e Boss Weaknesses
 
         _logger.LogInformation("✅ Seed do banco de dados concluído com sucesso!");
     }
 
     private async Task SeedUsersAsync()
     {
+        // Verifica se já existem usuários
+        if (await _context.Users.AnyAsync())
+        {
+            _logger.LogInformation("👤 Usuários já existem - pulando seed");
+            return;
+        }
+
         var users = new List<User>
         {
             new User
@@ -52,6 +60,7 @@ public class DatabaseSeeder
                 Email = "admin@eldoria.com",
                 PasswordHash = HashPassword("admin123"),
                 Role = "Admin",
+                Gold = 100,
                 CreatedAt = DateTime.UtcNow.AddDays(-30)
             },
             new User
@@ -60,6 +69,7 @@ public class DatabaseSeeder
                 Email = "player1@eldoria.com",
                 PasswordHash = HashPassword("senha123"),
                 Role = "Player",
+                Gold = 100,
                 CreatedAt = DateTime.UtcNow.AddDays(-20)
             },
             new User
@@ -68,6 +78,7 @@ public class DatabaseSeeder
                 Email = "gamer@eldoria.com",
                 PasswordHash = HashPassword("senha123"),
                 Role = "Player",
+                Gold = 100,
                 CreatedAt = DateTime.UtcNow.AddDays(-15)
             }
         };
@@ -79,54 +90,15 @@ public class DatabaseSeeder
 
     private async Task SeedHeroesAsync()
     {
-        var users = await _context.Users.ToListAsync();
-        var player1 = users.FirstOrDefault(u => u.Username == "player1");
-        var gamer = users.FirstOrDefault(u => u.Username == "gamer");
+        // Não cria heróis automaticamente - os players devem criar seus próprios heróis
+        _logger.LogInformation("⚔️ Heróis não criados - players criarão seus próprios heróis");
+        await Task.CompletedTask;
+    }
 
+    private async Task SeedHeroesAsync_OLD()
+    {
         var heroes = new List<Hero>
         {
-            // Herói do player1
-            new Hero
-            {
-                Name = "Aragorn",
-                Class = "Guerreiro",
-                Level = 15,
-                Experience = 450,
-                Strength = 40,
-                Intelligence = 22,
-                Dexterity = 28,
-                Gold = 5000,
-                UserId = player1?.Id,
-                CreatedAt = DateTime.UtcNow.AddDays(-25)
-            },
-            // Herói do gamer
-            new Hero
-            {
-                Name = "Gandalf",
-                Class = "Mago",
-                Level = 20,
-                Experience = 800,
-                Strength = 18,
-                Intelligence = 50,
-                Dexterity = 24,
-                Gold = 8000,
-                UserId = gamer?.Id,
-                CreatedAt = DateTime.UtcNow.AddDays(-28)
-            },
-            new Hero
-            {
-                Name = "Legolas",
-                Class = "Arqueiro",
-                Level = 18,
-                Experience = 650,
-                Strength = 26,
-                Intelligence = 28,
-                Dexterity = 48,
-                Gold = 6500,
-                CreatedAt = DateTime.UtcNow.AddDays(-22)
-            },
-            
-            // Heróis Experientes (Nível Médio)
             new Hero
             {
                 Name = "Gimli",
@@ -246,6 +218,13 @@ public class DatabaseSeeder
 
     private async Task SeedEnemiesAsync()
     {
+        // Verifica se já existem inimigos
+        if (await _context.Enemies.AnyAsync())
+        {
+            _logger.LogInformation("👹 Inimigos já existem - pulando seed");
+            return;
+        }
+
         var enemies = new List<Enemy>
         {
             // Inimigos Fracos (D6 - fácil)
@@ -255,12 +234,12 @@ public class DatabaseSeeder
             new Enemy { Name = "Wolf", Type = "Besta", Power = 18, Health = 55, RequiredDiceType = DiceType.D6, MinimumRoll = 3, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
             new Enemy { Name = "Giant Spider", Type = "Aranha", Power = 22, Health = 70, RequiredDiceType = DiceType.D6, MinimumRoll = 4, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
             
-            // Inimigos Médios (D8 - médio)
-            new Enemy { Name = "Orc Warlord", Type = "Orc", Power = 45, Health = 150, RequiredDiceType = DiceType.D8, MinimumRoll = 5, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
-            new Enemy { Name = "Dark Wizard", Type = "Humano", Power = 50, Health = 120, RequiredDiceType = DiceType.D8, MinimumRoll = 6, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
-            new Enemy { Name = "Troll", Type = "Troll", Power = 55, Health = 200, RequiredDiceType = DiceType.D8, MinimumRoll = 5, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
-            new Enemy { Name = "Vampire", Type = "Morto-Vivo", Power = 48, Health = 140, RequiredDiceType = DiceType.D8, MinimumRoll = 6, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
-            new Enemy { Name = "Werewolf", Type = "Besta", Power = 52, Health = 160, RequiredDiceType = DiceType.D8, MinimumRoll = 5, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            // Inimigos Médios (D10 - médio)
+            new Enemy { Name = "Orc Warlord", Type = "Orc", Power = 45, Health = 150, RequiredDiceType = DiceType.D10, MinimumRoll = 5, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            new Enemy { Name = "Dark Wizard", Type = "Humano", Power = 50, Health = 120, RequiredDiceType = DiceType.D10, MinimumRoll = 6, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            new Enemy { Name = "Troll", Type = "Troll", Power = 55, Health = 200, RequiredDiceType = DiceType.D10, MinimumRoll = 5, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            new Enemy { Name = "Vampire", Type = "Morto-Vivo", Power = 48, Health = 140, RequiredDiceType = DiceType.D10, MinimumRoll = 6, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            new Enemy { Name = "Werewolf", Type = "Besta", Power = 52, Health = 160, RequiredDiceType = DiceType.D10, MinimumRoll = 5, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
             
             // BOSSES (D12 e D20 - muito difícil, com drops especiais)
             new Enemy { Name = "Demon Lord", Type = "Demônio", Power = 75, Health = 300, RequiredDiceType = DiceType.D12, MinimumRoll = 8, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) },
@@ -278,6 +257,13 @@ public class DatabaseSeeder
 
     private async Task SeedItemsAsync()
     {
+        // Verifica se já existem itens
+        if (await _context.Items.AnyAsync())
+        {
+            _logger.LogInformation("🗡️ Itens já existem - pulando seed");
+            return;
+        }
+
         var items = new List<Item>
         {
             // COMUM - Itens compartilhados (podem dropar de qualquer boss)
@@ -319,6 +305,13 @@ public class DatabaseSeeder
 
     private async Task SeedQuestsAsync()
     {
+        // Verifica se já existem quests
+        if (await _context.Quests.AnyAsync())
+        {
+            _logger.LogInformation("🎯 Quests já existem - pulando seed");
+            return;
+        }
+
         var quests = new List<Quest>
         {
             // ===== QUEST TUTORIAL (Nível 1 - SEMPRE DISPONÍVEL) =====
@@ -342,7 +335,7 @@ Ele aponta para um mapa na parede, mostrando a **Vila de Thornwood**, rodeada po
 
 'Ah, e jovem herói... lembre-se: mesmo os maiores guerreiros começaram enfrentando goblins. Boa sorte!'",
                 Difficulty = "Tutorial",
-                RequiredLevel = 1,
+                RequiredLevel = 0,
                 RequiredClass = "Any",
                 Type = "Main",
                 ExperienceReward = 100,
@@ -876,8 +869,8 @@ Ele mostra um cinto cravejado de joias.
 
 **Formato:** 5 Combates Progressivos
 • Combate 1: Guerreiro Veterano (D6, Roll 4)
-• Combate 2: Campeã Élfica (D8, Roll 5)
-• Combate 3: Troll Blindado (D8, Roll 6)
+• Combate 2: Campeã Élfica (D10, Roll 5)
+• Combate 3: Troll Blindado (D10, Roll 6)
 • Combate 4: Dupla de Gladiadores (D12, Roll 8)
 • Combate 5: Campeão Defensor - Gorath, o Imortal (D12, Roll 9)
 
@@ -917,7 +910,7 @@ Ele se levanta, com olhos de determinação demente.
 **Objetivo:** Resgatar Princesa Elara da Torre de Ferro
 **Inimigos:** 
 • Guardas Kobold (D6)
-• Wyverns Guardiãs (D8)
+• Wyverns Guardiãs (D10)
 • Nightwing, o Dragão Negro (D20, Roll 17) - BOSS
 
 **Complicação:** Princesa está sob feitiço de sono - precisa de beijo verdadeiro OU poção de despertar
@@ -955,7 +948,7 @@ Voz se quebra.
 
 **Objetivo:** Rastrear e abater o Javali de Ferro
 **Desafio:** Rastreamento (INT check), depois combate
-**Inimigo:** Iron Boar (D8, Roll 6, Alta Defesa)
+**Inimigo:** Iron Boar (D10, Roll 6, Alta Defesa)
 **Troféu:** Presas de Ferro (item lendário para crafting)",
                 Difficulty = "Médio",
                 RequiredLevel = 3,
@@ -986,7 +979,7 @@ Tremendo de medo.
 **Objetivo:** Exterminar ninho de aranhas
 **Inimigos:** 
 • 15-20 Aranhas Gigantes (D6, Roll 3)
-• 1 Aranha Rainha (D8, Roll 6) - Veneno
+• 1 Aranha Rainha (D10, Roll 6) - Veneno
 
 **Perigo:** Teias reduzem movimento
 **Bônus:** Sacos de ovos destruídos = +100 Gold cada",
@@ -1026,7 +1019,7 @@ Ela se recompõe, secando as lágrimas.
 **Complicação:** O gato não quer descer. Tenta arranhar você.
 **Recompensa:** Poção da Juventude (-10 anos de aparência)",
                 Difficulty = "Fácil",
-                RequiredLevel = 1,
+                RequiredLevel = 0,
                 RequiredClass = "Any",
                 Type = "Side",
                 ExperienceReward = 50,
@@ -1155,6 +1148,13 @@ Lágrimas.
 
     private async Task SeedRewardsAsync()
     {
+        // Verifica se já existem rewards
+        if (await _context.Rewards.AnyAsync())
+        {
+            _logger.LogInformation("💰 Rewards já existem - pulando seed");
+            return;
+        }
+
         var quests = await _context.Quests.ToListAsync();
         var items = await _context.Items.ToListAsync();
         var rewards = new List<Reward>();
@@ -1198,6 +1198,13 @@ Lágrimas.
 
     private async Task SeedQuestEnemiesAsync()
     {
+        // Verifica se já existem relações quest-enemy
+        if (await _context.QuestEnemies.AnyAsync())
+        {
+            _logger.LogInformation("⚔️ Quest-Enemies já existem - pulando seed");
+            return;
+        }
+
         var quests = await _context.Quests.ToListAsync();
         var enemies = await _context.Enemies.ToListAsync();
         var questEnemies = new List<QuestEnemy>();
@@ -1243,6 +1250,13 @@ Lágrimas.
 
     private async Task SeedHeroItemsAsync()
     {
+        // Não cria itens para heróis - os players receberão itens ao completar quests
+        _logger.LogInformation("📦 HeroItems não criados - players receberão itens das quests");
+        await Task.CompletedTask;
+    }
+
+    private async Task SeedHeroItemsAsync_OLD()
+    {
         var heroes = await _context.Heroes.ToListAsync();
         var items = await _context.Items.ToListAsync();
         var heroItems = new List<HeroItem>();
@@ -1275,6 +1289,13 @@ Lágrimas.
     }
 
     private async Task SeedHeroQuestsAsync()
+    {
+        // Não cria quests para heróis - os players aceitarão suas próprias quests
+        _logger.LogInformation("🎯 HeroQuests não criadas - players aceitarão suas próprias quests");
+        await Task.CompletedTask;
+    }
+
+    private async Task SeedHeroQuestsAsync_OLD()
     {
         var heroes = await _context.Heroes.ToListAsync();
         var quests = await _context.Quests.ToListAsync();
@@ -1312,6 +1333,13 @@ Lágrimas.
 
     private async Task SeedBossDropTableAsync()
     {
+        // Verifica se já existem boss drops
+        if (await _context.BossDropTables.AnyAsync())
+        {
+            _logger.LogInformation("🎁 Boss drops já existem - pulando seed");
+            return;
+        }
+
         var enemies = await _context.Enemies.ToListAsync();
         var items = await _context.Items.ToListAsync();
 
@@ -1411,28 +1439,13 @@ Lágrimas.
 
     private async Task SeedDiceInventoriesAsync()
     {
-        var heroes = await _context.Heroes.ToListAsync();
-        var inventories = new List<DiceInventory>();
-
-        // Heróis de nível mais alto começam com mais dados
-        foreach (var hero in heroes)
-        {
-            var inventory = new DiceInventory
-            {
-                HeroId = hero.Id,
-                D6Count = 3 + (hero.Level / 5), // +1 D6 a cada 5 níveis
-                D8Count = hero.Level >= 10 ? 2 : 0,
-                D12Count = hero.Level >= 15 ? 1 : 0,
-                D20Count = hero.Level >= 18 ? 1 : 0
-            };
-
-            inventories.Add(inventory);
-        }
-
-        _context.DiceInventories.AddRange(inventories);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("🎲 {Count} inventários de dados criados para os heróis", inventories.Count);
+        // Não cria inventários de dados - serão criados ao criar heróis
+        _logger.LogInformation("🎲 DiceInventories não criados - serão criados ao criar heróis");
+        await Task.CompletedTask;
+    }
     
+    private async Task SeedPartyComboWeaknessesAsync()
+    {
         // ===== PARTY COMBOS =====
         _logger.LogInformation("Seeding Party Combos...");
         if (!_context.PartyCombos.Any())

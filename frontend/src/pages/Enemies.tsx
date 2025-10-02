@@ -157,7 +157,7 @@ export const Enemies: React.FC = () => {
                 <div className="bg-gray-700 rounded p-3 mb-4">
                   <p className="text-xs text-amber-500 font-semibold mb-2">Drops:</p>
                   <div className="text-sm space-y-1">
-                    <p>🪙 {enemy.goldDrop} ouro</p>
+                    <p>💰 {enemy.goldDrop} ouro</p>
                     <p>⭐ {enemy.experienceDrop} XP</p>
                   </div>
                 </div>

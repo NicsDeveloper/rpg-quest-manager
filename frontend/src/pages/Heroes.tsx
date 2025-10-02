@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { Navbar } from '../components/Navbar';
+import { HeroWidget } from '../components/HeroWidget';
 
 interface Hero {
   id: number;
@@ -15,6 +18,7 @@ interface Hero {
 }
 
 export const Heroes: React.FC = () => {
+  const navigate = useNavigate();
   const [heroes, setHeroes] = useState<Hero[]>([]);
   const [activeParty, setActiveParty] = useState<Hero[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,10 +28,22 @@ export const Heroes: React.FC = () => {
   const [newHero, setNewHero] = useState({
     name: '',
     class: 'Guerreiro',
-    strength: 15,
-    intelligence: 10,
-    dexterity: 10
+    strength: 0,
+    intelligence: 0,
+    dexterity: 0
   });
+
+  const TOTAL_POINTS = 30;
+  const MIN_STAT = 3; // Mínimo obrigatório em cada atributo para balanceamento
+  const MAX_STAT = 20;
+  
+  const usedPoints = newHero.strength + newHero.intelligence + newHero.dexterity;
+  const remainingPoints = TOTAL_POINTS - usedPoints;
+  
+  const canCreate = remainingPoints === 0 && 
+                    newHero.strength >= MIN_STAT && 
+                    newHero.intelligence >= MIN_STAT && 
+                    newHero.dexterity >= MIN_STAT;
 
   useEffect(() => {
     fetchData();
@@ -84,9 +100,9 @@ export const Heroes: React.FC = () => {
       setNewHero({
         name: '',
         class: 'Guerreiro',
-        strength: 15,
-        intelligence: 10,
-        dexterity: 10
+        strength: 0,
+        intelligence: 0,
+        dexterity: 0
       });
       fetchData();
     } catch (err: any) {
@@ -102,23 +118,38 @@ export const Heroes: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-xl">Carregando...</div>
-      </div>
+      <>
+        <HeroWidget />
+        <Navbar />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-xl">Carregando...</div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Meus Heróis</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition"
-        >
-          ➕ Criar Novo Herói
-        </button>
-      </div>
+    <>
+      <HeroWidget />
+      <Navbar />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <button
+              onClick={() => navigate(-1)}
+              className="mb-4 text-gray-400 hover:text-white flex items-center gap-2 transition"
+            >
+              ← Voltar
+            </button>
+            <h1 className="text-4xl font-bold">Meus Heróis</h1>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition"
+          >
+            ➕ Criar Novo Herói
+          </button>
+        </div>
 
       {error && (
         <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-6">
@@ -172,7 +203,7 @@ export const Heroes: React.FC = () => {
                     <span className="font-bold text-green-400">{hero.dexterity}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">🪙 Ouro:</span>
+                    <span className="text-gray-400">💰 Ouro:</span>
                     <span className="font-bold text-yellow-400">{hero.gold}</span>
                   </div>
                 </div>
@@ -231,7 +262,7 @@ export const Heroes: React.FC = () => {
                     <span className="font-bold">{hero.dexterity}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">🪙 Ouro:</span>
+                    <span className="text-gray-400">💰 Ouro:</span>
                     <span className="font-bold">{hero.gold}</span>
                   </div>
                 </div>
@@ -301,42 +332,124 @@ export const Heroes: React.FC = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">💪 Força</label>
+              {/* Points System */}
+              <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-lg p-4 border border-amber-700/30 mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-semibold text-amber-400">⭐ Pontos de Atributo</span>
+                  <span className={`text-2xl font-bold ${remainingPoints < 0 ? 'text-red-400' : remainingPoints === 0 ? 'text-green-400' : 'text-amber-400'}`}>
+                    {remainingPoints}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Você tem <strong>{TOTAL_POINTS}</strong> pontos para distribuir. Cada atributo deve ter no mínimo {MIN_STAT} pontos (balanceamento obrigatório).
+                </p>
+                {remainingPoints < 0 && (
+                  <p className="text-xs text-red-400 mt-2 font-semibold">⚠️ Você excedeu o limite de pontos!</p>
+                )}
+                {!canCreate && remainingPoints === 0 && (
+                  <p className="text-xs text-red-400 mt-2 font-semibold">⚠️ Cada atributo deve ter no mínimo {MIN_STAT} pontos!</p>
+                )}
+              </div>
+
+              {/* Attribute Sliders */}
+              <div className="space-y-4">
+                {/* Strength */}
+                <div className="bg-gray-800/50 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-semibold">💪 Força</label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewHero({ ...newHero, strength: Math.max(MIN_STAT, newHero.strength - 1) })}
+                        className="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition"
+                      >
+                        -
+                      </button>
+                      <span className="w-12 text-center font-bold text-xl">{newHero.strength}</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewHero({ ...newHero, strength: Math.min(MAX_STAT, newHero.strength + 1) })}
+                        className="w-8 h-8 bg-green-600 hover:bg-green-700 rounded-lg font-bold transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                   <input
-                    type="number"
-                    min="5"
-                    max="20"
+                    type="range"
+                    min={MIN_STAT}
+                    max={MAX_STAT}
                     value={newHero.strength}
                     onChange={(e) => setNewHero({ ...newHero, strength: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
-                    required
+                    className="w-full accent-red-600"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Dano físico e resistência</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2">🧠 Int</label>
+
+                {/* Intelligence */}
+                <div className="bg-gray-800/50 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-semibold">🧠 Inteligência</label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewHero({ ...newHero, intelligence: Math.max(MIN_STAT, newHero.intelligence - 1) })}
+                        className="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition"
+                      >
+                        -
+                      </button>
+                      <span className="w-12 text-center font-bold text-xl">{newHero.intelligence}</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewHero({ ...newHero, intelligence: Math.min(MAX_STAT, newHero.intelligence + 1) })}
+                        className="w-8 h-8 bg-green-600 hover:bg-green-700 rounded-lg font-bold transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                   <input
-                    type="number"
-                    min="5"
-                    max="20"
+                    type="range"
+                    min={MIN_STAT}
+                    max={MAX_STAT}
                     value={newHero.intelligence}
                     onChange={(e) => setNewHero({ ...newHero, intelligence: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
-                    required
+                    className="w-full accent-blue-600"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Poder mágico e descobertas</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2">🎯 Dex</label>
+
+                {/* Dexterity */}
+                <div className="bg-gray-800/50 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-semibold">🎯 Destreza</label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewHero({ ...newHero, dexterity: Math.max(MIN_STAT, newHero.dexterity - 1) })}
+                        className="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition"
+                      >
+                        -
+                      </button>
+                      <span className="w-12 text-center font-bold text-xl">{newHero.dexterity}</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewHero({ ...newHero, dexterity: Math.min(MAX_STAT, newHero.dexterity + 1) })}
+                        className="w-8 h-8 bg-green-600 hover:bg-green-700 rounded-lg font-bold transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                   <input
-                    type="number"
-                    min="5"
-                    max="20"
+                    type="range"
+                    min={MIN_STAT}
+                    max={MAX_STAT}
                     value={newHero.dexterity}
                     onChange={(e) => setNewHero({ ...newHero, dexterity: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
-                    required
+                    className="w-full accent-green-600"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Precisão e esquiva</p>
                 </div>
               </div>
 
@@ -350,15 +463,23 @@ export const Heroes: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg transition font-bold"
+                  disabled={!canCreate}
+                  className={`flex-1 py-3 rounded-lg transition font-bold ${
+                    !canCreate
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-purple-600 hover:bg-purple-700 text-white'
+                  }`}
                 >
-                  Criar Herói
+                  {remainingPoints !== 0 ? '⚠️ Distribua todos os pontos' : 
+                   !canCreate ? `⚠️ Mínimo ${MIN_STAT} em cada atributo` : 
+                   '✨ Criar Herói'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };

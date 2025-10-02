@@ -180,10 +180,15 @@ public class HeroesController : ControllerBase
     {
         var hero = _mapper.Map<Hero>(request);
         
+        // ⚠️ FORÇAR: Todo herói começa no nível 0 com 0 XP e 100 gold inicial
+        hero.Level = 0;
+        hero.Experience = 0;
+        hero.Gold = 100; // Um pouco de ouro inicial para começar
+        
         _context.Heroes.Add(hero);
         await _context.SaveChangesAsync();
         
-        _logger.LogInformation("Herói {Name} criado com ID {Id}", hero.Name, hero.Id);
+        _logger.LogInformation("Herói {Name} criado com ID {Id} (Nível 0, 0 XP)", hero.Name, hero.Id);
         
         var heroDto = _mapper.Map<HeroDto>(hero);
         return CreatedAtAction(nameof(GetById), new { id = hero.Id }, heroDto);

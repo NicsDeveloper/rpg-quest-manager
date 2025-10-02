@@ -6,6 +6,7 @@ export interface UserInfo {
   email: string;
   role: string;
   hasSeenTutorial: boolean;
+  gold: number;
   createdAt: string;
 }
 

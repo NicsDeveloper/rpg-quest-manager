@@ -10,43 +10,61 @@ interface TutorialProps {
 const tutorialSteps = [
   {
     title: '🎮 Bem-vindo ao RPG Quest Manager!',
-    content: 'Prepare-se para uma aventura épica! Vou te mostrar como funciona tudo por aqui.',
+    content: 'Prepare-se para uma aventura épica de RPG estratégico! Este tutorial vai te ensinar tudo sobre o jogo: criação de heróis, combate com dados, party e muito mais!',
     icon: '🎉',
     color: 'from-purple-600 to-purple-700'
   },
   {
-    title: '👤 Seu Perfil de Herói',
-    content: 'Todo jogador possui um herói! Acesse "Meu Perfil" para ver seus atributos, nível, inventário e missões aceitas. Conforme você completa missões, seu herói ganha experiência e sobe de nível!',
-    icon: '⚔️',
+    title: '⚔️ Crie Seu Primeiro Herói',
+    content: 'Você começa sem heróis! Acesse "Heróis" no menu para criar seu primeiro aventureiro. Escolha a classe (Guerreiro, Mago, Arqueiro, Paladino, Assassino) e distribua estrategicamente 30 pontos entre Força, Inteligência e Destreza. Mínimo 3 pontos em cada atributo para balanceamento!',
+    icon: '🧙',
     color: 'from-blue-600 to-blue-700'
   },
   {
-    title: '📚 Catálogo de Missões',
-    content: 'No menu "Missões", você encontra o catálogo completo! Aceite missões que correspondam ao seu nível e classe. Missões bloqueadas 🔒 ficam disponíveis quando você evoluir!',
-    icon: '📖',
+    title: '💰 Ouro Compartilhado',
+    content: 'Você começa com 100 moedas de ouro! O ouro é do PLAYER (você), não do herói, então é compartilhado entre todos os seus heróis. Use-o para comprar dados mágicos na loja!',
+    icon: '💎',
     color: 'from-amber-600 to-orange-600'
   },
   {
-    title: '🎯 Completando Missões',
-    content: 'Após aceitar uma missão, um administrador irá completá-la para você. Você receberá ouro, experiência e itens como recompensa!',
-    icon: '✨',
-    color: 'from-green-600 to-green-700'
-  },
-  {
-    title: '🎊 Level Up!',
-    content: 'Quando subir de nível, você ganha: +2 em todos os atributos, ouro extra e acesso a novas missões! Uma notificação te avisará sobre as novidades.',
-    icon: '📈',
-    color: 'from-pink-600 to-pink-700'
-  },
-  {
-    title: '🔔 Notificações',
-    content: 'Fique de olho no sino no topo da tela! Ele te avisa sobre level ups e novas missões disponíveis. Clique nele para ver suas notificações.',
-    icon: '🔔',
+    title: '🎲 Sistema de Combate com Dados',
+    content: 'As batalhas funcionam com dados! Compre dados D6, D10, D12 e D20 na loja. Cada inimigo requer um tipo de dado e uma rolagem mínima. Role os dados para vencer! Dados são consumidos ao usar, então compre com sabedoria!',
+    icon: '⚡',
     color: 'from-red-600 to-red-700'
   },
   {
-    title: '🚀 Pronto para Começar!',
-    content: 'Agora você está pronto para sua jornada épica! Explore o mundo, aceite missões e torne-se uma lenda!',
+    title: '🛡️ Sistema de Party',
+    content: 'Seu primeiro herói entra automaticamente na party. Você pode ter até 3 heróis ativos! Mais heróis = mais força no combate, mas as recompensas diminuem. Para criar mais heróis, seu primeiro precisa atingir nível 5+.',
+    icon: '👥',
+    color: 'from-green-600 to-green-700'
+  },
+  {
+    title: '📚 Aceite Missões e Lute!',
+    content: 'No Catálogo de Missões, aceite quests adequadas ao seu nível e classe. Clique em "Ir para Missão" para lutar! Escolha o dado certo, role e derrote os inimigos. Ganhe XP, ouro e itens épicos! Bosses dropam itens raros e lendários!',
+    icon: '⚔️',
+    color: 'from-purple-600 to-purple-700'
+  },
+  {
+    title: '📦 Inventário e Equipamentos',
+    content: 'Itens que você ganhar vão para o inventário. Acesse "Meu Perfil" para equipar e desequipar itens nos seus heróis. Itens dão bônus de atributos e melhoram seu poder de combate!',
+    icon: '🎒',
+    color: 'from-indigo-600 to-indigo-700'
+  },
+  {
+    title: '📈 Progressão e Níveis',
+    content: 'Seu herói começa no nível 0! A cada missão completada, ganha experiência. Ao subir de nível, seus atributos melhoram e novas missões ficam disponíveis. O nível máximo é 20!',
+    icon: '⭐',
+    color: 'from-pink-600 to-pink-700'
+  },
+  {
+    title: '🔔 Notificações e Dicas',
+    content: 'O sino no topo te avisa sobre level ups, novas quests disponíveis e recompensas. O widget do herói no canto superior esquerdo mostra suas informações em tempo real. Passe o mouse sobre ele para ver mais detalhes!',
+    icon: '💡',
+    color: 'from-cyan-600 to-cyan-700'
+  },
+  {
+    title: '🚀 Pronto para a Aventura!',
+    content: 'Agora você sabe tudo! Comece criando seu herói, compre alguns dados, aceite sua primeira missão e mostre sua estratégia em combate. Boa sorte, aventureiro! 🎯',
     icon: '🏆',
     color: 'from-amber-500 to-orange-600'
   }

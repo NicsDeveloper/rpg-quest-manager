@@ -8,6 +8,7 @@ public class User
     public string Email { get; set; } = string.Empty;
     public string Role { get; set; } = "Player";
     public bool HasSeenTutorial { get; set; } = false;
+    public int Gold { get; set; } = 100; // Ouro do player (compartilhado entre heróis)
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
