@@ -1,0 +1,1031 @@
+{
+	"info": {
+		"_postman_id": "rpg-quest-manager-collection",
+		"name": "🐉 RPG Quest Manager API",
+		"description": "Collection completa para testar a API do RPG Quest Manager com autenticação JWT, gerenciamento de heróis, quests, inimigos e inventário.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "🔐 Autenticação",
+			"item": [
+				{
+					"name": "Registrar Novo Usuário",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"jwt_token\", jsonData.token);",
+									"    pm.environment.set(\"user_id\", jsonData.userId);",
+									"    console.log(\"Token JWT salvo: \" + jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"herouser\",\n  \"email\": \"hero@eldoria.com\",\n  \"password\": \"senha123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Registra um novo usuário no sistema e retorna o token JWT automaticamente."
+					},
+					"response": []
+				},
+				{
+					"name": "Login (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"jwt_token\", jsonData.token);",
+									"    pm.environment.set(\"user_id\", jsonData.userId);",
+									"    console.log(\"✅ Login bem-sucedido! Token salvo.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica com usuário admin (criado pelo seeder) e salva o token JWT."
+					},
+					"response": []
+				},
+				{
+					"name": "Login (Player1)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"jwt_token\", jsonData.token);",
+									"    pm.environment.set(\"user_id\", jsonData.userId);",
+									"    console.log(\"✅ Login bem-sucedido! Token salvo.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"player1\",\n  \"password\": \"senha123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica com usuário player1 (criado pelo seeder)."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints de autenticação e registro. Execute o Login primeiro para obter o token JWT."
+		},
+		{
+			"name": "⚔️ Heróis",
+			"item": [
+				{
+					"name": "Listar Todos os Heróis",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/heroes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"heroes"
+							]
+						},
+						"description": "Lista todos os heróis cadastrados no sistema com seus atributos, nível e XP."
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Herói por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/heroes/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"heroes",
+								"1"
+							]
+						},
+						"description": "Retorna os detalhes completos de um herói específico."
+					},
+					"response": []
+				},
+				{
+					"name": "Top 10 Heróis Mais Fortes (CACHED)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/heroes/strongest?limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"heroes",
+								"strongest"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Quantidade de heróis no ranking"
+								}
+							]
+						},
+						"description": "Retorna o ranking dos heróis mais fortes (por nível e XP). Este endpoint usa cache Redis por 10 minutos."
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Novo Herói",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Thorin\",\n  \"class\": \"Guerreiro\",\n  \"strength\": 18,\n  \"intelligence\": 10,\n  \"dexterity\": 14\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/heroes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"heroes"
+							]
+						},
+						"description": "Cria um novo herói. Classes disponíveis: Guerreiro, Mago, Arqueiro, Paladino, Ladino."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Herói",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Thorin Escudo de Carvalho\",\n  \"class\": \"Guerreiro\",\n  \"strength\": 20,\n  \"intelligence\": 12,\n  \"dexterity\": 15\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/heroes/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"heroes",
+								"1"
+							]
+						},
+						"description": "Atualiza os dados de um herói existente."
+					},
+					"response": []
+				},
+				{
+					"name": "Deletar Herói",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/heroes/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"heroes",
+								"1"
+							]
+						},
+						"description": "Remove um herói do sistema."
+					},
+					"response": []
+				},
+				{
+					"name": "Adicionar Item ao Inventário",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"heroId\": 1,\n  \"itemId\": 1,\n  \"quantity\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/heroes/inventory/add",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"heroes",
+								"inventory",
+								"add"
+							]
+						},
+						"description": "Adiciona um item ao inventário do herói."
+					},
+					"response": []
+				},
+				{
+					"name": "Equipar Item",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"heroId\": 1,\n  \"itemId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/heroes/inventory/equip",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"heroes",
+								"inventory",
+								"equip"
+							]
+						},
+						"description": "Equipa um item do inventário do herói."
+					},
+					"response": []
+				},
+				{
+					"name": "Desequipar Item",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"heroId\": 1,\n  \"itemId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/heroes/inventory/unequip",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"heroes",
+								"inventory",
+								"unequip"
+							]
+						},
+						"description": "Remove um item equipado do herói."
+					},
+					"response": []
+				}
+			],
+			"description": "Gerenciamento completo de heróis incluindo atributos, níveis e inventário."
+		},
+		{
+			"name": "🎯 Quests",
+			"item": [
+				{
+					"name": "Listar Todas as Quests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quests",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"quests"
+							]
+						},
+						"description": "Lista todas as quests disponíveis com suas recompensas e inimigos."
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Quest por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quests/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"quests",
+								"1"
+							]
+						},
+						"description": "Retorna os detalhes completos de uma quest específica."
+					},
+					"response": []
+				},
+				{
+					"name": "Quests Mais Jogadas (CACHED)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quests/most-played?limit=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"quests",
+								"most-played"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						},
+						"description": "Retorna as quests mais completadas. Cache Redis de 10 minutos."
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Nova Quest",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Defesa da Vila\",\n  \"description\": \"Proteja a vila dos bandidos que a ameaçam\",\n  \"difficulty\": \"Normal\",\n  \"experienceReward\": 150,\n  \"goldReward\": 75\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quests",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"quests"
+							]
+						},
+						"description": "Cria uma nova quest. Dificuldades: Fácil, Normal, Médio, Difícil, Muito Difícil, Épico, Lendário, Mítico, Divino."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Quest",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Defesa Épica da Vila\",\n  \"description\": \"Proteja a vila de um ataque massivo de orcs\",\n  \"difficulty\": \"Difícil\",\n  \"experienceReward\": 300,\n  \"goldReward\": 150\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quests/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"quests",
+								"1"
+							]
+						},
+						"description": "Atualiza uma quest existente."
+					},
+					"response": []
+				},
+				{
+					"name": "Deletar Quest",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quests/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"quests",
+								"1"
+							]
+						},
+						"description": "Remove uma quest do sistema."
+					},
+					"response": []
+				},
+				{
+					"name": "🔥 Completar Quest (Level Up Automático)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"heroId\": 12,\n  \"questId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quests/complete",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"quests",
+								"complete"
+							]
+						},
+						"description": "Completa uma quest e aplica recompensas ao herói. O herói sobe de nível automaticamente se tiver XP suficiente! Publica evento no RabbitMQ."
+					},
+					"response": []
+				}
+			],
+			"description": "Gerenciamento de quests e sistema de conclusão com progressão automática de heróis."
+		},
+		{
+			"name": "👹 Inimigos",
+			"item": [
+				{
+					"name": "Listar Todos os Inimigos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/enemies",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"enemies"
+							]
+						},
+						"description": "Lista todos os inimigos cadastrados."
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Inimigo por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/enemies/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"enemies",
+								"1"
+							]
+						},
+						"description": "Retorna os detalhes de um inimigo específico."
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Novo Inimigo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Troll das Montanhas\",\n  \"type\": \"Gigante\",\n  \"power\": 45,\n  \"health\": 150\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/enemies",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"enemies"
+							]
+						},
+						"description": "Cria um novo inimigo no sistema."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Inimigo",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Troll das Montanhas Enfurecido\",\n  \"type\": \"Gigante\",\n  \"power\": 60,\n  \"health\": 200\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/enemies/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"enemies",
+								"1"
+							]
+						},
+						"description": "Atualiza um inimigo existente."
+					},
+					"response": []
+				},
+				{
+					"name": "Deletar Inimigo",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/enemies/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"enemies",
+								"1"
+							]
+						},
+						"description": "Remove um inimigo do sistema."
+					},
+					"response": []
+				}
+			],
+			"description": "CRUD completo de inimigos do jogo."
+		},
+		{
+			"name": "💰 Recompensas",
+			"item": [
+				{
+					"name": "Listar Todas as Recompensas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/rewards",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rewards"
+							]
+						},
+						"description": "Lista todas as recompensas cadastradas."
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Recompensa por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/rewards/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rewards",
+								"1"
+							]
+						},
+						"description": "Retorna os detalhes de uma recompensa específica."
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Nova Recompensa",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"questId\": 1,\n  \"gold\": 100,\n  \"experience\": 200,\n  \"itemName\": \"Espada de Aço\",\n  \"itemDescription\": \"Uma espada bem forjada\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/rewards",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rewards"
+							]
+						},
+						"description": "Cria uma nova recompensa vinculada a uma quest."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Recompensa",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"questId\": 1,\n  \"gold\": 150,\n  \"experience\": 250,\n  \"itemName\": \"Espada de Aço Reforçada\",\n  \"itemDescription\": \"Uma espada magistralmente forjada\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/rewards/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rewards",
+								"1"
+							]
+						},
+						"description": "Atualiza uma recompensa existente."
+					},
+					"response": []
+				},
+				{
+					"name": "Deletar Recompensa",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/rewards/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rewards",
+								"1"
+							]
+						},
+						"description": "Remove uma recompensa do sistema."
+					},
+					"response": []
+				}
+			],
+			"description": "Gerenciamento de recompensas vinculadas às quests."
+		},
+		{
+			"name": "🗡️ Itens",
+			"item": [
+				{
+					"name": "Listar Todos os Itens",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/items",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"items"
+							]
+						},
+						"description": "Lista todos os itens disponíveis no jogo."
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Item por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/items/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"items",
+								"1"
+							]
+						},
+						"description": "Retorna os detalhes de um item específico."
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Novo Item",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Machado de Batalha\",\n  \"description\": \"Um machado pesado e poderoso\",\n  \"type\": \"Arma\",\n  \"bonusStrength\": 12,\n  \"bonusIntelligence\": 0,\n  \"bonusDexterity\": 5,\n  \"value\": 200\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/items",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"items"
+							]
+						},
+						"description": "Cria um novo item. Tipos: Arma, Armadura, Acessório, Consumível."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Machado de Batalha Lendário\",\n  \"description\": \"Um machado forjado por mestres anões\",\n  \"type\": \"Arma\",\n  \"bonusStrength\": 18,\n  \"bonusIntelligence\": 0,\n  \"bonusDexterity\": 8,\n  \"value\": 500\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/items/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"items",
+								"1"
+							]
+						},
+						"description": "Atualiza um item existente."
+					},
+					"response": []
+				},
+				{
+					"name": "Deletar Item",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/items/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"items",
+								"1"
+							]
+						},
+						"description": "Remove um item do sistema."
+					},
+					"response": []
+				}
+			],
+			"description": "CRUD completo de itens equipáveis e consumíveis."
+		},
+		{
+			"name": "💚 Health Check",
+			"item": [
+				{
+					"name": "Verificar Saúde da API",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Verifica se a API, PostgreSQL e Redis estão funcionando corretamente."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoint de health check para monitoramento da aplicação."
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+
