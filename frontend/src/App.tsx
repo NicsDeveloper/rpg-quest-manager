@@ -11,6 +11,8 @@ import { Quests } from './pages/Quests';
 import { QuestCatalog } from './pages/QuestCatalog';
 import { Items } from './pages/Items';
 import { Enemies } from './pages/Enemies';
+import { Combat } from './pages/Combat';
+import { DiceShop } from './pages/DiceShop';
 
 const App: React.FC = () => {
   return (
@@ -79,6 +81,24 @@ const App: React.FC = () => {
             element={
               <PrivateRoute adminOnly>
                 <Enemies />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/combat"
+            element={
+              <PrivateRoute>
+                <Combat />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/dice-shop"
+            element={
+              <PrivateRoute>
+                <DiceShop />
               </PrivateRoute>
             }
           />

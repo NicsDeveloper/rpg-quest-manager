@@ -35,6 +35,12 @@ export const Navbar: React.FC = () => {
           <Link to="/quest-catalog" className="text-gray-300 hover:text-amber-500 font-semibold transition-colors">
             📚 Missões
           </Link>
+          <Link to="/combat" className="text-red-400 hover:text-red-300 font-bold transition-colors">
+            ⚔️ Combate
+          </Link>
+          <Link to="/dice-shop" className="text-yellow-400 hover:text-yellow-300 font-semibold transition-colors">
+            🎲 Loja de Dados
+          </Link>
           {isAdmin && (
             <Link to="/quests" className="text-gray-300 hover:text-amber-500 transition-colors text-sm">
               (Admin Panel)
