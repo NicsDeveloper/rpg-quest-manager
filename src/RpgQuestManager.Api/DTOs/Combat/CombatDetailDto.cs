@@ -31,6 +31,10 @@ public class CombatDetailDto
     public int ConsecutiveFailures { get; set; }
     public int ComboMultiplier { get; set; }
     public string LastAction { get; set; } = string.Empty;
+    
+    // Sistema de Status Effects
+    public List<StatusEffectDto> HeroStatusEffects { get; set; } = new();
+    public List<StatusEffectDto> EnemyStatusEffects { get; set; } = new();
 }
 
 public class HeroCombatInfo

@@ -69,6 +69,19 @@ export interface EnemyCombatInfo {
   isBoss: boolean;
 }
 
+export interface StatusEffect {
+  id: number;
+  combatSessionId: number;
+  heroId?: number;
+  enemyId?: number;
+  type: string;
+  duration: number;
+  intensity: number;
+  description: string;
+  isActive: boolean;
+  expiresAt: string;
+}
+
 export interface CombatLog {
   id: number;
   action: string;
@@ -132,6 +145,10 @@ export interface CombatDetail {
     icon: string;
     description: string;
   };
+  
+  // Sistema de Status Effects
+  heroStatusEffects?: StatusEffect[];
+  enemyStatusEffects?: StatusEffect[];
 }
 
 export interface RollDiceRequest {

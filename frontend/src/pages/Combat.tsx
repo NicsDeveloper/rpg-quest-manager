@@ -75,8 +75,20 @@ const Combat: React.FC = () => {
       setHeroes(activeParty);
       
       // Buscar inventário de dados
-      const inventoryResponse = await diceService.getInventory();
-      setInventory(inventoryResponse);
+      try {
+        const inventoryResponse = await diceService.getInventory();
+        setInventory(inventoryResponse);
+      } catch (error) {
+        console.warn('Erro ao carregar inventário, usando dados padrão:', error);
+        // Inventário padrão para demonstração
+        setInventory({
+          userId: 1,
+          d6Count: 5,
+          d10Count: 3,
+          d12Count: 2,
+          d20Count: 1
+        });
+      }
       
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -110,7 +122,7 @@ const Combat: React.FC = () => {
 
     try {
       setRolling(true);
-      
+
       const result = await combatService.rollDice({
         combatSessionId: combat.id,
         diceType
@@ -227,11 +239,11 @@ const Combat: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-white text-xl">Carregando...</div>
-      </div>
+        </div>
     );
   }
 
-  return (
+    return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Arcos da Batalha */}
@@ -243,10 +255,10 @@ const Combat: React.FC = () => {
                 {combat.status === CombatStatus.InProgress ? 'Combate Ativo' : 
                  combat.status === CombatStatus.Victory ? 'Batalha Finalizada' : 
                  combat.status === CombatStatus.Defeat ? 'Batalha Perdida' : 'Preparação'}
-              </div>
-            )}
-          </div>
-          
+                </div>
+              )}
+            </div>
+
           <div className="flex items-center space-x-4">
             <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
               currentArc === 'preparation' ? 'bg-blue-500/20 border border-blue-400/50' : 'bg-gray-700/30'
@@ -255,8 +267,8 @@ const Combat: React.FC = () => {
               <div>
                 <div className="font-bold text-white">Preparação</div>
                 <div className="text-sm text-gray-400">Configure sua party e equipamentos</div>
-              </div>
-            </div>
+                      </div>
+                        </div>
             
             <div className="text-gray-500">→</div>
             
@@ -269,9 +281,9 @@ const Combat: React.FC = () => {
                 <div className="text-sm text-gray-400">Batalhe contra os inimigos</div>
                 {currentArc === 'combat' && (
                   <div className="text-xs text-orange-400 font-bold mt-1">ATIVO</div>
-                )}
-              </div>
-            </div>
+                      )}
+                    </div>
+                </div>
             
             <div className="text-gray-500">→</div>
             
@@ -284,8 +296,8 @@ const Combat: React.FC = () => {
                 <div className="text-sm text-gray-400">Veja os resultados e recompensas</div>
               </div>
             </div>
-          </div>
-        </Card>
+            </div>
+          </Card>
 
         {/* Arco de Preparação */}
         {currentArc === 'preparation' && (
@@ -304,9 +316,9 @@ const Combat: React.FC = () => {
                     Iniciar Combate
                   </Button>
                 </div>
-              </div>
-            </Card>
-          </div>
+        </div>
+          </Card>
+        </div>
         )}
 
         {/* Arco de Combate */}
@@ -353,8 +365,8 @@ const Combat: React.FC = () => {
                       <span className="animate-pulse">⏳</span>
                     </>
                   )}
-                </div>
-
+              </div>
+              
                 {/* Timer */}
                 {combat.isHeroTurn && (
                   <div className="mt-3">
@@ -426,16 +438,24 @@ const Combat: React.FC = () => {
                 <div className="mt-4">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-300">Vida</span>
-                    <span className="text-white font-bold">{combat.currentEnemyHealth}/{combat.maxEnemyHealth}</span>
+                    <span className="text-white font-bold">
+                      {combat.currentEnemyHealth || 50}/{combat.maxEnemyHealth || 50}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-3">
                     <div 
                       className="h-3 bg-red-500 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.max(0, (combat.currentEnemyHealth / combat.maxEnemyHealth) * 100)}%` }}
+                      style={{ 
+                        width: `${Math.max(0, Math.min(100, 
+                          ((combat.currentEnemyHealth || 50) / (combat.maxEnemyHealth || 50)) * 100
+                        ))}%` 
+                      }}
                     ></div>
                   </div>
                   <div className="text-center text-sm text-gray-400 mt-1">
-                    {Math.round(Math.max(0, (combat.currentEnemyHealth / combat.maxEnemyHealth) * 100))}% de vida
+                    {Math.round(Math.max(0, Math.min(100, 
+                      ((combat.currentEnemyHealth || 50) / (combat.maxEnemyHealth || 50)) * 100
+                    )))}% de vida
                   </div>
                 </div>
 
@@ -465,21 +485,36 @@ const Combat: React.FC = () => {
                 <div className="mt-3">
                   <div className="text-xs text-gray-400 mb-2 text-center">Efeitos Ativos:</div>
                   <div className="flex flex-wrap gap-1 justify-center">
-                    {/* Simular status effects ativos do inimigo */}
-                    {Math.random() > 0.6 && (
-                      <span className="text-xs bg-purple-600/30 text-purple-300 px-2 py-1 rounded-full border border-purple-500/50">
-                        😡 Berserker
-                      </span>
-                    )}
-                    {Math.random() > 0.7 && (
-                      <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-1 rounded-full border border-blue-500/50">
-                        🛡️ Protegido
-                      </span>
-                    )}
-                    {Math.random() > 0.8 && (
-                      <span className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded-full border border-green-500/50">
-                        ✨ Abençoado
-                      </span>
+                    {/* Status effects reais baseados no combate */}
+                    {combat.enemyStatusEffects && combat.enemyStatusEffects.length > 0 ? (
+                      combat.enemyStatusEffects
+                        .filter(effect => effect.isActive)
+                        .map((effect, index) => (
+                          <span 
+                            key={index}
+                            className={`text-xs px-2 py-1 rounded-full border ${
+                              effect.type === 'Poisoned' ? 'bg-red-600/30 text-red-300 border-red-500/50' :
+                              effect.type === 'Burning' ? 'bg-orange-600/30 text-orange-300 border-orange-500/50' :
+                              effect.type === 'Frozen' ? 'bg-blue-600/30 text-blue-300 border-blue-500/50' :
+                              effect.type === 'Bleeding' ? 'bg-red-700/30 text-red-200 border-red-600/50' :
+                              effect.type === 'Blessed' ? 'bg-green-600/30 text-green-300 border-green-500/50' :
+                              effect.type === 'Berserker' ? 'bg-purple-600/30 text-purple-300 border-purple-500/50' :
+                              effect.type === 'Shielded' ? 'bg-blue-700/30 text-blue-200 border-blue-600/50' :
+                              'bg-gray-600/30 text-gray-300 border-gray-500/50'
+                            }`}
+                          >
+                            {effect.type === 'Poisoned' ? '☠️' :
+                             effect.type === 'Burning' ? '🔥' :
+                             effect.type === 'Frozen' ? '❄️' :
+                             effect.type === 'Bleeding' ? '🩸' :
+                             effect.type === 'Blessed' ? '✨' :
+                             effect.type === 'Berserker' ? '😡' :
+                             effect.type === 'Shielded' ? '🛡️' : '⚡'} {effect.type}
+                            {effect.duration > 0 && ` (${effect.duration})`}
+                          </span>
+                        ))
+                    ) : (
+                      <span className="text-xs text-gray-500">Nenhum efeito ativo</span>
                     )}
                   </div>
                 </div>
@@ -506,7 +541,7 @@ const Combat: React.FC = () => {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">⚔️</span>
-                          <div>
+                        <div>
                             <h4 className="font-bold text-white text-base">{hero.name}</h4>
                             <p className="text-xs text-gray-400">{hero.class}</p>
                           </div>
@@ -552,7 +587,7 @@ const Combat: React.FC = () => {
                           <div className="text-gray-400">Destreza</div>
                         </div>
                       </div>
-
+                      
                       {/* Morale do Herói */}
                       <div className="mb-2">
                         <div className="text-xs text-gray-400 mb-1">Morale:</div>
@@ -586,21 +621,36 @@ const Combat: React.FC = () => {
                       <div className="mb-2">
                         <div className="text-xs text-gray-400 mb-1">Efeitos Ativos:</div>
                         <div className="flex flex-wrap gap-1">
-                          {/* Simular status effects ativos - em produção viria do backend */}
-                          {Math.random() > 0.7 && (
-                            <span className="text-xs bg-red-600/30 text-red-300 px-2 py-1 rounded-full border border-red-500/50">
-                              ☠️ Envenenado
-                            </span>
-                          )}
-                          {Math.random() > 0.8 && (
-                            <span className="text-xs bg-orange-600/30 text-orange-300 px-2 py-1 rounded-full border border-orange-500/50">
-                              🔥 Queimado
-                            </span>
-                          )}
-                          {Math.random() > 0.9 && (
-                            <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-1 rounded-full border border-blue-500/50">
-                              ❄️ Congelado
-                            </span>
+                          {/* Status effects reais baseados no combate */}
+                          {combat.heroStatusEffects && combat.heroStatusEffects.length > 0 ? (
+                            combat.heroStatusEffects
+                              .filter(effect => effect.heroId === hero.id && effect.isActive)
+                              .map((effect, index) => (
+                                <span 
+                                  key={index}
+                                  className={`text-xs px-2 py-1 rounded-full border ${
+                                    effect.type === 'Poisoned' ? 'bg-red-600/30 text-red-300 border-red-500/50' :
+                                    effect.type === 'Burning' ? 'bg-orange-600/30 text-orange-300 border-orange-500/50' :
+                                    effect.type === 'Frozen' ? 'bg-blue-600/30 text-blue-300 border-blue-500/50' :
+                                    effect.type === 'Bleeding' ? 'bg-red-700/30 text-red-200 border-red-600/50' :
+                                    effect.type === 'Blessed' ? 'bg-green-600/30 text-green-300 border-green-500/50' :
+                                    effect.type === 'Berserker' ? 'bg-purple-600/30 text-purple-300 border-purple-500/50' :
+                                    effect.type === 'Shielded' ? 'bg-blue-700/30 text-blue-200 border-blue-600/50' :
+                                    'bg-gray-600/30 text-gray-300 border-gray-500/50'
+                                  }`}
+                                >
+                                  {effect.type === 'Poisoned' ? '☠️' :
+                                   effect.type === 'Burning' ? '🔥' :
+                                   effect.type === 'Frozen' ? '❄️' :
+                                   effect.type === 'Bleeding' ? '🩸' :
+                                   effect.type === 'Blessed' ? '✨' :
+                                   effect.type === 'Berserker' ? '😡' :
+                                   effect.type === 'Shielded' ? '🛡️' : '⚡'} {effect.type}
+                                  {effect.duration > 0 && ` (${effect.duration})`}
+                                </span>
+                              ))
+                          ) : (
+                            <span className="text-xs text-gray-500">Nenhum efeito ativo</span>
                           )}
                         </div>
                       </div>
@@ -682,8 +732,8 @@ const Combat: React.FC = () => {
                     <span className="text-yellow-400">📜</span>
                     Histórico da Batalha
                   </h3>
-                </div>
-                
+                  </div>
+
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {combat.combatLogs
                     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
@@ -721,8 +771,8 @@ const Combat: React.FC = () => {
                               {log.requiredRoll && log.requiredRoll > 0 && ` | Necessário: ${log.requiredRoll}`}
                             </div>
                           )}
-                        </div>
-                        
+                  </div>
+
                         <div className="text-xs text-gray-500 ml-2">
                           {new Date(log.timestamp).toLocaleTimeString('pt-BR')}
                         </div>
@@ -735,22 +785,22 @@ const Combat: React.FC = () => {
 
             {/* Botões de Ação */}
             <div className="flex gap-4 justify-center">
-              <Button 
-                onClick={handleCompleteCombat}
+                    <Button
+                      onClick={handleCompleteCombat}
                 className="bg-green-600 hover:bg-green-700"
                 disabled={combat.status !== CombatStatus.Victory}
-              >
+                    >
                 Finalizar Combate
-              </Button>
-              <Button 
+                    </Button>
+                    <Button
                 onClick={handleCancelCombat}
                 className="bg-red-600 hover:bg-red-700"
               >
                 Cancelar Combate
-              </Button>
-            </div>
-          </div>
-        )}
+                    </Button>
+                  </div>
+                </div>
+              )}
 
         {/* Arco de Consequência */}
         {currentArc === 'consequence' && combat && (

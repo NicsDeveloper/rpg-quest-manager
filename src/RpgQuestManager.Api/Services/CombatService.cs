@@ -516,6 +516,15 @@ public class CombatService : ICombatService
         var enemyMoraleState = await _context.MoraleStates
             .FirstOrDefaultAsync(m => m.CombatSessionId == combatSession.Id && m.EnemyId.HasValue);
 
+        // Buscar status effects
+        var heroStatusEffects = await _context.StatusEffects
+            .Where(se => se.CombatSessionId == combatSession.Id && se.HeroId.HasValue && se.IsActive)
+            .ToListAsync();
+            
+        var enemyStatusEffects = await _context.StatusEffects
+            .Where(se => se.CombatSessionId == combatSession.Id && se.EnemyId.HasValue && se.IsActive)
+            .ToListAsync();
+
         return new CombatDetailDto
         {
             Id = combatSession.Id,
@@ -563,7 +572,36 @@ public class CombatService : ICombatService
             ConsecutiveSuccesses = combatSession.ConsecutiveSuccesses,
             ConsecutiveFailures = combatSession.ConsecutiveFailures,
             ComboMultiplier = combatSession.ComboMultiplier,
-            LastAction = combatSession.LastAction
+            LastAction = combatSession.LastAction,
+            
+            // Sistema de Status Effects
+            HeroStatusEffects = heroStatusEffects.Select(se => new StatusEffectDto
+            {
+                Id = se.Id,
+                CombatSessionId = se.CombatSessionId,
+                HeroId = se.HeroId,
+                EnemyId = se.EnemyId,
+                Type = se.Type.ToString(),
+                Duration = se.Duration,
+                Intensity = se.Intensity,
+                Description = se.Description,
+                IsActive = se.IsActive,
+                ExpiresAt = se.ExpiresAt ?? DateTime.UtcNow
+            }).ToList(),
+            
+            EnemyStatusEffects = enemyStatusEffects.Select(se => new StatusEffectDto
+            {
+                Id = se.Id,
+                CombatSessionId = se.CombatSessionId,
+                HeroId = se.HeroId,
+                EnemyId = se.EnemyId,
+                Type = se.Type.ToString(),
+                Duration = se.Duration,
+                Intensity = se.Intensity,
+                Description = se.Description,
+                IsActive = se.IsActive,
+                ExpiresAt = se.ExpiresAt ?? DateTime.UtcNow
+            }).ToList()
         };
     }
 
@@ -580,7 +618,7 @@ public class CombatService : ICombatService
 
     private int CalculateAttackPower(Hero hero)
     {
-        var baseAttack = hero.Strength;
+        var baseAttack = Math.Max(1, hero.Strength); // Mínimo de 1 de dano
         var weaponBonus = 0; // Calcular bônus de armas (se implementado)
         return baseAttack + weaponBonus;
     }
@@ -862,10 +900,10 @@ public class CombatService : ICombatService
                 existingEffect.Duration = duration;
                 existingEffect.Intensity = Math.Max(existingEffect.Intensity, intensity);
                 existingEffect.ExpiresAt = DateTime.UtcNow.AddMinutes(duration * 2); // 2 minutos por turno
-                }
             }
-            else
-            {
+        }
+        else
+        {
             // Criar novo efeito
             var statusEffect = new StatusEffect
             {
