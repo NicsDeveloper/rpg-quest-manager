@@ -10,14 +10,9 @@ using System.Security.Claims;
 
 namespace RpgQuestManager.Api.Controllers;
 
-/// <summary>
-/// Gerenciamento de missões (quests) e conclusão com recompensas
-/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Authorize]
-[Produces("application/json")]
-[ApiExplorerSettings(GroupName = "🎯 Quests")]
 public class QuestsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -40,50 +35,89 @@ public class QuestsController : ControllerBase
         _logger = logger;
     }
     
-    /// <summary>
-    /// Obtém todas as quests (Admin vê todas, Player vê apenas as suas)
-    /// </summary>
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<QuestDto>>> GetAll()
+    [HttpGet("catalog")]
+    public async Task<ActionResult<List<QuestDto>>> GetCatalog()
     {
-        var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
-        var userRole = User.FindFirstValue(System.Security.Claims.ClaimTypes.Role);
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userRole = User.FindFirstValue(ClaimTypes.Role);
 
-        IQueryable<Quest> questsQuery = _context.Quests
-            .Include(q => q.Rewards)
-                .ThenInclude(r => r.Item);
+        var quests = await _context.Quests.ToListAsync();
+        var questDtos = _mapper.Map<List<QuestDto>>(quests);
 
         if (userRole != "Admin")
         {
             var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
             
-            if (hero == null)
+            if (hero != null)
             {
-                return Ok(new List<QuestDto>());
+                var acceptedQuestIds = await _context.HeroQuests
+                    .Where(hq => hq.HeroId == hero.Id)
+                    .Select(hq => hq.QuestId)
+                    .ToListAsync();
+
+                foreach (var quest in questDtos)
+                {
+                    quest.IsAccepted = acceptedQuestIds.Contains(quest.Id);
+                    quest.CanAccept = !quest.IsAccepted.Value && 
+                                     hero.Level >= quest.RequiredLevel &&
+                                     (quest.RequiredClass == "Any" || quest.RequiredClass == hero.Class);
+                }
             }
-
-            var heroQuestIds = await _context.HeroQuests
-                .Where(hq => hq.HeroId == hero.Id)
-                .Select(hq => hq.QuestId)
-                .ToListAsync();
-
-            questsQuery = questsQuery.Where(q => heroQuestIds.Contains(q.Id));
         }
 
-        var quests = await questsQuery.ToListAsync();
-        return Ok(_mapper.Map<IEnumerable<QuestDto>>(quests));
+        return Ok(questDtos);
+    }
+
+    [HttpGet("my-quests")]
+    public async Task<ActionResult<List<QuestDto>>> GetMyQuests()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+        
+        if (hero == null)
+        {
+            return Ok(new List<QuestDto>());
+        }
+
+        var heroQuestIds = await _context.HeroQuests
+            .Where(hq => hq.HeroId == hero.Id)
+            .Select(hq => hq.QuestId)
+            .ToListAsync();
+
+        var quests = await _context.Quests
+            .Where(q => heroQuestIds.Contains(q.Id))
+            .ToListAsync();
+
+        var questDtos = _mapper.Map<List<QuestDto>>(quests);
+        
+        foreach (var quest in questDtos)
+        {
+            quest.IsAccepted = true;
+        }
+
+        return Ok(questDtos);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<List<QuestDto>>> GetAll()
+    {
+        var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+        if (userRole == "Admin")
+        {
+            var quests = await _context.Quests.ToListAsync();
+            return Ok(_mapper.Map<List<QuestDto>>(quests));
+        }
+        else
+        {
+            return await GetMyQuests();
+        }
     }
     
-    /// <summary>
-    /// Obtém uma quest por ID
-    /// </summary>
     [HttpGet("{id}")]
     public async Task<ActionResult<QuestDto>> GetById(int id)
     {
-        var quest = await _context.Quests
-            .Include(q => q.Rewards)
-                .ThenInclude(r => r.Item)
-            .FirstOrDefaultAsync(q => q.Id == id);
+        var quest = await _context.Quests.FirstOrDefaultAsync(q => q.Id == id);
         
         if (quest == null)
         {
@@ -93,62 +127,19 @@ public class QuestsController : ControllerBase
         return Ok(_mapper.Map<QuestDto>(quest));
     }
     
-    /// <summary>
-    /// Obtém as quests mais jogadas (cache)
-    /// </summary>
-    [HttpGet("most-played")]
-    public async Task<ActionResult<IEnumerable<object>>> GetMostPlayed([FromQuery] int limit = 10)
-    {
-        var cacheKey = $"quests:most-played:{limit}";
-        var cached = await _cacheService.GetAsync<IEnumerable<object>>(cacheKey);
-        
-        if (cached != null)
-        {
-            _logger.LogInformation("Quests mais jogadas obtidas do cache");
-            return Ok(cached);
-        }
-        
-        var mostPlayed = await _context.HeroQuests
-            .GroupBy(hq => hq.Quest)
-            .OrderByDescending(g => g.Count())
-            .Take(limit)
-            .Select(g => new
-            {
-                Quest = _mapper.Map<QuestDto>(g.Key),
-                CompletionCount = g.Count(hq => hq.IsCompleted),
-                AttemptCount = g.Count()
-            })
-            .ToListAsync();
-        
-        // Salvar no cache por 10 minutos
-        await _cacheService.SetAsync(cacheKey, mostPlayed, TimeSpan.FromMinutes(10));
-        
-        return Ok(mostPlayed);
-    }
-    
-    /// <summary>
-    /// Cria uma nova quest (APENAS ADMIN)
-    /// </summary>
-    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<QuestDto>> Create([FromBody] CreateQuestRequest request)
     {
         var quest = _mapper.Map<Quest>(request);
-        
         _context.Quests.Add(quest);
         await _context.SaveChangesAsync();
         
-        _logger.LogInformation("Quest {Name} criada com ID {Id}", quest.Name, quest.Id);
+        await _cacheService.RemoveAsync("quests:popular:10");
         
-        var questDto = _mapper.Map<QuestDto>(quest);
-        return CreatedAtAction(nameof(GetById), new { id = quest.Id }, questDto);
+        return CreatedAtAction(nameof(GetById), new { id = quest.Id }, _mapper.Map<QuestDto>(quest));
     }
     
-    /// <summary>
-    /// Atualiza uma quest existente (APENAS ADMIN)
-    /// </summary>
-    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<QuestDto>> Update(int id, [FromBody] UpdateQuestRequest request)
@@ -163,15 +154,11 @@ public class QuestsController : ControllerBase
         _mapper.Map(request, quest);
         await _context.SaveChangesAsync();
         
-        _logger.LogInformation("Quest {Id} atualizada", id);
+        await _cacheService.RemoveAsync("quests:popular:10");
         
         return Ok(_mapper.Map<QuestDto>(quest));
     }
     
-    /// <summary>
-    /// Deleta uma quest (APENAS ADMIN)
-    /// </summary>
-    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id)
@@ -186,65 +173,73 @@ public class QuestsController : ControllerBase
         _context.Quests.Remove(quest);
         await _context.SaveChangesAsync();
         
-        _logger.LogInformation("Quest {Id} deletada", id);
+        await _cacheService.RemoveAsync("quests:popular:10");
         
         return NoContent();
     }
-    
-    /// <summary>
-    /// Completa uma quest e aplica recompensas ao herói (🔥 SISTEMA DE PROGRESSÃO AUTOMÁTICA)
-    /// </summary>
-    /// <param name="request">IDs do herói e da quest</param>
-    /// <returns>Quest completada</returns>
-    /// <remarks>
-    /// Este endpoint realiza todo o processo de conclusão de quest:
-    /// 
-    /// 1. Valida se o herói e a quest existem
-    /// 2. Verifica se a quest já foi completada
-    /// 3. Aplica recompensas (ouro e XP)
-    /// 4. **Level Up Automático** se tiver XP suficiente
-    /// 5. Publica evento no RabbitMQ
-    /// 6. Invalida cache do herói
-    /// 
-    /// Exemplo:
-    /// 
-    ///     POST /api/v1/quests/complete
-    ///     {
-    ///         "heroId": 1,
-    ///         "questId": 1
-    ///     }
-    ///     
-    /// ### Sistema de Level Up
-    /// 
-    /// Fórmula de XP por nível: **Nível Atual × 100**
-    /// 
-    /// * Nível 1 → 2: 100 XP
-    /// * Nível 2 → 3: 200 XP
-    /// * Nível 3 → 4: 300 XP
-    /// 
-    /// Ao subir de nível, o herói ganha:
-    /// * +2 Força
-    /// * +2 Inteligência
-    /// * +2 Destreza
-    /// 
-    /// Se tiver XP para múltiplos níveis, sobe todos automaticamente!
-    /// </remarks>
-    /// <response code="200">Quest completada, herói recompensado e pode ter subido de nível</response>
-    /// <response code="400">Herói ou quest não encontrados, ou quest já completada</response>
+
+    [HttpPost("{id}/accept")]
+    public async Task<ActionResult> AcceptQuest(int id)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+        
+        if (hero == null)
+        {
+            return BadRequest(new { message = "Você não possui um herói." });
+        }
+
+        var quest = await _context.Quests.FindAsync(id);
+        
+        if (quest == null)
+        {
+            return NotFound(new { message = "Quest não encontrada." });
+        }
+
+        var alreadyAccepted = await _context.HeroQuests
+            .AnyAsync(hq => hq.HeroId == hero.Id && hq.QuestId == id);
+        
+        if (alreadyAccepted)
+        {
+            return BadRequest(new { message = "Você já aceitou esta quest." });
+        }
+
+        if (hero.Level < quest.RequiredLevel)
+        {
+            return BadRequest(new { message = $"Seu herói precisa estar no nível {quest.RequiredLevel} para aceitar esta quest." });
+        }
+
+        if (quest.RequiredClass != "Any" && quest.RequiredClass != hero.Class)
+        {
+            return BadRequest(new { message = $"Esta quest é apenas para a classe {quest.RequiredClass}." });
+        }
+
+        var heroQuest = new HeroQuest
+        {
+            HeroId = hero.Id,
+            QuestId = id,
+            StartedAt = DateTime.UtcNow,
+            IsCompleted = false
+        };
+
+        _context.HeroQuests.Add(heroQuest);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Herói {HeroName} aceitou a quest {QuestName}", hero.Name, quest.Name);
+
+        return Ok(new { message = $"Quest '{quest.Name}' aceita com sucesso!" });
+    }
+
     [HttpPost("complete")]
     [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(QuestDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<QuestDto>> CompleteQuest([FromBody] CompleteQuestRequest request)
     {
         var result = await _questService.CompleteQuestAsync(request.HeroId, request.QuestId);
         
-        // Invalidar caches relevantes
         await _cacheService.RemoveAsync($"hero:{request.HeroId}");
         await _cacheService.RemoveAsync("heroes:strongest:10");
+        await _cacheService.RemoveAsync("quests:popular:10");
         
-        return Ok(result);
+        return Ok(_mapper.Map<QuestDto>(result));
     }
 }
-

@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<QuestEnemy> QuestEnemies { get; set; }
     public DbSet<Item> Items { get; set; }
     public DbSet<HeroItem> HeroItems { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

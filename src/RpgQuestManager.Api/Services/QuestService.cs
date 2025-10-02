@@ -13,17 +13,20 @@ public class QuestService : IQuestService
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<QuestService> _logger;
     
     public QuestService(
         ApplicationDbContext context, 
         IMapper mapper,
         IPublishEndpoint publishEndpoint,
+        INotificationService notificationService,
         ILogger<QuestService> logger)
     {
         _context = context;
         _mapper = mapper;
         _publishEndpoint = publishEndpoint;
+        _notificationService = notificationService;
         _logger = logger;
     }
     
@@ -108,9 +111,15 @@ public class QuestService : IQuestService
         }
         
         // Verificar level up automático
+        var initialLevel = hero.Level;
         if (hero.CanLevelUp())
         {
             hero.LevelUp();
+            
+            if (hero.Level > initialLevel)
+            {
+                await _notificationService.NotifyLevelUpAsync(hero, initialLevel, hero.Level);
+            }
         }
         
         await _context.SaveChangesAsync();
