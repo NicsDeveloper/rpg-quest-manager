@@ -39,9 +39,6 @@ export interface MyStats {
 export interface CreateHeroData {
   name: string;
   class: string;
-  strength: number;
-  intelligence: number;
-  dexterity: number;
 }
 
 export const profileService = {

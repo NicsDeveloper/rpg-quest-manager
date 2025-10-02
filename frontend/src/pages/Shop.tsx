@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/Navbar';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { shopService, ShopItem } from '../services/shopService';
+import { shopService, ShopItem, ShopDice } from '../services/shopService';
 import { itemService } from '../services/itemService';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Shop: React.FC = () => {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [shopDice, setShopDice] = useState<ShopDice[]>([]);
   const [inventory, setInventory] = useState<ShopItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState<number | null>(null);
+  const [buyingDice, setBuyingDice] = useState<string | null>(null);
   const [using, setUsing] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'shop' | 'inventory'>('shop');
+  const [activeTab, setActiveTab] = useState<'items' | 'dice' | 'inventory'>('items');
 
   useEffect(() => {
     loadData();
@@ -24,12 +24,13 @@ export const Shop: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [shopData, inventoryData] = await Promise.all([
+      const [shopData, diceData] = await Promise.all([
         shopService.getShopItems(),
-        shopService.getInventory()
+        shopService.getShopDice()
       ]);
       setShopItems(shopData);
-      setInventory(inventoryData);
+      setShopDice(diceData);
+      setInventory([]); // Por enquanto, inventário vazio
     } catch (error) {
       console.error('Error loading shop data:', error);
     } finally {
@@ -52,6 +53,24 @@ export const Shop: React.FC = () => {
       alert(error.response?.data?.message || 'Erro ao comprar item');
     } finally {
       setBuying(null);
+    }
+  };
+
+  const handleBuyDice = async (diceType: string, quantity: number = 1) => {
+    try {
+      setBuyingDice(diceType);
+      const result = await shopService.buyDice(diceType, quantity);
+      
+      if (result.success) {
+        alert(result.message);
+        loadData(); // Recarregar dados
+      } else {
+        alert(result.message);
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Erro ao comprar dados');
+    } finally {
+      setBuyingDice(null);
     }
   };
 
@@ -130,7 +149,7 @@ export const Shop: React.FC = () => {
           </p>
           {user && (
             <div className="mt-4 text-yellow-400 text-xl font-bold">
-              💰 {user.gold} Gold Disponível
+              💰 {user.gold || 0} Gold Disponível
             </div>
           )}
         </div>
@@ -139,14 +158,24 @@ export const Shop: React.FC = () => {
         <div className="flex justify-center mb-8">
           <div className="bg-gray-800 rounded-lg p-1 flex">
             <button
-              onClick={() => setActiveTab('shop')}
+              onClick={() => setActiveTab('items')}
               className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                activeTab === 'shop'
+                activeTab === 'items'
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              🛒 Loja
+              🛒 Itens
+            </button>
+            <button
+              onClick={() => setActiveTab('dice')}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                activeTab === 'dice'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              🎲 Dados
             </button>
             <button
               onClick={() => setActiveTab('inventory')}
@@ -161,7 +190,7 @@ export const Shop: React.FC = () => {
           </div>
         </div>
 
-        {activeTab === 'shop' ? (
+        {activeTab === 'items' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {shopItems.map((item) => (
               <Card key={item.id}>
@@ -219,11 +248,49 @@ export const Shop: React.FC = () => {
                     </div>
                     <Button
                       onClick={() => handleBuyItem(item)}
-                      disabled={buying === item.id || (user && user.gold < item.value)}
+                      disabled={buying === item.id || (user && (user.gold || 0) < item.value) || false}
                       variant="success"
                       className="text-sm"
                     >
                       {buying === item.id ? 'Comprando...' : 'Comprar'}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : activeTab === 'dice' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {shopDice.map((dice) => (
+              <Card key={dice.type}>
+                <div className="p-4 rounded-lg bg-gray-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">🎲</span>
+                      <h3 className="text-lg font-bold text-white">
+                        {dice.type}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-blue-900 text-blue-300 px-2 py-1 rounded text-xs">
+                        Possuídos: {dice.owned}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-300 text-sm mb-4">{dice.description}</p>
+
+                  <div className="flex items-center justify-between">
+                    <div className="text-yellow-400 font-bold text-lg">
+                      💰 {dice.price} Gold
+                    </div>
+                    <Button
+                      onClick={() => handleBuyDice(dice.type)}
+                      disabled={buyingDice === dice.type || (user && (user.gold || 0) < dice.price) || false}
+                      variant="success"
+                      className="text-sm"
+                    >
+                      {buyingDice === dice.type ? 'Comprando...' : 'Comprar'}
                     </Button>
                   </div>
                 </div>

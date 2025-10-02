@@ -34,7 +34,7 @@ public class ShopController : ControllerBase
     }
     
     /// <summary>
-    /// Obtém todos os itens disponíveis na loja
+    /// Obtém todos os itens disponíveis na loja (incluindo dados)
     /// </summary>
     [HttpGet("items")]
     public async Task<ActionResult<IEnumerable<ShopItemDto>>> GetShopItems()
@@ -46,6 +46,135 @@ public class ShopController : ControllerBase
             .ToListAsync();
             
         return Ok(_mapper.Map<IEnumerable<ShopItemDto>>(items));
+    }
+    
+    /// <summary>
+    /// Obtém dados disponíveis na loja
+    /// </summary>
+    [HttpGet("dice")]
+    public async Task<ActionResult<IEnumerable<ShopDiceDto>>> GetShopDice()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var diceInventory = await _context.DiceInventories
+            .FirstOrDefaultAsync(di => di.UserId == userId);
+            
+        if (diceInventory == null)
+        {
+            return BadRequest(new { message = "Inventário de dados não encontrado." });
+        }
+        
+        var availableDice = new List<ShopDiceDto>
+        {
+            new ShopDiceDto
+            {
+                Type = "D6",
+                Price = 150,
+                Owned = diceInventory.D6Count,
+                Description = "Dado de 6 lados - padrão para a maioria dos combates"
+            },
+            new ShopDiceDto
+            {
+                Type = "D10",
+                Price = 300,
+                Owned = diceInventory.D10Count,
+                Description = "Dado de 10 lados - para combates avançados"
+            },
+            new ShopDiceDto
+            {
+                Type = "D12",
+                Price = 500,
+                Owned = diceInventory.D12Count,
+                Description = "Dado de 12 lados - para combates épicos"
+            },
+            new ShopDiceDto
+            {
+                Type = "D20",
+                Price = 1000,
+                Owned = diceInventory.D20Count,
+                Description = "Dado de 20 lados - para combates lendários"
+            }
+        };
+        
+        return Ok(availableDice);
+    }
+    
+    /// <summary>
+    /// Compra dados na loja
+    /// </summary>
+    [HttpPost("buy-dice/{diceType}")]
+    public async Task<ActionResult<ShopPurchaseResultDto>> BuyDice(string diceType, [FromQuery] int quantity = 1)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+        
+        if (hero == null)
+        {
+            return BadRequest(new { message = "Você não possui um herói." });
+        }
+        
+        var diceInventory = await _context.DiceInventories
+            .FirstOrDefaultAsync(di => di.UserId == userId);
+            
+        if (diceInventory == null)
+        {
+            return BadRequest(new { message = "Inventário de dados não encontrado." });
+        }
+        
+        var dicePrices = new Dictionary<string, int>
+        {
+            { "D6", 150 },
+            { "D10", 300 },
+            { "D12", 500 },
+            { "D20", 1000 }
+        };
+        
+        if (!dicePrices.ContainsKey(diceType))
+        {
+            return BadRequest(new { message = "Tipo de dado inválido." });
+        }
+        
+        var pricePerDice = dicePrices[diceType];
+        var totalCost = pricePerDice * quantity;
+        
+        if (hero.Gold < totalCost)
+        {
+            return BadRequest(new { message = $"Ouro insuficiente. Necessário: {totalCost}, Disponível: {hero.Gold}" });
+        }
+        
+        // Deduzir ouro
+        hero.Gold -= totalCost;
+        
+        // Adicionar dados ao inventário
+        switch (diceType)
+        {
+            case "D6":
+                diceInventory.D6Count += quantity;
+                break;
+            case "D10":
+                diceInventory.D10Count += quantity;
+                break;
+            case "D12":
+                diceInventory.D12Count += quantity;
+                break;
+            case "D20":
+                diceInventory.D20Count += quantity;
+                break;
+        }
+        
+        await _context.SaveChangesAsync();
+        
+        _logger.LogInformation("🎲 Dados comprados! Herói {HeroName} comprou {Quantity}x {DiceType} por {Cost} gold", 
+            hero.Name, quantity, diceType, totalCost);
+        
+        return Ok(new ShopPurchaseResultDto
+        {
+            Success = true,
+            Message = $"Compra realizada com sucesso! {quantity}x {diceType} adicionado ao inventário.",
+            ItemName = $"{quantity}x {diceType}",
+            Quantity = quantity,
+            TotalCost = totalCost,
+            RemainingGold = hero.Gold
+        });
     }
     
     /// <summary>

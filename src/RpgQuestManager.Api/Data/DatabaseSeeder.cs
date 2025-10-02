@@ -296,7 +296,33 @@ public class DatabaseSeeder
             
             // Poções de XP (Consumíveis que dão XP em porcentagem)
             new Item { Name = "Poção de Experiência Menor", Description = "Concede 5% do XP necessário para o próximo nível", Type = "Poção", Rarity = ItemRarity.Rare, Value = 200, IsConsumable = true, PercentageXpBonus = 0.05m },
-            new Item { Name = "Poção de Experiência Maior", Description = "Concede 10% do XP necessário para o próximo nível", Type = "Poção", Rarity = ItemRarity.Epic, RarityTier = 1, Value = 500, IsConsumable = true, PercentageXpBonus = 0.10m }
+            new Item { Name = "Poção de Experiência Maior", Description = "Concede 10% do XP necessário para o próximo nível", Type = "Poção", Rarity = ItemRarity.Epic, RarityTier = 1, Value = 500, IsConsumable = true, PercentageXpBonus = 0.10m },
+            new Item { Name = "Poção de Experiência Suprema", Description = "Concede 20% do XP necessário para o próximo nível", Type = "Poção", Rarity = ItemRarity.Legendary, RarityTier = 1, Value = 1000, IsConsumable = true, PercentageXpBonus = 0.20m },
+            
+            // Itens de Ajuda para Combate - COMUNS
+            new Item { Name = "Pó de Força", Description = "Aumenta temporariamente a força para combates físicos", Type = "Consumível", Rarity = ItemRarity.Common, Value = 50, IsConsumable = true, BonusStrength = 3 },
+            new Item { Name = "Essência Mágica", Description = "Aumenta temporariamente a inteligência para combates mágicos", Type = "Consumível", Rarity = ItemRarity.Common, Value = 50, IsConsumable = true, BonusIntelligence = 3 },
+            new Item { Name = "Elixir de Agilidade", Description = "Aumenta temporariamente a destreza para combates ágeis", Type = "Consumível", Rarity = ItemRarity.Common, Value = 50, IsConsumable = true, BonusDexterity = 3 },
+            new Item { Name = "Amuleto de Proteção", Description = "Reduz ligeiramente a dificuldade do combate", Type = "Consumível", Rarity = ItemRarity.Common, Value = 75, IsConsumable = true, BonusStrength = 1, BonusIntelligence = 1, BonusDexterity = 1 },
+            
+            // Itens de Ajuda para Combate - RAROS
+            new Item { Name = "Cristal de Poder", Description = "Aumenta significativamente a força para combates físicos", Type = "Consumível", Rarity = ItemRarity.Rare, Value = 150, IsConsumable = true, BonusStrength = 8 },
+            new Item { Name = "Orbe Arcano", Description = "Aumenta significativamente a inteligência para combates mágicos", Type = "Consumível", Rarity = ItemRarity.Rare, Value = 150, IsConsumable = true, BonusIntelligence = 8 },
+            new Item { Name = "Sangue de Dragão", Description = "Aumenta significativamente a destreza para combates ágeis", Type = "Consumível", Rarity = ItemRarity.Rare, Value = 150, IsConsumable = true, BonusDexterity = 8 },
+            new Item { Name = "Talismã da Sorte", Description = "Reduz moderadamente a dificuldade do combate", Type = "Consumível", Rarity = ItemRarity.Rare, Value = 200, IsConsumable = true, BonusStrength = 3, BonusIntelligence = 3, BonusDexterity = 3 },
+            
+            // Itens de Ajuda para Combate - ÉPICOS
+            new Item { Name = "Fúria do Berserker", Description = "Aumenta drasticamente a força para combates físicos", Type = "Consumível", Rarity = ItemRarity.Epic, RarityTier = 1, Value = 400, IsConsumable = true, BonusStrength = 15 },
+            new Item { Name = "Sabedoria Ancestral", Description = "Aumenta drasticamente a inteligência para combates mágicos", Type = "Consumível", Rarity = ItemRarity.Epic, RarityTier = 1, Value = 400, IsConsumable = true, BonusIntelligence = 15 },
+            new Item { Name = "Velocidade do Vento", Description = "Aumenta drasticamente a destreza para combates ágeis", Type = "Consumível", Rarity = ItemRarity.Epic, RarityTier = 1, Value = 400, IsConsumable = true, BonusDexterity = 15 },
+            new Item { Name = "Bênção Divina", Description = "Reduz drasticamente a dificuldade do combate", Type = "Consumível", Rarity = ItemRarity.Epic, RarityTier = 1, Value = 500, IsConsumable = true, BonusStrength = 6, BonusIntelligence = 6, BonusDexterity = 6 },
+            
+            // Itens de Ajuda para Combate - LENDÁRIOS
+            new Item { Name = "Essência do Titã", Description = "Aumenta massivamente a força para combates físicos", Type = "Consumível", Rarity = ItemRarity.Legendary, RarityTier = 1, Value = 800, IsConsumable = true, BonusStrength = 25 },
+            new Item { Name = "Conhecimento dos Deuses", Description = "Aumenta massivamente a inteligência para combates mágicos", Type = "Consumível", Rarity = ItemRarity.Legendary, RarityTier = 1, Value = 800, IsConsumable = true, BonusIntelligence = 25 },
+            new Item { Name = "Reflexos do Fênix", Description = "Aumenta massivamente a destreza para combates ágeis", Type = "Consumível", Rarity = ItemRarity.Legendary, RarityTier = 1, Value = 800, IsConsumable = true, BonusDexterity = 25 },
+            new Item { Name = "Poder Supremo", Description = "Reduz massivamente a dificuldade do combate", Type = "Consumível", Rarity = ItemRarity.Legendary, RarityTier = 2, Value = 1200, IsConsumable = true, BonusStrength = 10, BonusIntelligence = 10, BonusDexterity = 10 },
+            new Item { Name = "Elixir da Vitória", Description = "Garante quase certeza de vitória no combate", Type = "Consumível", Rarity = ItemRarity.Legendary, RarityTier = 3, Value = 2000, IsConsumable = true, BonusStrength = 20, BonusIntelligence = 20, BonusDexterity = 20 }
         };
 
         _context.Items.AddRange(items);

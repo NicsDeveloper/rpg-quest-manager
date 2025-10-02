@@ -223,18 +223,12 @@ public class ProfileController : ControllerBase
             }
         }
 
-        // Aplica atributos base por classe
-        var (baseStr, baseInt, baseDex) = Hero.GetBaseAttributesForClass(request.Class);
-        
         var hero = new Hero
         {
             Name = request.Name,
             Class = request.Class,
-            Level = 0,
+            Level = 1, // Começa no nível 1
             Experience = 0,
-            Strength = baseStr,
-            Intelligence = baseInt,
-            Dexterity = baseDex,
             UnallocatedAttributePoints = 0, // Começa sem pontos não alocados
             Gold = 0, // Ouro está no player, não no herói
             UserId = userId,
@@ -242,6 +236,9 @@ public class ProfileController : ControllerBase
             PartySlot = null,
             CreatedAt = DateTime.UtcNow
         };
+        
+        // Configurar atributos base baseados na classe
+        hero.ConfigureInitialAttributes();
 
         _context.Heroes.Add(hero);
         await _context.SaveChangesAsync();

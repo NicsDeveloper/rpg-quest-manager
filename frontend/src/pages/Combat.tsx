@@ -360,21 +360,21 @@ export const Combat: React.FC = () => {
                         <p className="text-red-400 font-bold">{hero.strength}</p>
                         <p className="text-gray-500">FOR</p>
                         {combat.heroes && combat.heroes.find(h => h.id === hero.id)?.totalAttack !== hero.strength && (
-                          <p className="text-green-400 text-xs">+{combat.heroes.find(h => h.id === hero.id)?.totalAttack - hero.strength}</p>
+                          <p className="text-green-400 text-xs">+{(combat.heroes.find(h => h.id === hero.id)?.totalAttack || 0) - hero.strength}</p>
                         )}
                       </div>
                       <div className="bg-blue-900/30 rounded py-1">
                         <p className="text-blue-400 font-bold">{hero.intelligence}</p>
                         <p className="text-gray-500">INT</p>
                         {combat.heroes && combat.heroes.find(h => h.id === hero.id)?.totalMagic !== hero.intelligence && (
-                          <p className="text-green-400 text-xs">+{combat.heroes.find(h => h.id === hero.id)?.totalMagic - hero.intelligence}</p>
+                          <p className="text-green-400 text-xs">+{(combat.heroes.find(h => h.id === hero.id)?.totalMagic || 0) - hero.intelligence}</p>
                         )}
                       </div>
                       <div className="bg-green-900/30 rounded py-1">
                         <p className="text-green-400 font-bold">{hero.dexterity}</p>
                         <p className="text-gray-500">DEX</p>
                         {combat.heroes && combat.heroes.find(h => h.id === hero.id)?.totalDefense !== hero.dexterity && (
-                          <p className="text-green-400 text-xs">+{combat.heroes.find(h => h.id === hero.id)?.totalDefense - hero.dexterity}</p>
+                          <p className="text-green-400 text-xs">+{(combat.heroes.find(h => h.id === hero.id)?.totalDefense || 0) - hero.dexterity}</p>
                         )}
                       </div>
                     </div>

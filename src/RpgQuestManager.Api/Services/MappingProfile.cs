@@ -4,6 +4,7 @@ using RpgQuestManager.Api.DTOs.Quests;
 using RpgQuestManager.Api.DTOs.Enemies;
 using RpgQuestManager.Api.DTOs.Rewards;
 using RpgQuestManager.Api.DTOs.Items;
+using RpgQuestManager.Api.DTOs.Shop;
 using RpgQuestManager.Api.Models;
 
 namespace RpgQuestManager.Api.Services;
@@ -37,6 +38,9 @@ public class MappingProfile : Profile
         // Item mappings
         CreateMap<Item, ItemDto>();
         CreateMap<CreateItemRequest, Item>();
+        
+        // Shop mappings
+        CreateMap<Item, ShopItemDto>();
     }
 }
 

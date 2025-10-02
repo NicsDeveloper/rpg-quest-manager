@@ -49,7 +49,7 @@ export const HeroWidget: React.FC = () => {
 
   if (!party || party.length === 0) {
     return (
-      <Link to="/profile" className="hero-widget-compact hover:bg-gray-800/50 transition-colors">
+      <Link to="/heroes" className="hero-widget-compact hover:bg-gray-800/50 transition-colors">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-2xl">
             ❓
@@ -117,7 +117,7 @@ export const HeroWidget: React.FC = () => {
 
       {/* Versão Expandida - Mostra todos os heróis da party */}
       <div className={`hero-widget-expanded ${isExpanded ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-        <Link to="/profile" className="block">
+        <Link to="/heroes" className="block">
           <div className="p-4 space-y-3 max-h-[600px] overflow-y-auto">
             {/* Ouro do Player - SEMPRE NO TOPO */}
             {user && (

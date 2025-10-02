@@ -24,6 +24,16 @@ public class Hero
     public int Dexterity { get; set; } = 10;
     public int Gold { get; set; } = 0;
     public int UnallocatedAttributePoints { get; set; } = 0; // Pontos de atributo não alocados
+    
+    // Atributos base da classe (não editáveis)
+    public int BaseStrength { get; set; } = 10;
+    public int BaseIntelligence { get; set; } = 10;
+    public int BaseDexterity { get; set; } = 10;
+    
+    // Pontos adicionais distribuídos pelo jogador
+    public int BonusStrength { get; set; } = 0;
+    public int BonusIntelligence { get; set; } = 0;
+    public int BonusDexterity { get; set; } = 0;
     public int? UserId { get; set; }
     
     // Sistema de Party
@@ -70,6 +80,14 @@ public class Hero
         var itemBonus = equippedItems.Sum(hi => hi.Item.BonusStrength);
         return Strength + itemBonus;
     }
+    
+    /// <summary>
+    /// Obtém o ataque base (sem itens)
+    /// </summary>
+    public int GetBaseAttack()
+    {
+        return BaseStrength + BonusStrength;
+    }
 
     /// <summary>
     /// Calcula a defesa total do herói (baseado em Dexterity + bônus de itens equipados)
@@ -80,6 +98,14 @@ public class Hero
         var itemBonus = equippedItems.Sum(hi => hi.Item.BonusDexterity);
         return Dexterity + itemBonus;
     }
+    
+    /// <summary>
+    /// Obtém a defesa base (sem itens)
+    /// </summary>
+    public int GetBaseDefense()
+    {
+        return BaseDexterity + BonusDexterity;
+    }
 
     /// <summary>
     /// Calcula a magia total do herói (baseado em Intelligence + bônus de itens equipados)
@@ -89,6 +115,14 @@ public class Hero
         var equippedItems = HeroItems.Where(hi => hi.IsEquipped);
         var itemBonus = equippedItems.Sum(hi => hi.Item.BonusIntelligence);
         return Intelligence + itemBonus;
+    }
+    
+    /// <summary>
+    /// Obtém a magia base (sem itens)
+    /// </summary>
+    public int GetBaseMagic()
+    {
+        return BaseIntelligence + BonusIntelligence;
     }
 
     /// <summary>
@@ -163,6 +197,127 @@ public class Hero
     }
     
     /// <summary>
+    /// Configura atributos iniciais baseados na classe do herói
+    /// </summary>
+    public void ConfigureInitialAttributes()
+    {
+        // Reset para valores base
+        BaseStrength = 10;
+        BaseIntelligence = 10;
+        BaseDexterity = 10;
+        
+        // Reset bônus adicionais
+        BonusStrength = 0;
+        BonusIntelligence = 0;
+        BonusDexterity = 0;
+        
+        // Aplica bônus baseado na classe
+        switch (Class.ToLower())
+        {
+            case "guerreiro":
+            case "warrior":
+                BaseStrength += 8;    // 18 total
+                BaseIntelligence += 2; // 12 total
+                BaseDexterity += 4;   // 14 total
+                break;
+                
+            case "mago":
+            case "wizard":
+            case "mage":
+                BaseStrength += 0;    // 10 total
+                BaseIntelligence += 12; // 22 total
+                BaseDexterity += 6;   // 16 total
+                break;
+                
+            case "arqueiro":
+            case "archer":
+            case "ranger":
+                BaseStrength += 4;    // 14 total
+                BaseIntelligence += 5; // 15 total
+                BaseDexterity += 10;  // 20 total
+                break;
+                
+            case "ladino":
+            case "rogue":
+            case "thief":
+                BaseStrength += 2;    // 12 total
+                BaseIntelligence += 4; // 14 total
+                BaseDexterity += 8;   // 18 total
+                break;
+                
+            case "paladino":
+            case "paladin":
+                BaseStrength += 6;    // 16 total
+                BaseIntelligence += 8; // 18 total
+                BaseDexterity += 4;   // 14 total
+                break;
+                
+            case "clérigo":
+            case "cleric":
+                BaseStrength += 2;    // 12 total
+                BaseIntelligence += 10; // 20 total
+                BaseDexterity += 2;   // 12 total
+                break;
+                
+            case "bárbaro":
+            case "barbarian":
+                BaseStrength += 10;   // 20 total
+                BaseIntelligence += 0; // 10 total
+                BaseDexterity += 2;   // 12 total
+                break;
+                
+            default:
+                // Classe não reconhecida - atributos balanceados
+                BaseStrength += 3;    // 13 total
+                BaseIntelligence += 3; // 13 total
+                BaseDexterity += 3;   // 13 total
+                break;
+        }
+        
+        // Atualiza os atributos totais
+        UpdateTotalAttributes();
+    }
+    
+    /// <summary>
+    /// Atualiza os atributos totais baseado nos atributos base + bônus
+    /// </summary>
+    public void UpdateTotalAttributes()
+    {
+        Strength = BaseStrength + BonusStrength;
+        Intelligence = BaseIntelligence + BonusIntelligence;
+        Dexterity = BaseDexterity + BonusDexterity;
+    }
+    
+    /// <summary>
+    /// Distribui pontos de atributo não alocados (apenas bônus adicionais)
+    /// </summary>
+    public bool AllocateAttributePoints(int strengthPoints, int intelligencePoints, int dexterityPoints)
+    {
+        var totalPoints = strengthPoints + intelligencePoints + dexterityPoints;
+        
+        if (totalPoints > UnallocatedAttributePoints)
+        {
+            return false; // Não tem pontos suficientes
+        }
+        
+        if (strengthPoints < 0 || intelligencePoints < 0 || dexterityPoints < 0)
+        {
+            return false; // Valores negativos não permitidos
+        }
+        
+        // Aplica apenas aos bônus adicionais (não aos atributos base da classe)
+        BonusStrength += strengthPoints;
+        BonusIntelligence += intelligencePoints;
+        BonusDexterity += dexterityPoints;
+        UnallocatedAttributePoints -= totalPoints;
+        
+        // Atualiza os atributos totais
+        UpdateTotalAttributes();
+        
+        return true;
+    }
+    
+    /// <summary>
     /// Obtém os atributos base para cada classe
     /// </summary>
     public static (int Strength, int Intelligence, int Dexterity) GetBaseAttributesForClass(string heroClass)
@@ -178,25 +333,5 @@ public class Hero
         };
     }
     
-    /// <summary>
-    /// Distribui pontos de atributo não alocados
-    /// </summary>
-    public bool AllocateAttributePoints(int strengthPoints, int intelligencePoints, int dexterityPoints)
-    {
-        var totalPoints = strengthPoints + intelligencePoints + dexterityPoints;
-        
-        if (totalPoints > UnallocatedAttributePoints)
-            return false; // Não tem pontos suficientes
-        
-        if (strengthPoints < 0 || intelligencePoints < 0 || dexterityPoints < 0)
-            return false; // Não pode alocar valores negativos
-        
-        Strength += strengthPoints;
-        Intelligence += intelligencePoints;
-        Dexterity += dexterityPoints;
-        UnallocatedAttributePoints -= totalPoints;
-        
-        return true;
-    }
 }
 

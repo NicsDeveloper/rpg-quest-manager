@@ -16,9 +16,15 @@ const tutorialSteps = [
   },
   {
     title: '⚔️ Crie Seu Primeiro Herói',
-    content: 'Você começa sem heróis! Acesse "Heróis" no menu para criar seu primeiro aventureiro. Escolha a classe (Guerreiro, Mago, Arqueiro, Paladino, Ladino) e distribua estrategicamente 30 pontos entre Força, Inteligência e Destreza. Mínimo 3 pontos em cada atributo para balanceamento!',
+    content: 'Você começa sem heróis! Acesse "Heróis" no menu para criar seu primeiro aventureiro. Escolha a classe (Guerreiro, Mago, Arqueiro, Paladino, Ladrão, Clérigo, Bárbaro, Bruxo, Druida, Monge) - cada classe tem atributos base únicos! Os atributos base são fixos, mas você ganhará pontos para distribuir ao subir de nível.',
     icon: '🧙',
     color: 'from-blue-600 to-blue-700'
+  },
+  {
+    title: '⚔️ Sistema de Atributos',
+    content: 'Cada classe tem atributos base únicos: Guerreiros são fortes (FOR+8), Magos são inteligentes (INT+8), Arqueiros são ágeis (DEX+6), etc. Os atributos base são fixos! Ao subir de nível, você ganha pontos para distribuir livremente entre Força, Inteligência e Destreza na página "Atributos".',
+    icon: '💪',
+    color: 'from-red-600 to-red-700'
   },
   {
     title: '💰 Ouro Compartilhado',
@@ -28,7 +34,7 @@ const tutorialSteps = [
   },
   {
     title: '🎲 Sistema de Combate com Dados',
-    content: 'As batalhas funcionam com dados! Compre dados D6, D10, D12 e D20 na loja. Cada inimigo requer um tipo de dado e uma rolagem mínima. Role os dados para vencer! Dados são consumidos ao usar, então compre com sabedoria!',
+    content: 'As batalhas funcionam com dados! Compre dados D6, D10, D12 e D20 na loja unificada. Cada inimigo requer um tipo de dado e uma rolagem mínima. Seus atributos reduzem a dificuldade! Use itens de ajuda no combate para facilitar ainda mais. Dados são consumidos ao usar, então compre com sabedoria!',
     icon: '⚡',
     color: 'from-red-600 to-red-700'
   },
@@ -40,9 +46,21 @@ const tutorialSteps = [
   },
   {
     title: '📚 Aceite Missões e Lute!',
-    content: 'No Catálogo de Missões, aceite quests adequadas ao seu nível e classe. Clique em "Ir para Missão" para lutar! Escolha o dado certo, role e derrote os inimigos. Ganhe XP, ouro e itens épicos! Bosses dropam itens raros e lendários!',
+    content: 'No Catálogo de Missões, aceite quests adequadas ao seu nível e classe. Questes diárias (repetíveis) aparecem com ⏰ - complete-as todos os dias! Clique em "Ir para Missão" para lutar! Escolha o dado certo, role e derrote os inimigos. Ganhe XP, ouro e itens épicos! Bosses dropam itens raros e lendários!',
     icon: '⚔️',
     color: 'from-purple-600 to-purple-700'
+  },
+  {
+    title: '🛒 Loja Unificada',
+    content: 'Acesse "Loja" para comprar dados mágicos, poções de XP e itens de ajuda para combate! A loja tem 3 abas: Itens (poções e equipamentos), Dados (D6, D10, D12, D20) e Inventário (seus itens). Use poções de XP para acelerar a progressão!',
+    icon: '🛒',
+    color: 'from-green-600 to-green-700'
+  },
+  {
+    title: '🏋️ Treinamento Diário',
+    content: 'Não consegue fazer missões? Use o treinamento diário! Acesse "Treinamento" para ganhar XP sem fazer quests. Cada herói pode treinar uma vez por dia. É uma forma garantida de progressão!',
+    icon: '🏋️',
+    color: 'from-orange-600 to-orange-700'
   },
   {
     title: '📦 Inventário e Equipamentos',
@@ -52,7 +70,7 @@ const tutorialSteps = [
   },
   {
     title: '📈 Progressão e Níveis',
-    content: 'Seu herói começa no nível 0! A cada missão completada, ganha experiência. Ao subir de nível, seus atributos melhoram e novas missões ficam disponíveis. O nível máximo é 20!',
+    content: 'Seu herói começa no nível 1! A cada missão completada, ganha experiência. Ao subir de nível, você ganha pontos para distribuir entre atributos na página "Atributos". Use poções de XP para acelerar! O nível máximo é 20!',
     icon: '⭐',
     color: 'from-pink-600 to-pink-700'
   },
@@ -64,7 +82,7 @@ const tutorialSteps = [
   },
   {
     title: '🚀 Pronto para a Aventura!',
-    content: 'Agora você sabe tudo! Comece criando seu herói, compre alguns dados, aceite sua primeira missão e mostre sua estratégia em combate. Boa sorte, aventureiro! 🎯',
+    content: 'Agora você sabe tudo! Comece criando seu herói, distribua pontos de atributos, compre dados e itens na loja, aceite missões diárias, use treinamento e mostre sua estratégia em combate. Boa sorte, aventureiro! 🎯',
     icon: '🏆',
     color: 'from-amber-500 to-orange-600'
   }

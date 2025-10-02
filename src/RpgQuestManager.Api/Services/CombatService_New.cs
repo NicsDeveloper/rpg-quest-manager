@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RpgQuestManager.Api.Data;
 using RpgQuestManager.Api.DTOs.Combat;
@@ -861,6 +862,9 @@ public class CombatServiceNew : ICombatService
                     await _notificationService.NotifyLevelUpAsync(heroToLevel, oldLevel, heroToLevel.Level);
                 }
             }
+            
+            // Sistema de drops de itens especiais
+            await TryDropSpecialItems(heroToLevel, combatSession.Quest);
         }
 
         // Drops de TODOS os inimigos derrotados (não apenas bosses)
@@ -1031,125 +1035,82 @@ public class CombatServiceNew : ICombatService
     }
 
     /// <summary>
-    /// Usa um item consumível durante o combate
+    /// Tenta dropar itens especiais para o herói após completar uma quest
     /// </summary>
-    public async Task<ActionResult<CombatItemUsageResultDto>> UseItemInCombat(int combatSessionId, int itemId, int heroId)
+    private async Task TryDropSpecialItems(Hero hero, Quest quest)
     {
-        var combatSession = await _context.CombatSessions
-            .Include(cs => cs.Quest)
-            .FirstOrDefaultAsync(cs => cs.Id == combatSessionId);
-
-        if (combatSession == null)
+        var random = new Random();
+        
+        // Chance base de drop (5% por quest)
+        var baseDropChance = 0.05;
+        
+        // Aumenta chance baseado na dificuldade da quest
+        var difficultyMultiplier = quest.Difficulty switch
         {
-            return NotFound("Sessão de combate não encontrada");
-        }
-
-        if (combatSession.Status != "Active")
-        {
-            return BadRequest("A sessão de combate não está ativa");
-        }
-
-        var hero = await _context.Heroes.FindAsync(heroId);
-        if (hero == null)
-        {
-            return NotFound("Herói não encontrado");
-        }
-
-        var heroItem = await _context.HeroItems
-            .Include(hi => hi.Item)
-            .FirstOrDefaultAsync(hi => hi.HeroId == heroId && hi.ItemId == itemId);
-
-        if (heroItem == null)
-        {
-            return NotFound("Item não encontrado no inventário do herói");
-        }
-
-        if (!heroItem.Item.IsConsumable)
-        {
-            return BadRequest("Este item não é consumível");
-        }
-
-        if (heroItem.Quantity <= 0)
-        {
-            return BadRequest("Item não disponível");
-        }
-
-        // Aplicar efeitos do item
-        var result = new CombatItemUsageResultDto
-        {
-            Success = true,
-            ItemName = heroItem.Item.Name,
-            Message = $"{heroItem.Item.Name} usado com sucesso!"
+            "Fácil" => 1.0,
+            "Médio" => 1.5,
+            "Difícil" => 2.0,
+            "Muito Difícil" => 2.5,
+            "Épico" => 3.0,
+            "Lendário" => 4.0,
+            _ => 1.0
         };
-
-        // Aplicar bônus de XP se for poção de XP
-        if (heroItem.Item.PercentageXpBonus.HasValue && heroItem.Item.PercentageXpBonus > 0)
+        
+        var finalDropChance = baseDropChance * difficultyMultiplier;
+        
+        if (random.NextDouble() < finalDropChance)
         {
-            var xpNeeded = hero.GetExperienceForNextLevel();
-            var xpGained = (int)(xpNeeded * heroItem.Item.PercentageXpBonus.Value);
+            // Seleciona um item especial para dropar
+            var specialItems = await _context.Items
+                .Where(i => i.IsConsumable && (i.BonusStrength > 0 || i.BonusIntelligence > 0 || i.BonusDexterity > 0))
+                .OrderBy(i => i.Rarity)
+                .ToListAsync();
             
-            hero.Experience += xpGained;
-            result.XpGained = xpGained;
-            result.Message += $" Ganhou {xpGained} XP!";
-            
-            // Verificar level up
-            var oldLevel = hero.Level;
-            if (hero.CanLevelUp())
+            if (specialItems.Any())
             {
-                hero.LevelUp();
-                if (hero.Level > oldLevel)
+                // Peso baseado na raridade (mais raro = menos chance)
+                var weightedItems = new List<Item>();
+                foreach (var item in specialItems)
                 {
-                    result.LeveledUp = true;
-                    result.NewLevel = hero.Level;
-                    result.Message += $" Subiu para o nível {hero.Level}!";
+                    var weight = item.Rarity switch
+                    {
+                        ItemRarity.Common => 50,
+                        ItemRarity.Rare => 30,
+                        ItemRarity.Epic => 15,
+                        ItemRarity.Legendary => 5,
+                        _ => 10
+                    };
+                    
+                    for (int i = 0; i < weight; i++)
+                    {
+                        weightedItems.Add(item);
+                    }
                 }
+                
+                var selectedItem = weightedItems[random.Next(weightedItems.Count)];
+                
+                // Adicionar ao inventário do herói
+                var existingHeroItem = await _context.HeroItems
+                    .FirstOrDefaultAsync(hi => hi.HeroId == hero.Id && hi.ItemId == selectedItem.Id);
+                
+                if (existingHeroItem != null)
+                {
+                    existingHeroItem.Quantity += 1;
+                }
+                else
+                {
+                    _context.HeroItems.Add(new HeroItem
+                    {
+                        HeroId = hero.Id,
+                        ItemId = selectedItem.Id,
+                        Quantity = 1
+                    });
+                }
+                
+                _logger.LogInformation("🎁 Item especial dropado! {HeroName} recebeu {ItemName} ({Rarity})", 
+                    hero.Name, selectedItem.Name, selectedItem.Rarity);
             }
         }
-
-        // Aplicar bônus de atributos temporários (reduzir RequiredRoll)
-        if (heroItem.Item.BonusStrength > 0 || heroItem.Item.BonusIntelligence > 0 || heroItem.Item.BonusDexterity > 0)
-        {
-            var currentEnemy = combatSession.CurrentEnemy;
-            if (currentEnemy != null)
-            {
-                var relevantBonus = currentEnemy.CombatType switch
-                {
-                    CombatType.Physical => heroItem.Item.BonusStrength,
-                    CombatType.Magical => heroItem.Item.BonusIntelligence,
-                    CombatType.Agile => heroItem.Item.BonusDexterity,
-                    _ => 0
-                };
-
-                if (relevantBonus > 0)
-                {
-                    result.CombatBonus = -(relevantBonus / 5); // Cada 5 pontos = -1 no roll
-                    result.Message += $" Bônus de combate: {Math.Abs(result.CombatBonus)}!";
-                }
-            }
-        }
-
-        // Remover item do inventário
-        heroItem.Quantity -= 1;
-        if (heroItem.Quantity <= 0)
-        {
-            _context.HeroItems.Remove(heroItem);
-        }
-
-        // Registrar uso no log de combate
-        var combatLog = new CombatLog
-        {
-            CombatSessionId = combatSessionId,
-            Action = "ItemUsed",
-            Details = $"{hero.Name} usou {heroItem.Item.Name}",
-            Timestamp = DateTime.UtcNow
-        };
-        _context.CombatLogs.Add(combatLog);
-
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation("🧪 Item {ItemName} usado no combate por herói {HeroName}. XP: {XpGained}, Bônus: {CombatBonus}", 
-            heroItem.Item.Name, hero.Name, result.XpGained, result.CombatBonus);
-
-        return Ok(result);
     }
+
 }

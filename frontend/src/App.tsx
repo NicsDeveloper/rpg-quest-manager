@@ -17,6 +17,7 @@ import { DiceShop } from './pages/DiceShop';
 import { Bestiary } from './pages/Bestiary';
 import { FreeDice } from './pages/FreeDice';
 import { Shop } from './pages/Shop';
+import { Attributes } from './pages/Attributes';
 
 const App: React.FC = () => {
   return (
@@ -94,6 +95,15 @@ const App: React.FC = () => {
             element={
               <PrivateRoute>
                 <Shop />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/attributes"
+            element={
+              <PrivateRoute>
+                <Attributes />
               </PrivateRoute>
             }
           />

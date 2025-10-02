@@ -27,23 +27,67 @@ export const Heroes: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newHero, setNewHero] = useState({
     name: '',
-    class: 'Guerreiro',
-    strength: 0,
-    intelligence: 0,
-    dexterity: 0
+    class: 'Guerreiro'
   });
+  
+  // Atributos base por classe (apenas para exibição)
+  const getClassAttributes = (heroClass: string) => {
+    switch (heroClass) {
+      case 'Guerreiro': return { strength: 18, intelligence: 12, dexterity: 14 };
+      case 'Mago': return { strength: 12, intelligence: 18, dexterity: 14 };
+      case 'Arqueiro': return { strength: 14, intelligence: 14, dexterity: 16 };
+      case 'Paladino': return { strength: 16, intelligence: 14, dexterity: 14 };
+      case 'Ladrão': return { strength: 13, intelligence: 13, dexterity: 18 };
+      case 'Clérigo': return { strength: 14, intelligence: 16, dexterity: 14 };
+      case 'Bárbaro': return { strength: 20, intelligence: 11, dexterity: 13 };
+      case 'Bruxo': return { strength: 11, intelligence: 19, dexterity: 14 };
+      case 'Druida': return { strength: 13, intelligence: 15, dexterity: 16 };
+      case 'Monge': return { strength: 14, intelligence: 14, dexterity: 16 };
+      default: return { strength: 13, intelligence: 13, dexterity: 13 };
+    }
+  };
+  
+  const classAttributes = getClassAttributes(newHero.class);
+  const canCreate = newHero.name.trim().length > 0;
 
-  const TOTAL_POINTS = 30;
-  const MIN_STAT = 3; // Mínimo obrigatório em cada atributo para balanceamento
-  const MAX_STAT = 20;
-  
-  const usedPoints = newHero.strength + newHero.intelligence + newHero.dexterity;
-  const remainingPoints = TOTAL_POINTS - usedPoints;
-  
-  const canCreate = remainingPoints === 0 && 
-                    newHero.strength >= MIN_STAT && 
-                    newHero.intelligence >= MIN_STAT && 
-                    newHero.dexterity >= MIN_STAT;
+  // Listas para geração aleatória
+  const heroNames = [
+    'Aragorn', 'Legolas', 'Gimli', 'Gandalf', 'Frodo', 'Samwise', 'Merry', 'Pippin',
+    'Boromir', 'Faramir', 'Eowyn', 'Arwen', 'Galadriel', 'Elrond', 'Thranduil',
+    'Thorin', 'Bilbo', 'Smaug', 'Saruman', 'Gollum', 'Sauron', 'Nazgul',
+    'Conan', 'Kull', 'Red Sonja', 'Thulsa Doom', 'Valeria', 'Subotai',
+    'Drizzt', 'Bruenor', 'Wulfgar', 'Catti-brie', 'Regis', 'Artemis',
+    'Raistlin', 'Caramon', 'Tanis', 'Sturm', 'Flint', 'Tasslehoff',
+    'Kvothe', 'Denna', 'Auri', 'Elodin', 'Simmon', 'Wilem',
+    'Geralt', 'Yennefer', 'Triss', 'Ciri', 'Dandelion', 'Zoltan',
+    'Kaladin', 'Shallan', 'Dalinar', 'Adolin', 'Jasnah', 'Navani',
+    'Vin', 'Kelsier', 'Elend', 'Sazed', 'Breeze', 'Ham',
+    'Rand', 'Mat', 'Perrin', 'Egwene', 'Nynaeve', 'Moiraine',
+    'Tyrion', 'Jon', 'Daenerys', 'Arya', 'Sansa', 'Bran',
+    'Kvothe', 'Denna', 'Auri', 'Elodin', 'Simmon', 'Wilem'
+  ];
+
+  const heroClasses = [
+    'Guerreiro', 'Mago', 'Arqueiro', 'Paladino', 'Ladrão', 
+    'Clérigo', 'Bárbaro', 'Bruxo', 'Druida', 'Monge'
+  ];
+
+  // Funções para gerar aleatoriamente
+  const generateRandomName = () => {
+    const randomName = heroNames[Math.floor(Math.random() * heroNames.length)];
+    setNewHero({ ...newHero, name: randomName });
+  };
+
+  const generateRandomClass = () => {
+    const randomClass = heroClasses[Math.floor(Math.random() * heroClasses.length)];
+    setNewHero({ ...newHero, class: randomClass });
+  };
+
+  const generateRandomHero = () => {
+    const randomName = heroNames[Math.floor(Math.random() * heroNames.length)];
+    const randomClass = heroClasses[Math.floor(Math.random() * heroClasses.length)];
+    setNewHero({ name: randomName, class: randomClass });
+  };
 
   useEffect(() => {
     fetchData();
@@ -99,10 +143,7 @@ export const Heroes: React.FC = () => {
       setShowCreateModal(false);
       setNewHero({
         name: '',
-        class: 'Guerreiro',
-        strength: 0,
-        intelligence: 0,
-        dexterity: 0
+        class: 'Guerreiro'
       });
       fetchData();
     } catch (err: any) {
@@ -307,81 +348,96 @@ export const Heroes: React.FC = () => {
 
             <form onSubmit={handleCreateHero} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Nome do Herói</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-semibold">Nome do Herói</label>
+                  <button
+                    type="button"
+                    onClick={generateRandomName}
+                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition flex items-center gap-1"
+                  >
+                    🎲 Nome Aleatório
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={newHero.name}
                   onChange={(e) => setNewHero({ ...newHero, name: e.target.value })}
                   className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
+                  placeholder="Digite o nome do herói"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Classe</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-semibold">Classe</label>
+                  <button
+                    type="button"
+                    onClick={generateRandomClass}
+                    className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition flex items-center gap-1"
+                  >
+                    🎲 Classe Aleatória
+                  </button>
+                </div>
                 <select
                   value={newHero.class}
                   onChange={(e) => setNewHero({ ...newHero, class: e.target.value })}
                   className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
                 >
-                  <option value="Guerreiro">⚔️ Guerreiro</option>
-                  <option value="Mago">🔮 Mago</option>
-                  <option value="Arqueiro">🏹 Arqueiro</option>
-                  <option value="Paladino">🛡️ Paladino</option>
-                  <option value="Ladino">🗡️ Ladino</option>
+                  <option value="Guerreiro">⚔️ Guerreiro - Força +8, Inteligência +2, Destreza +4</option>
+                  <option value="Mago">🔮 Mago - Força +2, Inteligência +8, Destreza +4</option>
+                  <option value="Arqueiro">🏹 Arqueiro - Força +4, Inteligência +4, Destreza +6</option>
+                  <option value="Paladino">🛡️ Paladino - Força +6, Inteligência +4, Destreza +4</option>
+                  <option value="Ladrão">🗡️ Ladrão - Força +3, Inteligência +3, Destreza +8</option>
+                  <option value="Clérigo">⛪ Clérigo - Força +4, Inteligência +6, Destreza +4</option>
+                  <option value="Bárbaro">🪓 Bárbaro - Força +10, Inteligência +1, Destreza +3</option>
+                  <option value="Bruxo">🔮 Bruxo - Força +1, Inteligência +9, Destreza +4</option>
+                  <option value="Druida">🌿 Druida - Força +3, Inteligência +5, Destreza +6</option>
+                  <option value="Monge">🥋 Monge - Força +4, Inteligência +4, Destreza +6</option>
                 </select>
               </div>
 
-              {/* Points System */}
-              <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-lg p-4 border border-amber-700/30 mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-amber-400">⭐ Pontos de Atributo</span>
-                  <span className={`text-2xl font-bold ${remainingPoints < 0 ? 'text-red-400' : remainingPoints === 0 ? 'text-green-400' : 'text-amber-400'}`}>
-                    {remainingPoints}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-400">
-                  Você tem <strong>{TOTAL_POINTS}</strong> pontos para distribuir. Cada atributo deve ter no mínimo {MIN_STAT} pontos (balanceamento obrigatório).
-                </p>
-                {remainingPoints < 0 && (
-                  <p className="text-xs text-red-400 mt-2 font-semibold">⚠️ Você excedeu o limite de pontos!</p>
-                )}
-                {!canCreate && remainingPoints === 0 && (
-                  <p className="text-xs text-red-400 mt-2 font-semibold">⚠️ Cada atributo deve ter no mínimo {MIN_STAT} pontos!</p>
-                )}
+              {/* Botão para Herói Completamente Aleatório */}
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={generateRandomHero}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-lg transition flex items-center gap-2 shadow-lg"
+                >
+                  🎲✨ Criar Herói Aleatório ✨🎲
+                </button>
               </div>
 
-              {/* Attribute Sliders */}
+              {/* Atributos Base da Classe */}
+              <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-lg p-4 border border-amber-700/30 mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-semibold text-amber-400">⭐ Atributos Base da Classe</span>
+                  <span className="text-amber-400 text-sm">🔒 Fixos</span>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Os atributos base são definidos automaticamente pela classe escolhida. 
+                  Você poderá distribuir pontos adicionais ao subir de nível na página "Atributos".
+                </p>
+              </div>
+
+              {/* Attribute Sliders - BLOQUEADOS */}
               <div className="space-y-4">
                 {/* Strength */}
                 <div className="bg-gray-800/50 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-2">
                     <label className="text-sm font-semibold">💪 Força</label>
                     <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setNewHero({ ...newHero, strength: Math.max(MIN_STAT, newHero.strength - 1) })}
-                        className="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition"
-                      >
-                        -
-                      </button>
-                      <span className="w-12 text-center font-bold text-xl">{newHero.strength}</span>
-                      <button
-                        type="button"
-                        onClick={() => setNewHero({ ...newHero, strength: Math.min(MAX_STAT, newHero.strength + 1) })}
-                        className="w-8 h-8 bg-green-600 hover:bg-green-700 rounded-lg font-bold transition"
-                      >
-                        +
-                      </button>
+                      <span className="w-12 text-center font-bold text-xl text-amber-400">{classAttributes.strength}</span>
+                      <span className="text-xs text-gray-500">🔒</span>
                     </div>
                   </div>
                   <input
                     type="range"
-                    min={MIN_STAT}
-                    max={MAX_STAT}
-                    value={newHero.strength}
-                    onChange={(e) => setNewHero({ ...newHero, strength: parseInt(e.target.value) })}
-                    className="w-full accent-red-600"
+                    min="1"
+                    max="25"
+                    value={classAttributes.strength}
+                    disabled
+                    className="w-full accent-red-600 opacity-50 cursor-not-allowed"
                   />
                   <p className="text-xs text-gray-500 mt-1">Dano físico e resistência</p>
                 </div>
@@ -391,30 +447,17 @@ export const Heroes: React.FC = () => {
                   <div className="flex justify-between items-center mb-2">
                     <label className="text-sm font-semibold">🧠 Inteligência</label>
                     <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setNewHero({ ...newHero, intelligence: Math.max(MIN_STAT, newHero.intelligence - 1) })}
-                        className="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition"
-                      >
-                        -
-                      </button>
-                      <span className="w-12 text-center font-bold text-xl">{newHero.intelligence}</span>
-                      <button
-                        type="button"
-                        onClick={() => setNewHero({ ...newHero, intelligence: Math.min(MAX_STAT, newHero.intelligence + 1) })}
-                        className="w-8 h-8 bg-green-600 hover:bg-green-700 rounded-lg font-bold transition"
-                      >
-                        +
-                      </button>
+                      <span className="w-12 text-center font-bold text-xl text-amber-400">{classAttributes.intelligence}</span>
+                      <span className="text-xs text-gray-500">🔒</span>
                     </div>
                   </div>
                   <input
                     type="range"
-                    min={MIN_STAT}
-                    max={MAX_STAT}
-                    value={newHero.intelligence}
-                    onChange={(e) => setNewHero({ ...newHero, intelligence: parseInt(e.target.value) })}
-                    className="w-full accent-blue-600"
+                    min="1"
+                    max="25"
+                    value={classAttributes.intelligence}
+                    disabled
+                    className="w-full accent-blue-600 opacity-50 cursor-not-allowed"
                   />
                   <p className="text-xs text-gray-500 mt-1">Poder mágico e descobertas</p>
                 </div>
@@ -424,30 +467,17 @@ export const Heroes: React.FC = () => {
                   <div className="flex justify-between items-center mb-2">
                     <label className="text-sm font-semibold">🎯 Destreza</label>
                     <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setNewHero({ ...newHero, dexterity: Math.max(MIN_STAT, newHero.dexterity - 1) })}
-                        className="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition"
-                      >
-                        -
-                      </button>
-                      <span className="w-12 text-center font-bold text-xl">{newHero.dexterity}</span>
-                      <button
-                        type="button"
-                        onClick={() => setNewHero({ ...newHero, dexterity: Math.min(MAX_STAT, newHero.dexterity + 1) })}
-                        className="w-8 h-8 bg-green-600 hover:bg-green-700 rounded-lg font-bold transition"
-                      >
-                        +
-                      </button>
+                      <span className="w-12 text-center font-bold text-xl text-amber-400">{classAttributes.dexterity}</span>
+                      <span className="text-xs text-gray-500">🔒</span>
                     </div>
                   </div>
                   <input
                     type="range"
-                    min={MIN_STAT}
-                    max={MAX_STAT}
-                    value={newHero.dexterity}
-                    onChange={(e) => setNewHero({ ...newHero, dexterity: parseInt(e.target.value) })}
-                    className="w-full accent-green-600"
+                    min="1"
+                    max="25"
+                    value={classAttributes.dexterity}
+                    disabled
+                    className="w-full accent-green-600 opacity-50 cursor-not-allowed"
                   />
                   <p className="text-xs text-gray-500 mt-1">Precisão e esquiva</p>
                 </div>
@@ -470,9 +500,7 @@ export const Heroes: React.FC = () => {
                       : 'bg-purple-600 hover:bg-purple-700 text-white'
                   }`}
                 >
-                  {remainingPoints !== 0 ? '⚠️ Distribua todos os pontos' : 
-                   !canCreate ? `⚠️ Mínimo ${MIN_STAT} em cada atributo` : 
-                   '✨ Criar Herói'}
+                  {!canCreate ? '⚠️ Digite um nome' : '✨ Criar Herói'}
                 </button>
               </div>
             </form>
