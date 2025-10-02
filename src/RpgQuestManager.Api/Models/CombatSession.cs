@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 namespace RpgQuestManager.Api.Models;
 
@@ -38,6 +39,19 @@ public class CombatSession
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+    
+    // Sistema de Habilidades Especiais
+    public string HeroAbilityCooldowns { get; set; } = "{}"; // JSON string de Dictionary<int, int> (HeroId, CooldownRestante)
+    
+    public Dictionary<int, int> GetHeroAbilityCooldowns() => JsonSerializer.Deserialize<Dictionary<int, int>>(HeroAbilityCooldowns) ?? new Dictionary<int, int>();
+    
+    public void SetHeroAbilityCooldowns(Dictionary<int, int> cooldowns) => HeroAbilityCooldowns = JsonSerializer.Serialize(cooldowns);
+    
+    // Sistema de Combos
+    public int ConsecutiveSuccesses { get; set; } = 0; // Sucessos consecutivos
+    public int ConsecutiveFailures { get; set; } = 0; // Falhas consecutivas
+    public int ComboMultiplier { get; set; } = 1; // Multiplicador de combo atual
+    public string LastAction { get; set; } = string.Empty; // Última ação realizada
     
     // Navegação
     [ForeignKey("UserId")]

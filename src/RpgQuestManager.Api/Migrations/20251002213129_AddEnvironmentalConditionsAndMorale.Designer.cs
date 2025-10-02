@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RpgQuestManager.Api.Data;
@@ -11,9 +12,11 @@ using RpgQuestManager.Api.Data;
 namespace RpgQuestManager.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002213129_AddEnvironmentalConditionsAndMorale")]
+    partial class AddEnvironmentalConditionsAndMorale
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -645,191 +648,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.ToTable("Items");
                 });
 
-            modelBuilder.Entity("RpgQuestManager.Api.Models.Monster", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Armor")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AttackBonus")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AttackDice")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("BaseMorale")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("BossHealthThreshold")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("BossPhase")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("BossPhases")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Charisma")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
-
-                    b.Property<int>("Constitution")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CriticalChance")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("DamageBonus")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("Dexterity")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("EnvironmentalBonuses")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ExperienceReward")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("GoldReward")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Health")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Immunities")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Intelligence")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsBoss")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsElite")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("LootTable")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Lore")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<int>("MaxGroupSize")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MinGroupSize")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<int>("MoraleRange")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Origin")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("Power")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PreferredEnvironment")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Resistances")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Size")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SpawnChance")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("SpecialAbilities")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("SpecialAbilityCooldown")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Speed")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("StatusEffects")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("StatusImmunities")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Strength")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Vulnerabilities")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Weakness")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("Wisdom")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Monsters");
-                });
-
             modelBuilder.Entity("RpgQuestManager.Api.Models.MoraleState", b =>
                 {
                     b.Property<int>("Id")
@@ -963,35 +781,23 @@ namespace RpgQuestManager.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("BossId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)");
 
                     b.Property<string>("Difficulty")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("Environment")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("EnvironmentalCondition")
                         .HasColumnType("integer");
 
                     b.Property<int>("EnvironmentalIntensity")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EstimatedDuration")
                         .HasColumnType("integer");
 
                     b.Property<int>("ExperienceReward")
@@ -1008,23 +814,13 @@ namespace RpgQuestManager.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsBossQuest")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsRepeatable")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsUnlocked")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Prerequisites")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("RequiredClass")
                         .IsRequired()
@@ -1034,13 +830,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Property<int>("RequiredLevel")
                         .HasColumnType("integer");
 
-                    b.Property<string>("SpecialRewards")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("StoryOrder")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1048,63 +837,7 @@ namespace RpgQuestManager.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
-
                     b.ToTable("Quests");
-                });
-
-            modelBuilder.Entity("RpgQuestManager.Api.Models.QuestCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("Difficulty")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Environment")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("MaxLevel")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MinLevel")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("QuestCategories");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.QuestEnemy", b =>
@@ -1500,16 +1233,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("RpgQuestManager.Api.Models.Quest", b =>
-                {
-                    b.HasOne("RpgQuestManager.Api.Models.QuestCategory", "Category")
-                        .WithMany("Quests")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Category");
-                });
-
             modelBuilder.Entity("RpgQuestManager.Api.Models.QuestEnemy", b =>
                 {
                     b.HasOne("RpgQuestManager.Api.Models.Enemy", "Enemy")
@@ -1614,11 +1337,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Navigation("QuestEnemies");
 
                     b.Navigation("Rewards");
-                });
-
-            modelBuilder.Entity("RpgQuestManager.Api.Models.QuestCategory", b =>
-                {
-                    b.Navigation("Quests");
                 });
 #pragma warning restore 612, 618
         }

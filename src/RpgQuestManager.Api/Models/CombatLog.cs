@@ -11,6 +11,7 @@ public class CombatLog
     [Required]
     public int CombatSessionId { get; set; }
     
+    public int? HeroId { get; set; }
     public int? EnemyId { get; set; }
     
     [Required]

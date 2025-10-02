@@ -21,6 +21,16 @@ public class CombatDetailDto
     public DateTime CreatedAt { get; set; }
     public DateTime? StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+    
+    // Sistema de Morale
+    public List<MoraleStateDto> HeroMoraleStates { get; set; } = new();
+    public MoraleStateDto? EnemyMoraleState { get; set; }
+    
+    // Sistema de Combos
+    public int ConsecutiveSuccesses { get; set; }
+    public int ConsecutiveFailures { get; set; }
+    public int ComboMultiplier { get; set; }
+    public string LastAction { get; set; } = string.Empty;
 }
 
 public class HeroCombatInfo
@@ -66,4 +76,15 @@ public class CombatLogDto
     public int? EnemyHealthAfter { get; set; }
     public string Details { get; set; } = string.Empty;
     public DateTime Timestamp { get; set; }
+}
+
+public class MoraleStateDto
+{
+    public int Id { get; set; }
+    public int? HeroId { get; set; }
+    public int? EnemyId { get; set; }
+    public string Level { get; set; } = string.Empty;
+    public int MoralePoints { get; set; }
+    public string Icon { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }

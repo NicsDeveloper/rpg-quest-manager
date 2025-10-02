@@ -10,6 +10,7 @@ import { Heroes } from './pages/Heroes';
 import { HeroRecovery } from './pages/HeroRecovery';
 import { Quests } from './pages/Quests';
 import { QuestCatalog } from './pages/QuestCatalog';
+import { QuestCategories } from './pages/QuestCategories';
 import { Items } from './pages/Items';
 import { Enemies } from './pages/Enemies';
 import Combat from './pages/Combat';
@@ -77,6 +78,15 @@ const App: React.FC = () => {
             element={
               <PrivateRoute>
                 <QuestCatalog />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/quest-categories"
+            element={
+              <PrivateRoute>
+                <QuestCategories />
               </PrivateRoute>
             }
           />

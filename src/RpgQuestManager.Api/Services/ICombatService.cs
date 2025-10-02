@@ -11,4 +11,5 @@ public interface ICombatService
     Task<EnemyAttackResult> EnemyAttackAsync(int combatSessionId);
     Task<CombatDetailDto> CompleteCombatAsync(int combatSessionId);
     Task<bool> CancelCombatAsync(int combatSessionId);
+    Task<UseSpecialAbilityResult> UseSpecialAbilityAsync(int combatSessionId, int heroId);
 }

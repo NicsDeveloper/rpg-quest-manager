@@ -26,9 +26,18 @@ public class ApplicationDbContext : DbContext
     public DbSet<DiceInventory> DiceInventories { get; set; }
     public DbSet<BossDropTable> BossDropTables { get; set; }
     
-    // Sistema de Combate
-    public DbSet<CombatSession> CombatSessions { get; set; }
-    public DbSet<CombatLog> CombatLogs { get; set; }
+        // Sistema de Combate
+        public DbSet<CombatSession> CombatSessions { get; set; }
+        public DbSet<CombatLog> CombatLogs { get; set; }
+        public DbSet<StatusEffect> StatusEffects { get; set; }
+        
+    // Sistema de Condições Ambientais e Morale
+    public DbSet<EnvironmentalCondition> EnvironmentalConditions { get; set; }
+    public DbSet<MoraleState> MoraleStates { get; set; }
+    
+    // Sistema de Missões Redesenhado
+    public DbSet<QuestCategory> QuestCategories { get; set; }
+    public DbSet<Monster> Monsters { get; set; }
     
     // Sistema de Combos e Party
     public DbSet<PartyCombo> PartyCombos { get; set; }
@@ -215,6 +224,95 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.EnemyId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configuração StatusEffect
+        modelBuilder.Entity<StatusEffect>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Type).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(200);
+            entity.HasOne(e => e.CombatSession)
+                .WithMany()
+                .HasForeignKey(e => e.CombatSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Hero)
+                .WithMany()
+                .HasForeignKey(e => e.HeroId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Enemy)
+                .WithMany()
+                .HasForeignKey(e => e.EnemyId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configuração EnvironmentalCondition
+        modelBuilder.Entity<EnvironmentalCondition>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Type).IsRequired();
+            entity.HasOne(e => e.Quest)
+                .WithMany(q => q.EnvironmentalConditions)
+                .HasForeignKey(e => e.QuestId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configuração MoraleState
+        modelBuilder.Entity<MoraleState>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Level).IsRequired();
+            entity.HasOne(e => e.CombatSession)
+                .WithMany()
+                .HasForeignKey(e => e.CombatSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Hero)
+                .WithMany()
+                .HasForeignKey(e => e.HeroId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Enemy)
+                .WithMany()
+                .HasForeignKey(e => e.EnemyId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configuração QuestCategory
+        modelBuilder.Entity<QuestCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Icon).HasMaxLength(10);
+            entity.Property(e => e.Color).HasMaxLength(7);
+        });
+
+        // Configuração Monster
+        modelBuilder.Entity<Monster>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Icon).HasMaxLength(10);
+            entity.Property(e => e.Color).HasMaxLength(7);
+            entity.Property(e => e.Model).HasMaxLength(50);
+            entity.Property(e => e.Lore).HasMaxLength(1000);
+            entity.Property(e => e.Origin).HasMaxLength(200);
+            entity.Property(e => e.Weakness).HasMaxLength(200);
+        });
+
+        // Configuração Quest atualizada
+        modelBuilder.Entity<Quest>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.Type).HasMaxLength(50);
+            entity.Property(e => e.Difficulty).HasMaxLength(50);
+            entity.Property(e => e.RequiredClass).HasMaxLength(50);
+            entity.HasOne(e => e.Category)
+                .WithMany(c => c.Quests)
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
         
         // Configuração BossDropTable

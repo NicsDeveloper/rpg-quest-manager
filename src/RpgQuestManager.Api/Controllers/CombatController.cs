@@ -139,6 +139,27 @@ public class CombatController : ControllerBase
         }
     }
 
+    [HttpPost("use-special-ability")]
+    [ProducesResponseType(typeof(UseSpecialAbilityResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UseSpecialAbilityResult>> UseSpecialAbility([FromBody] UseSpecialAbilityRequest request)
+    {
+        try
+        {
+            var result = await _combatService.UseSpecialAbilityAsync(request.CombatSessionId, request.HeroId);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
     private int GetCurrentUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

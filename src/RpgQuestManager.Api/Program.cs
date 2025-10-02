@@ -73,6 +73,7 @@ builder.Services.AddScoped<ICombatService, CombatService>();
 builder.Services.AddScoped<IDropService, DropService>();
 builder.Services.AddScoped<IComboService, ComboService>();
 builder.Services.AddScoped<IFreeDiceService, FreeDiceService>();
+builder.Services.AddScoped<QuestDataSeeder>();
 
 // Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();

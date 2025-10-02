@@ -185,6 +185,23 @@ const Combat: React.FC = () => {
     }
   };
 
+  const handleUseSpecialAbility = async (heroId: number) => {
+    if (!combat) return;
+    
+    try {
+      setRolling(true);
+      const result = await combatService.useSpecialAbility({
+        combatSessionId: combat.id,
+        heroId: heroId
+      });
+      setCombat(result.updatedCombatSession);
+    } catch (error) {
+      console.error('Erro ao usar habilidade especial:', error);
+    } finally {
+      setRolling(false);
+    }
+  };
+
   // Verificar se há combate ativo
   useEffect(() => {
     const checkActiveCombat = async () => {
@@ -362,6 +379,21 @@ const Combat: React.FC = () => {
               </div>
             </Card>
 
+            {/* Condições Ambientais */}
+            {combat.environmentalCondition && (
+              <Card className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 border-purple-500/50">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-400 mb-2 flex items-center justify-center gap-2">
+                    <span className="text-2xl">{combat.environmentalCondition.icon}</span>
+                    {combat.environmentalCondition.description}
+                  </div>
+                  <div className="text-sm text-purple-300">
+                    Intensidade: {combat.environmentalCondition.intensity}
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {/* Informações do Inimigo */}
             <Card className="bg-gradient-to-r from-red-900/30 to-orange-900/30 border-red-500/50">
               <div className="text-center">
@@ -404,6 +436,51 @@ const Combat: React.FC = () => {
                   </div>
                   <div className="text-center text-sm text-gray-400 mt-1">
                     {Math.round(Math.max(0, (combat.currentEnemyHealth / combat.maxEnemyHealth) * 100))}% de vida
+                  </div>
+                </div>
+
+                {/* Morale do Inimigo */}
+                <div className="mt-3">
+                  <div className="text-xs text-gray-400 mb-2 text-center">Morale do Inimigo:</div>
+                  {combat.enemyMoraleState && (
+                    <div className="flex items-center gap-2 justify-center">
+                      <span className="text-lg">{combat.enemyMoraleState.icon}</span>
+                      <div className="flex-1 bg-gray-700 rounded-full h-2 max-w-32">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            combat.enemyMoraleState.moralePoints <= 10 ? 'bg-red-500' :
+                            combat.enemyMoraleState.moralePoints <= 30 ? 'bg-orange-500' :
+                            combat.enemyMoraleState.moralePoints <= 70 ? 'bg-yellow-500' :
+                            combat.enemyMoraleState.moralePoints <= 90 ? 'bg-green-500' : 'bg-emerald-500'
+                          }`}
+                          style={{ width: `${Math.max(0, Math.min(100, combat.enemyMoraleState.moralePoints))}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-300">{combat.enemyMoraleState.level}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Status Effects do Inimigo */}
+                <div className="mt-3">
+                  <div className="text-xs text-gray-400 mb-2 text-center">Efeitos Ativos:</div>
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    {/* Simular status effects ativos do inimigo */}
+                    {Math.random() > 0.6 && (
+                      <span className="text-xs bg-purple-600/30 text-purple-300 px-2 py-1 rounded-full border border-purple-500/50">
+                        😡 Berserker
+                      </span>
+                    )}
+                    {Math.random() > 0.7 && (
+                      <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-1 rounded-full border border-blue-500/50">
+                        🛡️ Protegido
+                      </span>
+                    )}
+                    {Math.random() > 0.8 && (
+                      <span className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded-full border border-green-500/50">
+                        ✨ Abençoado
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -461,7 +538,7 @@ const Combat: React.FC = () => {
                       </div>
                       
                       {/* Atributos */}
-                      <div className="grid grid-cols-3 gap-1 text-xs">
+                      <div className="grid grid-cols-3 gap-1 text-xs mb-2">
                         <div className="bg-gray-600/30 rounded p-1 text-center">
                           <div className="text-red-400 font-bold">{hero.strength}</div>
                           <div className="text-gray-400">Força</div>
@@ -475,6 +552,72 @@ const Combat: React.FC = () => {
                           <div className="text-gray-400">Destreza</div>
                         </div>
                       </div>
+
+                      {/* Morale do Herói */}
+                      <div className="mb-2">
+                        <div className="text-xs text-gray-400 mb-1">Morale:</div>
+                        {(() => {
+                          const heroMorale = combat.heroMoraleStates.find(m => m.heroId === hero.id);
+                          const moralePoints = heroMorale?.moralePoints || 50;
+                          const moraleLevel = heroMorale?.level || 'Normal';
+                          const moraleIcon = heroMorale?.icon || '😐';
+                          
+                          return (
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{moraleIcon}</span>
+                              <div className="flex-1 bg-gray-700 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full transition-all duration-300 ${
+                                    moralePoints <= 10 ? 'bg-red-500' :
+                                    moralePoints <= 30 ? 'bg-orange-500' :
+                                    moralePoints <= 70 ? 'bg-yellow-500' :
+                                    moralePoints <= 90 ? 'bg-green-500' : 'bg-emerald-500'
+                                  }`}
+                                  style={{ width: `${Math.max(0, Math.min(100, moralePoints))}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs text-gray-300">{moraleLevel}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Status Effects do Herói */}
+                      <div className="mb-2">
+                        <div className="text-xs text-gray-400 mb-1">Efeitos Ativos:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {/* Simular status effects ativos - em produção viria do backend */}
+                          {Math.random() > 0.7 && (
+                            <span className="text-xs bg-red-600/30 text-red-300 px-2 py-1 rounded-full border border-red-500/50">
+                              ☠️ Envenenado
+                            </span>
+                          )}
+                          {Math.random() > 0.8 && (
+                            <span className="text-xs bg-orange-600/30 text-orange-300 px-2 py-1 rounded-full border border-orange-500/50">
+                              🔥 Queimado
+                            </span>
+                          )}
+                          {Math.random() > 0.9 && (
+                            <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-1 rounded-full border border-blue-500/50">
+                              ❄️ Congelado
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Botão de Habilidade Especial */}
+                      {combat.isHeroTurn && (
+                        <button
+                          onClick={() => handleUseSpecialAbility(hero.id)}
+                          disabled={rolling}
+                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="text-sm">⚡</span>
+                            <span>ULT</span>
+                          </div>
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -493,6 +636,18 @@ const Combat: React.FC = () => {
                   <div className="text-xs text-green-300 bg-green-500/20 px-2 py-1 rounded-full inline-block">
                     ⚡ Clique em um dado para atacar! ⚡
                   </div>
+                  
+                  {/* Indicador de Combo */}
+                  {combat.comboMultiplier > 1 && (
+                    <div className="mt-2 p-2 bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-400/50 rounded-lg">
+                      <div className="text-sm font-bold text-purple-300">
+                        🔥 COMBO ATIVO! x{combat.comboMultiplier} 🔥
+                      </div>
+                      <div className="text-xs text-purple-200">
+                        {combat.consecutiveSuccesses} sucessos consecutivos!
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

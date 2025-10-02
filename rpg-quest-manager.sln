@@ -1,0 +1,38 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RpgQuestManager.Api", "src\RpgQuestManager.Api\RpgQuestManager.Api.csproj", "{183C47B4-827F-8384-A234-4A4AF7DB1341}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RpgQuestManager.Tests", "tests\RpgQuestManager.Tests\RpgQuestManager.Tests.csproj", "{092E0FC7-B32C-D6AE-F9B1-32F1A32DF717}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{183C47B4-827F-8384-A234-4A4AF7DB1341}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{183C47B4-827F-8384-A234-4A4AF7DB1341}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{183C47B4-827F-8384-A234-4A4AF7DB1341}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{183C47B4-827F-8384-A234-4A4AF7DB1341}.Release|Any CPU.Build.0 = Release|Any CPU
+		{092E0FC7-B32C-D6AE-F9B1-32F1A32DF717}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{092E0FC7-B32C-D6AE-F9B1-32F1A32DF717}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{092E0FC7-B32C-D6AE-F9B1-32F1A32DF717}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{092E0FC7-B32C-D6AE-F9B1-32F1A32DF717}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{183C47B4-827F-8384-A234-4A4AF7DB1341} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{092E0FC7-B32C-D6AE-F9B1-32F1A32DF717} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C54312B7-0247-4476-8C5F-141901B6C0E0}
+	EndGlobalSection
+EndGlobal

@@ -440,5 +440,54 @@ public class Hero
         };
     }
     
+    // Sistema de Habilidades Especiais (ULTs)
+    public string GetSpecialAbility()
+    {
+        return Class.ToLower() switch
+        {
+            "guerreiro" => "Investida Devastadora",
+            "mago" => "Bola de Fogo",
+            "arqueiro" => "Chuva de Flechas", 
+            "clérigo" => "Cura Divina",
+            "ladrão" => "Ataque Furtivo",
+            "paladino" => "Golpe Sagrado",
+            "bárbaro" => "Fúria Berserker",
+            "druida" => "Chamado da Natureza",
+            _ => "Ataque Poderoso"
+        };
+    }
+    
+    public string GetSpecialAbilityDescription()
+    {
+        return Class.ToLower() switch
+        {
+            "guerreiro" => "Desfere um golpe devastador que causa 200% de dano",
+            "mago" => "Lança uma bola de fogo que causa dano mágico em área",
+            "arqueiro" => "Dispara múltiplas flechas que atingem todos os inimigos",
+            "clérigo" => "Cura todos os membros da party em 50% da vida máxima",
+            "ladrão" => "Ataque furtivo que ignora defesa e causa dano crítico",
+            "paladino" => "Golpe sagrado que causa dano extra contra criaturas das trevas",
+            "bárbaro" => "Entra em fúria, dobrando o dano por 3 turnos",
+            "druida" => "Invoca criaturas da natureza para ajudar no combate",
+            _ => "Ataque especial que causa 150% de dano"
+        };
+    }
+    
+    public int GetSpecialAbilityCooldown()
+    {
+        return Class.ToLower() switch
+        {
+            "guerreiro" => 3, // 3 turnos
+            "mago" => 4,      // 4 turnos
+            "arqueiro" => 3,  // 3 turnos
+            "clérigo" => 5,   // 5 turnos
+            "ladrão" => 2,    // 2 turnos
+            "paladino" => 4,  // 4 turnos
+            "bárbaro" => 6,   // 6 turnos
+            "druida" => 5,    // 5 turnos
+            _ => 3            // 3 turnos padrão
+        };
+    }
+    
 }
 

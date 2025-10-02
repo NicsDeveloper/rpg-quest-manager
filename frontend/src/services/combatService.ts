@@ -101,6 +101,37 @@ export interface CombatDetail {
   createdAt: string;
   startedAt?: string;
   completedAt?: string;
+  // Sistema de Combos
+  consecutiveSuccesses: number;
+  consecutiveFailures: number;
+  comboMultiplier: number;
+  lastAction: string;
+  
+  // Sistema de Condições Ambientais e Morale
+  environmentalCondition?: {
+    type: string;
+    intensity: number;
+    description: string;
+    icon: string;
+  };
+  heroMoraleStates: {
+    id: number;
+    heroId?: number;
+    enemyId?: number;
+    level: string;
+    moralePoints: number;
+    icon: string;
+    description: string;
+  }[];
+  enemyMoraleState?: {
+    id: number;
+    heroId?: number;
+    enemyId?: number;
+    level: string;
+    moralePoints: number;
+    icon: string;
+    description: string;
+  };
 }
 
 export interface RollDiceRequest {
@@ -169,4 +200,23 @@ export const combatService = {
   cancelCombat: async (combatSessionId: number): Promise<void> => {
     await api.post(`/combat/${combatSessionId}/cancel`);
   },
+
+  useSpecialAbility: async (request: UseSpecialAbilityRequest): Promise<UseSpecialAbilityResult> => {
+    const response = await api.post<UseSpecialAbilityResult>('/combat/use-special-ability', request);
+    return response.data;
+  },
 };
+
+export interface UseSpecialAbilityRequest {
+  combatSessionId: number;
+  heroId: number;
+}
+
+export interface UseSpecialAbilityResult {
+  success: boolean;
+  message: string;
+  damageDealt: number;
+  healingDone: number;
+  cooldownRemaining: number;
+  updatedCombatSession: CombatDetail;
+}
