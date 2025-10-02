@@ -144,6 +144,12 @@ docker-compose down && docker-compose up -d --build
 - ✅ **Sistema de Inventário Completo** - Gerenciamento de itens com equipamento e bônus
 - ✅ **Progressão Automática** - Level up automático com recompensas (XP, ouro, atributos)
 - ✅ **Sistema de Notificações** - Avisos de level up e novas missões disponíveis
+- ⚔️ **Sistema de Combate com Dados Virtuais** - Rolagem de D6, D8, D12, D20 contra inimigos
+- 🎲 **Loja de Dados** - Compra de dados com ouro do herói (preços escalados)
+- 👑 **Sistema de Bosses com Drops** - Drops exclusivos e raros de bosses épicos
+- 🎁 **Sistema de Drop Avançado** - Chances de drop por raridade (Common, Rare, Epic I-III, Legendary I-III)
+- 💎 **Itens com Raridades em Tiers** - Sistema de raridade épico/lendário com níveis
+- 🔥 **Notificações Especiais para Drops Raros** - Alertas automáticos para itens épicos/lendários
 - ✅ **Cache Inteligente** - Redis para otimizar consultas frequentes (Top 10 heróis, Quests mais jogadas)
 - ✅ **Eventos Assíncronos** - RabbitMQ para notificações de conclusão de quests
 - ✅ **Validações Robustas** - FluentValidation em todas as entradas
@@ -159,6 +165,10 @@ docker-compose down && docker-compose up -d --build
 - ✅ **Sistema de Aceitação Visual** - Badges de status (Disponível, Aceita, Bloqueada)
 - ✅ **Notificações em Tempo Real** - Sino com contador e painel dropdown
 - ✅ **Tutorial Interativo** - Wizard de 7 passos para novos jogadores
+- ⚔️ **Tela de Combate Interativa** - Rolagem de dados com animações e feedback visual
+- 🎲 **Loja de Dados** - Interface de compra com preços e inventário em tempo real
+- 🏆 **Tela de Resultados de Combate** - Exibição de drops obtidos com raridades
+- 📜 **Histórico de Combate em Tempo Real** - Log de ações durante a batalha
 - ✅ **Internacionalização (i18n)** - Suporte a múltiplos idiomas
 - ✅ **Rotas Protegidas** - Controle de acesso baseado em roles
 - ✅ **Panel Admin** - Interface completa para gerenciamento (apenas Admin)
@@ -220,6 +230,30 @@ docker-compose down && docker-compose up -d --build
   - Endpoint dedicado `/profile/my-hero`
   - Visualização de inventário e histórico de missões
   - Estatísticas pessoais
+  
+- ⚔️ **Sistema de Combate com Dados Virtuais**
+  - 🎲 Rolagem de dados (D6, D8, D12, D20) contra inimigos
+  - Cada inimigo requer um tipo específico de dado e roll mínimo
+  - Dados são consumíveis e podem ser comprados na loja com ouro
+  - Sessões de combate persistentes (InProgress, Victory, Fled, Defeated)
+  - Log de ações em tempo real durante o combate
+  - Interface interativa com feedback visual imediato
+  
+- 🎁 **Sistema de Drops Avançado de Bosses**
+  - Bosses marcados com flag `IsBoss` tem drops exclusivos
+  - 5 níveis de raridade: **Common**, **Rare**, **Epic I-III**, **Legendary I-III**
+  - Tabela `BossDropTable` com chances configuráveis (5% a 60%)
+  - Itens exclusivos de bosses (não dropam de outros inimigos)
+  - Itens comuns compartilhados (60% de chance em todos os bosses)
+  - Múltiplos drops possíveis (0 a N itens por boss derrotado)
+  - Notificações automáticas para drops épicos/lendários
+  - Tela de resultados mostrando todos os itens obtidos
+  
+- 🏪 **Loja de Dados Virtuais**
+  - Compra de dados com ouro do herói
+  - Preços escalados: D6 (50g), D8 (100g), D12 (200g), D20 (500g)
+  - Inventário persistente por herói
+  - Heróis de nível alto começam com mais dados no seed
 
 ---
 
