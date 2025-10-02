@@ -321,135 +321,836 @@ public class DatabaseSeeder
     {
         var quests = new List<Quest>
         {
-            // Quests Fáceis
+            // ===== QUEST TUTORIAL (Nível 1 - SEMPRE DISPONÍVEL) =====
             new Quest
             {
-                Name = "Caça aos Goblins",
-                Description = "Uma horda de goblins está atacando fazendas próximas. Elimine-os!",
+                Name = "Os Primeiros Passos: Bem-vindo à Guilda",
+                Description = @"🎭 **Bem-vindo à Guilda dos Heróis!**
+
+O Mestre da Guilda, **Eldrin Coração-de-Pedra**, um veterano de mil batalhas, te recebe com um sorriso caloroso mas marcas de preocupação em seu rosto enrugado.
+
+'Aventureiro! Finalmente chegou. Nosso reino, **Valestra**, está em tempos sombrios. Criaturas das trevas emergem das Terras Desoladas, e precisamos de cada braço forte, cada mente brilhante, cada arco certeiro que pudermos reunir.'
+
+Ele aponta para um mapa na parede, mostrando a **Vila de Thornwood**, rodeada por pequenos símbolos vermelhos.
+
+'Goblins. Criaturas covardes, mas perigosas em números. Eles atacaram fazendas próximas e roubaram suprimentos. Sua primeira missão: vá até a **Floresta de Thornwood** e elimine pelo menos 5 goblins. Isso mostrará que você tem o que é preciso para ser um verdadeiro herói.'
+
+**Objetivos:**
+• Derrote 5 Goblin Raiders na Floresta de Thornwood
+• Retorne à Guilda com prova de sua vitória
+• Aprenda as bases do combate e progressão
+
+'Ah, e jovem herói... lembre-se: mesmo os maiores guerreiros começaram enfrentando goblins. Boa sorte!'",
+                Difficulty = "Tutorial",
+                RequiredLevel = 1,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 100,
+                GoldReward = 50,
+                CreatedAt = DateTime.UtcNow.AddDays(-30)
+            },
+            
+            // ===== QUESTS INICIANTES (Nível 1-3) =====
+            new Quest
+            {
+                Name = "A Infestação do Cemitério",
+                Description = @"⚰️ **O Descanso Perturbado**
+
+O **Padre Marcus**, guardião do antigo cemitério de Thornwood, te procura desesperado. Suas mãos tremem enquanto segura um crucifixo de prata.
+
+'Herói, algo terrível aconteceu! Na última lua nova, os mortos começaram a emergir de suas tumbas. Esqueletos guerreiros vagam entre as lápides, atacando qualquer um que se aproxime!'
+
+Ele aponta para marcas de garras na porta da capela.
+
+'Minha congregação não pode mais visitar seus entes queridos. As famílias choram em desespero. **10 esqueletos** atormentam o cemitério. Por favor, devolva-os ao descanso eterno!'
+
+**Local:** Cemitério Antigo de Thornwood
+**Inimigos:** Skeleton Warriors (Mortos-vivos amaldiçoados)
+**Recompensa especial:** Bênção do Padre Marcus (+10% XP por 1 hora)
+
+'Que a luz te guie nas trevas, bravo guerreiro.'",
                 Difficulty = "Fácil",
-                ExperienceReward = 50,
-                GoldReward = 100,
+                RequiredLevel = 2,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 150,
+                GoldReward = 120,
+                CreatedAt = DateTime.UtcNow.AddDays(-28)
+            },
+            
+            new Quest
+            {
+                Name = "Os Lobos Famintos da Estrada",
+                Description = @"🐺 **Perigo nas Rotas Comerciais**
+
+**Greta**, a mercadora viajante, está presa na taverna há três dias. Ela mostra marcas de mordidas em seu braço enfaixado.
+
+'Nunca vi nada assim em 20 anos de estrada! Uma matilha de lobos, grandes como pôneis, está bloqueando a **Estrada do Leste**. Eles atacaram minha caravana, mataram meus guardas e quase me levaram!'
+
+Ela deixa cair uma bolsa de moedas na mesa.
+
+'Preciso chegar a **Porto Âncora** em dois dias, ou perderei o contrato da vida. Mate pelo menos **8 lobos** e limpe a estrada. Pagarei bem - e você terá minha gratidão eterna.'
+
+**Local:** Estrada do Leste, próximo ao Rio Cristalino
+**Inimigos:** Lobos Selvagens (Matilha faminta e agressiva)
+**Tempo:** Urgente - Greta precisa partir em breve
+
+'Por favor, não me decepcione. Meu futuro depende disso.'",
+                Difficulty = "Fácil",
+                RequiredLevel = 3,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 180,
+                GoldReward = 150,
+                CreatedAt = DateTime.UtcNow.AddDays(-27)
+            },
+
+            // ===== QUESTS MÉDIAS (Nível 5-8) =====
+            new Quest
+            {
+                Name = "A Invasão Orc: Defesa de Thornwood",
+                Description = @"⚔️ **A HORDA SE APROXIMA**
+
+**Capitão Roderick**, comandante da guarda de Thornwood, bate seu punho na mesa do quartel-general. Mapas de batalha estão espalhados, marcados com símbolos vermelhos de inimigos.
+
+'ESCUTE BEM, HERÓI! Espiões reportam que uma horda orc, liderada pelo brutal **Warlord Grak'thor**, marcha em direção à vila. **TREZENTOS ORCS**. Queimando tudo em seu caminho!'
+
+Ele aponta para o mapa, mostrando a rota dos orcs.
+
+'Não temos tropas suficientes. Preciso que você e outros heróis façam uma **MISSÃO SUICIDA**: infiltrar-se no acampamento orc a leste e **MATAR O WARLORD**. Sem líder, a horda se dispersará.'
+
+Sua expressão se suaviza por um momento.
+
+'Sei que peço muito. Mas se Thornwood cair, **milhares morrerão**. Você é nossa única esperança.'
+
+**Local:** Acampamento Orc, Planícies de Cinzas
+**Inimigo:** Orc Warlord Grak'thor (Líder brutal e estrategista)
+**Risco:** MUITO ALTO - Infiltração em território inimigo
+**Impacto:** SALVA THORNWOOD DE DESTRUIÇÃO
+
+'Volte vivo, herói. Valestra precisa de você.'",
+                Difficulty = "Médio",
+                RequiredLevel = 5,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 400,
+                GoldReward = 500,
                 CreatedAt = DateTime.UtcNow.AddDays(-25)
             },
+
             new Quest
             {
-                Name = "Coleta de Ervas",
-                Description = "Colete 20 ervas medicinais na floresta",
-                Difficulty = "Fácil",
-                ExperienceReward = 30,
-                GoldReward = 75,
-                CreatedAt = DateTime.UtcNow.AddDays(-24)
-            },
-            new Quest
-            {
-                Name = "Limpeza do Cemitério",
-                Description = "Esqueletos emergiram do cemitério antigo. Devolva-os ao descanso eterno.",
-                Difficulty = "Fácil",
-                ExperienceReward = 60,
-                GoldReward = 120,
+                Name = "O Feiticeiro Negro de Ravenmoor",
+                Description = @"🌑 **MAGIA NEGRA E MALDIÇÕES**
+
+A **Arquimaga Lyria**, da Academia Arcana, te convoca urgentemente. Círculos mágicos brilham no chão de sua torre enquanto ela estuda pergaminhos antigos.
+
+'Detectei uma presença sombria no pântano de Ravenmoor. Um feiticeiro negro, **Malachar, o Corrompido**, está realizando rituais proibidos!'
+
+Ela aponta para uma bola de cristal mostrando visões de aldeões transformados em criaturas.
+
+'Ele está transmutando aldeões em abominações! Já perdemos **20 pessoas**. Se não pararmos, ele terá poder suficiente para convocar algo... pior.'
+
+Sua voz se torna grave.
+
+'Malachar foi meu aluno, há anos. Eu o expulsei por praticar necromancia. Agora voltou para se vingar. Você deve confrontá-lo em sua **Torre das Sombras**.'
+
+**Local:** Torre das Sombras, Pântano de Ravenmoor
+**Inimigo:** Dark Wizard Malachar (Ex-membro da Academia, extremamente perigoso)
+**Habilidades inimigas:** Magia negra, invocações demoníacas, maldições
+**Recompensa especial:** Tomo de Magia Antiga
+
+'Tenha cuidado, herói. Ele conhece todos os truques que eu ensino...'",
+                Difficulty = "Médio",
+                RequiredLevel = 6,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 450,
+                GoldReward = 600,
                 CreatedAt = DateTime.UtcNow.AddDays(-23)
             },
-            
-            // Quests Médias
+
             new Quest
             {
-                Name = "A Invasão Orc",
-                Description = "Um exército orc se aproxima da cidade. Derrote o líder!",
+                Name = "A Maldição do Lobisomem",
+                Description = @"🌕 **HORROR NAS NOITES DE LUA CHEIA**
+
+O **Lorde Edmund**, governante de Silverwood, te recebe em seu solar. Ele parece ter envelhecido 20 anos. Suas mãos tremem ao te oferecer vinho.
+
+'A cada lua cheia, a mesma história. Corpos dilacerados. Famílias destroçadas. Um **LOBISOMEM** assombra meus domínios há três meses.'
+
+Ele mostra retratos de família na parede - metade cobertos por pano negro.
+
+'Perdi meu filho primogênito na primeira noite. Minha filha na segunda. Agora minha esposa está trancada na torre, rezando. Os aldeões falam em abandonar Silverwood.'
+
+Sua voz se quebra.
+
+'O mestre de caça identificou a toca da criatura: as **Cavernas de Prata** ao norte. Mate-o. Por favor. Antes da próxima lua cheia - em **3 dias**.'
+
+**Local:** Cavernas de Prata, Montanhas do Norte
+**Inimigo:** Werewolf (Amaldiçoado, força sobre-humana, regeneração)
+**Prazo:** 3 dias até próxima lua cheia
+**Equipamento recomendado:** Armas de prata (fornecidas pelo Lorde)
+
+'Salve minha família. Salve Silverwood.'",
                 Difficulty = "Médio",
-                ExperienceReward = 150,
-                GoldReward = 400,
-                CreatedAt = DateTime.UtcNow.AddDays(-22)
-            },
-            new Quest
-            {
-                Name = "O Feiticeiro das Sombras",
-                Description = "Um feiticeiro negro está amaldiçoando aldeões. Pare-o!",
-                Difficulty = "Médio",
-                ExperienceReward = 180,
-                GoldReward = 500,
+                RequiredLevel = 7,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 500,
+                GoldReward = 700,
                 CreatedAt = DateTime.UtcNow.AddDays(-21)
             },
+
+            // ===== QUESTS DIFÍCEIS (Nível 10-15) =====
             new Quest
             {
-                Name = "Caçada ao Lobisomem",
-                Description = "Um lobisomem aterroriza viajantes nas noites de lua cheia",
-                Difficulty = "Médio",
-                ExperienceReward = 200,
-                GoldReward = 600,
-                CreatedAt = DateTime.UtcNow.AddDays(-20)
-            },
-            new Quest
-            {
-                Name = "O Covil do Troll",
-                Description = "Entre na caverna do troll e recupere o tesouro roubado",
-                Difficulty = "Médio",
-                ExperienceReward = 170,
-                GoldReward = 450,
-                CreatedAt = DateTime.UtcNow.AddDays(-19)
-            },
-            
-            // Quests Difíceis
-            new Quest
-            {
-                Name = "O Vampiro Ancestral",
-                Description = "Um vampiro antigo desperta. Apenas os mais corajosos ousam enfrentá-lo.",
+                Name = "O Vampiro Ancestral de Crimson Vale",
+                Description = @"🦇 **TERROR IMORTAL**
+
+A **Inquisidora Celeste**, caçadora de vampiros há 30 anos, te mostra um medalhão ensanguentado. Seu rosto cicatrizado conta histórias de batalhas perdidas.
+
+'Este medalhão pertencia ao meu mentor. Encontrei-o drenado de sangue em **Crimson Vale**. O trabalho de **Lord Vladimor**, um vampiro de 500 anos.'
+
+Ela abre um tomo antigo, mostrando ilustrações de horrores noturnos.
+
+'Vladimor não é um vampiro comum. É um **ANCIÃO**. Comandou exércitos de mortos-vivos nas Guerras Sangrentas. Foi selado por meu bisavô, mas o selo se quebrou.'
+
+Seus olhos brilham com determinação e dor.
+
+'Já perdi 12 caçadores tentando destruí-lo. Mas você... você tem algo especial. Leve esta estaca de freixo abençoado. Perfure seu coração antes do amanhecer, ou Crimson Vale se tornará um reino de trevas eternas.'
+
+**Local:** Castelo Crimson, Vale das Sombras Eternas
+**Inimigo:** Vampire Lord Vladimor (500 anos, imortal, mestre da manipulação)
+**Habilidades:** Controle mental, transformação em morcego, regeneração, exército de lacaios
+**ATENÇÃO:** Extremamente perigoso - party recomendada
+**Recompensa:** Capa do Caçador de Vampiros (Lendária)
+
+'Que a luz te proteja nas trevas absolutas.'",
                 Difficulty = "Difícil",
-                ExperienceReward = 350,
-                GoldReward = 1000,
+                RequiredLevel = 10,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 800,
+                GoldReward = 1500,
                 CreatedAt = DateTime.UtcNow.AddDays(-18)
             },
+
             new Quest
             {
-                Name = "A Torre do Necromante",
-                Description = "Suba a torre do necromante e impeça seus planos sombrios",
+                Name = "A Torre do Lich King",
+                Description = @"💀 **O SENHOR DOS MORTOS**
+
+O **Arcebispo Theron**, líder espiritual de Valestra, te convoca à catedral. Luz sagrada emana de seu cajado enquanto ele aponta para o norte.
+
+'Uma presença maligna se ergue. A **Torre Negra**, selada há mil anos, voltou a brilhar com luz verde doentia. O **LICH KING** desperta!'
+
+Ele desenrola uma profecia antiga.
+
+'Quando o sol se alinhar com a lua negra, o Lich despertará e marchará com legião de 10.000 mortos. TRÊS DIAS até o alinhamento!'
+
+Sua voz ecoa pela catedral.
+
+'Você deve ESCALAR a Torre Negra, atravessar os 7 níveis de horrores mortos-vivos, e destruir o phylactery do Lich antes que o ritual se complete. Ou Valestra CAIRÁ.'
+
+**Local:** Torre Negra, Terras Desoladas
+**Inimigo Final:** Lich King (Necromante supremo, milhares de anos)
+**Desafios:** 7 andares, cada um com guardião único
+**Prazo:** 3 dias até ritual de despertar completo
+**Risco:** EXTREMO - Muitos entraram, nenhum retornou
+
+'Esta pode ser a última batalha de Valestra. Faça valer a pena.'",
                 Difficulty = "Difícil",
-                ExperienceReward = 400,
-                GoldReward = 1200,
-                CreatedAt = DateTime.UtcNow.AddDays(-17)
-            },
-            new Quest
-            {
-                Name = "O Dragão das Montanhas",
-                Description = "Um dragão anciã está queimando vilas. Derrote-o e salve o reino!",
-                Difficulty = "Difícil",
-                ExperienceReward = 450,
-                GoldReward = 1500,
+                RequiredLevel = 12,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 1000,
+                GoldReward = 2000,
                 CreatedAt = DateTime.UtcNow.AddDays(-16)
             },
-            
-            // Quests Épicas
+
+            // ===== QUESTS ÉPICAS (Nível 15-20) =====
             new Quest
             {
-                Name = "O Despertar do Balrog",
-                Description = "Um demônio das profundezas emerge. O destino do mundo está em suas mãos.",
+                Name = "O Despertar do Dragão Ancião",
+                Description = @"🐉 **A FÚRIA DO CÉU E FOGO**
+
+**Rei Aldric**, monarca de Valestra, te recebe em seu trono. Toda a corte está em pânico. Fumaça é visível através das janelas do castelo.
+
+'**SMAUG, O DEVASTADOR** despertou! O dragão ancião que dormia há 300 anos nas Montanhas Flamejantes ACORDOU!'
+
+Ele desce do trono, desesperado.
+
+'Três cidades JÁ FORAM QUEIMADAS. Dez mil mortos. O dragão marcha em direção à capital. Estimo... 2 dias até nos alcançar.'
+
+Mapas mostram um rastro de destruição.
+
+'Convoquei todos os heróis do reino. Preciso que você lidere o assalto final. Voar até a Montanha Flamejante e **ENFRENTAR SMAUG** em seu covil. É suicídio... mas é nossa ÚNICA chance.'
+
+Ele te entrega uma espada brilhante.
+
+'Esta é **Luzardo**, Matadora de Dragões, forjada na primeira era. Perfurou o coração de 3 dragões. Que perfure o quarto.'
+
+**Local:** Pico da Montanha Flamejante, Covil do Dragão
+**Inimigo:** Elder Dragon Smaug (300 anos, inteligência superior, poder destrutivo absoluto)
+**Habilidades:** Sopro de fogo apocalíptico, voo, escamas impenetráveis, magia dracônica
+**ATENÇÃO:** BOSS RAID - PARTY DE 3 HERÓIS OBRIGATÓRIA
+**Recompensa:** Tesouro de Smaug (50.000 gold + itens lendários)
+
+'Se falhar... Valestra cai. Sem pressão.'",
                 Difficulty = "Épico",
-                ExperienceReward = 800,
-                GoldReward = 3000,
-                CreatedAt = DateTime.UtcNow.AddDays(-15)
-            },
-            new Quest
-            {
-                Name = "O Senhor dos Liches",
-                Description = "O Rei Lich planeja mergulhar o mundo em escuridão eterna",
-                Difficulty = "Épico",
-                ExperienceReward = 1000,
+                RequiredLevel = 15,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 2000,
                 GoldReward = 5000,
                 CreatedAt = DateTime.UtcNow.AddDays(-14)
             },
+
             new Quest
             {
-                Name = "Kraken dos Mares Profundos",
-                Description = "A besta marinha lendária ameaça destruir a frota",
+                Name = "O Portal Demoníaco: O Senhor Demônio Desperta",
+                Description = @"😈 **O FIM DOS TEMPOS**
+
+O **Oráculo Ancestral**, guardião do Cristal do Destino, te convoca com urgência. O cristal RACHA enquanto visões apocalípticas se manifestam.
+
+'VI O FIM! Um portal para o **ABISMO INFERNAL** foi aberto no **Deserto de Cinzas Eternas**! **BAEL, O SENHOR DEMÔNIO**, líder das legiões do inferno, está CRUZANDO!'
+
+Visões mostram cidades em chamas, céus vermelhos sangue.
+
+'Se Bael cruzar completamente, traz consigo **100.000 DEMÔNIOS**. Valestra, não... TODO O MUNDO cairá em escravidão eterna!'
+
+A voz do Oráculo se torna um sussurro profético.
+
+'Você deve entrar no portal, lutar através das legiões demoníacas, e **DESTRUIR BAEL** antes que ele cruze completamente. Mas cuidado... o Abismo corrompe. Muitos entraram como heróis. Voltaram como monstros.'
+
+**Local:** Portal do Abismo, Deserto de Cinzas Eternas
+**Inimigo:** Demon Lord Bael (Um dos 7 Senhores do Inferno, poder incompreensível)
+**Ambiente:** O próprio Abismo - calor extremo, corrupção espiritual
+**PERIGO MÁXIMO:** Pode não haver retorno
+**Recompensa:** Salvação de toda Valestra + Título: Matador de Demônios
+
+'Que os deuses tenham misericórdia de sua alma... porque Bael não terá.'",
                 Difficulty = "Épico",
-                ExperienceReward = 900,
-                GoldReward = 4000,
+                RequiredLevel = 18,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 3000,
+                GoldReward = 10000,
+                CreatedAt = DateTime.UtcNow.AddDays(-12)
+            },
+
+            new Quest
+            {
+                Name = "Kraken: O Terror dos Mares Profundos",
+                Description = @"🦑 **LENDA DAS PROFUNDEZAS**
+
+**Almirante Blackwater**, comandante da Armada Real, te intercepta no porto. Sua mão esquerda foi substituída por um gancho. Ele está pálido de medo.
+
+'Vi AQUILO com meus próprios olhos! O **KRAKEN**! A lenda é REAL! Aquela... COISA... destruiu METADE DA MINHA FROTA!'
+
+Ele bate o gancho na mesa.
+
+'Tentáculos do tamanho de navios! Olhos grandes como escudos! Mandíbulas que engolem galeras inteiras! Perdi 300 homens em 5 minutos!'
+
+Lágrimas escorrem por seu rosto marcado pelo sal.
+
+'Mas não é só vingança. O Kraken bloqueou a **Rota Comercial Marítima**. Sem ela, Valestra **MORRE DE FOME** em 30 dias. Você precisa... descer. Ir ao **Abismo Oceânico**. E matar essa ABOMINAÇÃO.'
+
+**Local:** Abismo Oceânico, 5000 metros de profundidade
+**Inimigo:** Kraken (Lenda viva, 500 anos, imbatível?)
+**Equipamento especial:** Poção de Respiração Aquática (fornecida)
+**Ambiente:** Combate subaquático, pressão extrema, escuridão total
+**ATENÇÃO:** Muitos tentaram. Todos morreram. Você será diferente?
+
+'Traga-me um tentáculo como prova. E... boa sorte. Você precisará.'",
+                Difficulty = "Épico",
+                RequiredLevel = 16,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 2500,
+                GoldReward = 7500,
                 CreatedAt = DateTime.UtcNow.AddDays(-13)
+            },
+
+            // ===== MISSÕES DE ESCOLTA (Nível 4-6) =====
+            new Quest
+            {
+                Name = "A Caravana Perdida",
+                Description = @"🛒 **MERCADORES EM PERIGO**
+
+**Marcus, o Mercador**, gesticula desesperadamente ao te ver. Suor escorre por seu rosto enquanto ele desdobra um mapa rasgado.
+
+'Minha caravana! Estava indo para Porto Âncora com tecidos raros quando fomos atacados por bandidos na **Passagem do Corvo Negro**!'
+
+Ele aponta com dedos tremulantes no mapa.
+
+'Consegui fugir, mas meus três guardas e todo meu estoque ficaram lá! Eles vão matar todos se não conseguirem o resgate em 24 HORAS!'
+
+Lágrimas escorrem.
+
+'Por favor... eu pago tudo que tenho. Só... traga-os de volta vivos. São como família para mim.'
+
+**Objetivo:** Resgatar os 3 guardas e recuperar a mercadoria
+**Local:** Passagem do Corvo Negro
+**Inimigos:** Bandidos (15-20 bandidos armados)
+**Tempo:** 24 horas
+**Bônus:** Se ninguém morrer, recompensa duplicada",
+                Difficulty = "Médio",
+                RequiredLevel = 4,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 300,
+                GoldReward = 400,
+                CreatedAt = DateTime.UtcNow.AddDays(-26)
+            },
+
+            // ===== MISSÕES DE INVESTIGAÇÃO (Nível 6-8) =====
+            new Quest
+            {
+                Name = "O Mistério do Cult da Lua Negra",
+                Description = @"🔍 **DESAPARECIMENTOS MISTERIOSOS**
+
+**Detetive Helena Blackwood**, investigadora real, te mostra um quadro com fotos e linhas vermelhas conectando pontos.
+
+'Nos últimos 3 meses, **17 pessoas desapareceram** em Thornwood. Todas na lua nova. Todas deixaram este símbolo.'
+
+Ela mostra um desenho: uma lua negra com três garras.
+
+'Segui as pistas até um galpão abandonado nos **Docas Velhas**. Vi figuras encapuzadas entrando à meia-noite. Rituais. Cânticos. Algo... sobrenatural.'
+
+Sua mão vai instintivamente para a arma.
+
+'Preciso de alguém com... habilidades especiais. Infiltre-se no culto. Descubra o que estão planejando. E se possível... ACABE COM ISSO.'
+
+**Objetivo:** 
+• Infiltrar o Culto da Lua Negra
+• Descobrir o plano deles
+• Resgatar as vítimas
+• Eliminar o líder do culto
+
+**Local:** Docas Velhas → Templo Subterrâneo
+**Perigo:** Cultistas (mágicos), possível demônio invocado
+**Recompensa especial:** Distintivo de Investigador Real",
+                Difficulty = "Médio",
+                RequiredLevel = 6,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 550,
+                GoldReward = 800,
+                CreatedAt = DateTime.UtcNow.AddDays(-24)
+            },
+
+            new Quest
+            {
+                Name = "O Ladrão Fantasma de Porto Âncora",
+                Description = @"👤 **O IMPOSSÍVEL SE TORNA REAL**
+
+**Capitão da Guarda Sullivan** te recebe em seu escritório. Três cofres abertos e vazios estão alinhados na mesa.
+
+'Em 7 dias, **7 roubos impossíveis**. Todos os cofres trancados com magia. Todas as guardas patrulhando. Ninguém viu NADA.'
+
+Ele esfrega as têmporas.
+
+'As vítimas? Os homens mais ricos da cidade. O último foi o **Barão Thornhill** - roubado enquanto dormia no mesmo quarto que o cofre. Acordou e o ouro tinha SUMIDO.'
+
+Um mapa da cidade com marcações vermelhas.
+
+'Contratei 20 guardas extras. Instalei alarmes mágicos. E ontem? Roubaram a PRÓPRIA SALA DO TESOURO DA GUILDA!'
+
+Sua voz tremula de raiva e medo.
+
+'Isso não é normal. É magia. Ou algo pior. Pegue esse fantasma antes que a cidade entre em pânico total.'
+
+**Objetivo:** Investigar padrões, encontrar e capturar o ladrão
+**Pistas:** Todos os roubos foram entre 2h e 3h da manhã
+**Suspeitos:** Possível mago-ladrão ou criatura etérea
+**Recompensa:** 20% do ouro recuperado",
+                Difficulty = "Médio",
+                RequiredLevel = 7,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 480,
+                GoldReward = 650,
+                CreatedAt = DateTime.UtcNow.AddDays(-22)
+            },
+
+            // ===== MISSÕES DE COLETA ÉPICA (Nível 8-10) =====
+            new Quest
+            {
+                Name = "Os Três Artefatos Perdidos do Rei Antigo",
+                Description = @"👑 **A HERANÇA DO REI LOUCO**
+
+**Arquivista Eldrin**, guardião da biblioteca real, desenrola um pergaminho com 1000 anos.
+
+'O Rei Malachar, o Louco, antes de sua morte, dividiu seu poder em **TRÊS ARTEFATOS**. Separou-os para que ninguém pudesse reuní-los.'
+
+Ele aponta para ilustrações antigas.
+
+'A **Coroa da Dominação** - escondida na Catacumba Real
+A **Espada da Destruição** - guardada pelo Dragão de Gelo nas Montanhas Congeladas  
+O **Anel da Imortalidade** - nas profundezas do Templo Submerso'
+
+Sua expressão se torna grave.
+
+'Recentemente, cultistas começaram a procurar os artefatos. Se REUNIREM os três, podem ressuscitar Malachar. E isso significaria... o FIM DE VALESTRA.'
+
+Ele te entrega um mapa antigo.
+
+'Encontre os três artefatos ANTES deles. E quando tiver todos... destrua-os. Para sempre.'
+
+**Objetivos:**
+• Recuperar a Coroa (Catacumba Real - Nível 8)
+• Recuperar a Espada (Montanha Congelada - Nível 9)  
+• Recuperar o Anel (Templo Submerso - Nível 10)
+• Destruir os três na Forja Sagrada
+
+**Perigo:** MÁXIMO - 3 dungeons épicas
+**Duração:** Sem limite, mas cultistas também estão procurando",
+                Difficulty = "Difícil",
+                RequiredLevel = 8,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 1200,
+                GoldReward = 2500,
+                CreatedAt = DateTime.UtcNow.AddDays(-20)
+            },
+
+            // ===== MISSÕES DE DEFESA (Nível 5-7) =====
+            new Quest
+            {
+                Name = "A Noite das Hordas: Defesa de Vila Esperança",
+                Description = @"🏰 **APOCALIPSE ZUMBI**
+
+**Prefeita Elena**, de Vila Esperança, está em prantos. Você pode ver fumaça ao longe.
+
+'O necromante que vocês DEIXARAM ESCAPAR na Torre Negra... ele voltou. E trouxe uma HORDA DE MORTOS-VIVOS!'
+
+Ela aponta para a vila cercada.
+
+'300 pessoas estão aqui. Crianças. Idosos. Temos muros fracos e apenas 12 guardas. A horda tem **MIL MORTOS-VIVOS** e chegará ao amanhecer.'
+
+Lágrimas de desespero.
+
+'Não podemos evacuar - eles bloqueariam a estrada. Não podemos negociar - eles não são humanos mais. Só podemos... LUTAR.'
+
+Ela te entrega uma espada.
+
+'Organize a defesa. Fortifique os muros. Proteja meu povo. Até o amanhecer. Se sobrevivermos... tudo que temos é seu.'
+
+**Formato:** Defesa em Ondas
+**Ondas:** 5 ondas de 200 mortos-vivos cada
+**Objetivo:** Sobreviver até o amanhecer (5 ondas)
+**Penalidade:** Cada civil morto = -50 Gold
+**Bônus:** 0 civis mortos = +1000 Gold extra",
+                Difficulty = "Médio",
+                RequiredLevel = 5,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 700,
+                GoldReward = 1000,
+                CreatedAt = DateTime.UtcNow.AddDays(-19)
+            },
+
+            // ===== MISSÕES DE ARENA (Nível 10-12) =====
+            new Quest
+            {
+                Name = "Campeão da Arena Sangrenta",
+                Description = @"⚔️ **GLÓRIA OU MORTE**
+
+**Mestre da Arena Brutus**, um gigante com cicatrizes por todo corpo, te analisa com olhos de predador.
+
+'Então... quer entrar na ARENA? Ver se é páreo para os VERDADEIROS guerreiros de Valestra?'
+
+Ele cospe no chão.
+
+'A Arena Sangrenta não é para heróizinhos de conto de fadas. É SANGUE. É DOR. É MORTE. 87 entraram este ano. 12 saíram vivos.'
+
+Um sorriso cruel.
+
+'Mas se VENCER... 5 lutas. 5 oponentes cada vez mais mortais. Se sobreviver ao 5º combate... será CAMPEÃO. Fama eterna. Riquezas. E este.'
+
+Ele mostra um cinto cravejado de joias.
+
+'O Cinto do Campeão. Só 3 pessoas vivas o conquistaram. Quer ser o 4º? Ou mais um nome na lista de MORTOS?'
+
+**Formato:** 5 Combates Progressivos
+• Combate 1: Guerreiro Veterano (D6, Roll 4)
+• Combate 2: Campeã Élfica (D8, Roll 5)
+• Combate 3: Troll Blindado (D8, Roll 6)
+• Combate 4: Dupla de Gladiadores (D12, Roll 8)
+• Combate 5: Campeão Defensor - Gorath, o Imortal (D12, Roll 9)
+
+**Regra:** NÃO PODE FUGIR. Vence ou morre.
+**Prêmio:** Cinto do Campeão + 5000 Gold + Título",
+                Difficulty = "Difícil",
+                RequiredLevel = 10,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 900,
+                GoldReward = 5000,
+                CreatedAt = DateTime.UtcNow.AddDays(-17)
+            },
+
+            // ===== MISSÕES DE RESGATE ÉPICO (Nível 12-14) =====
+            new Quest
+            {
+                Name = "Resgate na Torre de Ferro: A Princesa Sequestrada",
+                Description = @"👸 **O REI IMPLORA**
+
+**Rei Aldric**, com os olhos vermelhos de tanto chorar, segura tua mão com desespero.
+
+'Minha filha... minha **Princesa Elara**... LEVADA por um dragão negro! Há 3 dias!'
+
+Ele desmorona na frente do trono.
+
+'O dragão **Nightwing** a mantém presa na **Torre de Ferro**, nas Montanhas Amaldiçoadas. Mandei 3 grupos de resgate. Nenhum voltou.'
+
+Guardas seguram o rei que parece à beira da loucura.
+
+'ELA É TUDO QUE ME RESTA! Minha esposa morreu no parto. Elara é... tudo. TUDO!'
+
+Ele se levanta, com olhos de determinação demente.
+
+'Traga-a de volta. VIVA. E te darei... METADE DO REINO. Castelos. Terras. Ouro. Tudo. Só... TRAGA MINHA FILHA DE VOLTA!'
+
+**Objetivo:** Resgatar Princesa Elara da Torre de Ferro
+**Inimigos:** 
+• Guardas Kobold (D6)
+• Wyverns Guardiãs (D8)
+• Nightwing, o Dragão Negro (D20, Roll 17) - BOSS
+
+**Complicação:** Princesa está sob feitiço de sono - precisa de beijo verdadeiro OU poção de despertar
+**Recompensa:** Metade do tesouro real + Título de Duque/Duquesa",
+                Difficulty = "Épico",
+                RequiredLevel = 12,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 1500,
+                GoldReward = 8000,
+                CreatedAt = DateTime.UtcNow.AddDays(-15)
+            },
+
+            // ===== MISSÕES DE CAÇA (Nível 3-5) =====
+            new Quest
+            {
+                Name = "A Grande Caçada: O Javali de Ferro",
+                Description = @"🐗 **LENDA VIVA**
+
+**Caçador-Mor Wilhelm**, coberto de cicatrizes, mostra uma presa de javali do tamanho do teu braço.
+
+'50 anos de caçada. Matei ursos, lobos, até um wyvern jovem. Mas HÁ UMA criatura que sempre escapou.'
+
+Olhos brilham com obsessão.
+
+'O **Javali de Ferro**. 800 quilos de músculo e fúria. Dizem que tem 100 anos. Pele dura como aço. Chifres que perfuram carvalhos.'
+
+Ele mostra um mapa da Floresta Negra.
+
+'Vive nas profundezas da Floresta Negra. Já matou 23 caçadores. Meu irmão foi um deles, há 10 anos.'
+
+Voz se quebra.
+
+'Estou velho. Minha última chance. Me ajude a caçar a besta. Morte ou glória. Uma última caçada ÉPICA.'
+
+**Objetivo:** Rastrear e abater o Javali de Ferro
+**Desafio:** Rastreamento (INT check), depois combate
+**Inimigo:** Iron Boar (D8, Roll 6, Alta Defesa)
+**Troféu:** Presas de Ferro (item lendário para crafting)",
+                Difficulty = "Médio",
+                RequiredLevel = 3,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 250,
+                GoldReward = 350,
+                CreatedAt = DateTime.UtcNow.AddDays(-25)
+            },
+
+            new Quest
+            {
+                Name = "Extermínio: Ninho de Aranhas Gigantes",
+                Description = @"🕷️ **PESADELO DE 8 PATAS**
+
+**Fazendeiro Thomas**, com braço enfaixado sangrando, aponta para o celeiro.
+
+'Começou com ovelhas desaparecendo. Depois galinhas. Ontem... meu FILHO quase foi arrastado!'
+
+Ele quebra em soluços.
+
+'Há um NINHO no celeiro. Aranhas do tamanho de cães. Teias por toda parte. Ouço algo GRANDE lá dentro... a mãe delas.'
+
+Tremendo de medo.
+
+'Não posso chamar a guarda - demoram dias. Minha família está trancada em casa. PRECISO DO CELEIRO LIMPO! É nossa colheita de inverno inteira!'
+
+**Objetivo:** Exterminar ninho de aranhas
+**Inimigos:** 
+• 15-20 Aranhas Gigantes (D6, Roll 3)
+• 1 Aranha Rainha (D8, Roll 6) - Veneno
+
+**Perigo:** Teias reduzem movimento
+**Bônus:** Sacos de ovos destruídos = +100 Gold cada",
+                Difficulty = "Fácil",
+                RequiredLevel = 2,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 180,
+                GoldReward = 200,
+                CreatedAt = DateTime.UtcNow.AddDays(-29)
+            },
+
+            // ===== MISSÕES CÔMIC RELIEF (Nível 1-3) =====
+            new Quest
+            {
+                Name = "O Gato da Bruxa: Missão Impossível",
+                Description = @"😺 **NUNCA SUBESTIME UM GATO**
+
+**Bruxa Morgana**, uma senhora de 80 anos, te olha com olhos lacrimejantes.
+
+'Meu Senhor Bigodes... meu gatinho... subiu na **ÁRVORE ANCESTRAL** há 3 dias e não desce!'
+
+Ela aponta para uma árvore de 50 metros de altura.
+
+'Já tentei magia, mas ele é imune (experimentei nele quando era bebê). Tentei comida, não desce. Tentei rezar, não funcionou!'
+
+Lágrimas escorrem.
+
+'Ele é TUDO que tenho! Sem ele... eu... eu...'
+
+Ela se recompõe, secando as lágrimas.
+
+'Me ajude a resgatar Senhor Bigodes e te darei uma poção da juventude que estou guardando há 30 anos.'
+
+**Objetivo:** Subir na Árvore Ancestral e resgatar o gato
+**Desafio:** Escalada (DEX check) + Convencer o gato (CHA check)
+**Complicação:** O gato não quer descer. Tenta arranhar você.
+**Recompensa:** Poção da Juventude (-10 anos de aparência)",
+                Difficulty = "Fácil",
+                RequiredLevel = 1,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 50,
+                GoldReward = 100,
+                CreatedAt = DateTime.UtcNow.AddDays(-30)
+            },
+
+            new Quest
+            {
+                Name = "A Taverna do Caos: Pare a Briga!",
+                Description = @"🍺 **DESTRUIÇÃO ALCOÓLICA**
+
+**Taverneiro Brutus**, desesperado, te puxa para dentro da taverna.
+
+Caos total. 30 bêbados brigando. Mesas quebradas. Barris rolando. Alguém está PENDURADO NO LUSTRE.
+
+'COMEÇOU COM UMA DISCUSSÃO SOBRE QUAL DRAGÃO É MAIS FORTE! AGORA ESTÃO DESTRUINDO MEU BAR!'
+
+Ele grita por cima do barulho.
+
+'SE NÃO PARAR ESSA BRIGA, VOU TER PREJUÍZO DE 1000 GOLD! FAÇA ALGUMA COISA!'
+
+Um bêbado voa pela janela.
+
+**Objetivo:** Parar a briga na taverna
+**Desafio:** Opções múltiplas:
+• Intimidação (STR check) - Nocautear todo mundo
+• Persuasão (CHA check) - Oferecer rodada grátis  
+• Magia (INT check) - Feitiço de sono em massa
+• Criatividade (sua escolha!)
+
+**Bônus:** Menos dano à taverna = mais recompensa
+**Punição:** Se taverna for destruída completamente = 0 gold",
+                Difficulty = "Fácil",
+                RequiredLevel = 2,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 100,
+                GoldReward = 150,
+                CreatedAt = DateTime.UtcNow.AddDays(-28)
+            },
+
+            // ===== MISSÕES DE CRAFTING (Nível 6-9) =====
+            new Quest
+            {
+                Name = "O Ferreiro Mestre: Forja de uma Lâmina Lendária",
+                Description = @"🔨 **OBRA-PRIMA FINAL**
+
+**Mestre Ferreiro Gareth**, com 60 anos de experiência, mostra projetos antigos.
+
+'Meu avô forjou espadas para reis. Meu pai para heróis. Eu... quero forjar UMA LÂMINA LENDÁRIA antes de morrer.'
+
+Ele desenrola um pergaminho com designs complexos.
+
+'**Starfall** - assim a chamarei. Mas preciso de materiais IMPOSSÍVEIS:
+
+• Aço de Meteoro (do meteoro nas Planícies de Fogo)
+• Coração de Elemental de Fogo (das Cavernas Vulcânicas)
+• Água Benta da Fonte Sagrada (no Templo dos Antigos)
+• Essência de Estrela Cadente (precisa coletar à meia-noite)'
+
+Olhos brilham.
+
+'Traga-me esses materiais e forjarei uma espada que será LENDA por mil anos. Uma espada digna de heróis.'
+
+**Objetivos:**
+• Coletar Aço de Meteoro
+• Derrotar Elemental e pegar seu coração
+• Conseguir Água Benta
+• Capturar Essência de Estrela (evento raro)
+
+**Recompensa:** Espada Lendária personalizada com seu nome",
+                Difficulty = "Difícil",
+                RequiredLevel = 9,
+                RequiredClass = "Any",
+                Type = "Main",
+                ExperienceReward = 850,
+                GoldReward = 0,
+                CreatedAt = DateTime.UtcNow.AddDays(-18)
+            },
+
+            // ===== MISSÕES DE HORROR (Nível 13-15) =====
+            new Quest
+            {
+                Name = "O Manicômio Abandonado: Espíritos Torturados",
+                Description = @"👻 **ONDE A LOUCURA REINA**
+
+**Médium Elizabeth**, sensitiva espiritual, está pálida de terror.
+
+'Sinto... tantas almas. MILHARES. Todas presas. Todas... SOFRENDO.'
+
+Ela aponta para o Manicômio Ravenwood, abandonado há 50 anos.
+
+'O Diretor era um sádico. Experimentava em pacientes. Torturas. Lobotomias. Horrores inimagináveis. Um dia... os pacientes se rebelaram. Mataram todos os médicos. E então... TRANCARAM AS PORTAS DE DENTRO.'
+
+Ela treme.
+
+'Encontraram 200 corpos meses depois. Pacientes que se entre-mataram. Agora... seus espíritos vagam. Presos entre mundos. Em AGONIA ETERNA.'
+
+Lágrimas.
+
+'Preciso que entre lá. Encontre os restos do Diretor. QUEIME seu diário maldito. É o que os prende. Liberte essas almas.'
+
+**Local:** Manicômio Ravenwood (3 andares de horror)
+**Perigos:**
+• Espíritos Enfurecidos
+• Armadilhas psicológicas
+• Testes de sanidade
+• Boss: Fantasma do Diretor (D12, Roll 10)
+
+**Aviso:** Pode afetar sanidade mental do herói",
+                Difficulty = "Difícil",
+                RequiredLevel = 13,
+                RequiredClass = "Any",
+                Type = "Side",
+                ExperienceReward = 1100,
+                GoldReward = 1800,
+                CreatedAt = DateTime.UtcNow.AddDays(-14)
             }
         };
 
         _context.Quests.AddRange(quests);
         await _context.SaveChangesAsync();
-        _logger.LogInformation("🎯 {Count} quests criadas", quests.Count);
+        _logger.LogInformation("🎯 {Count} quests criadas (incluindo quest tutorial)", quests.Count);
     }
 
     private async Task SeedRewardsAsync()
@@ -731,6 +1432,169 @@ public class DatabaseSeeder
         _context.DiceInventories.AddRange(inventories);
         await _context.SaveChangesAsync();
         _logger.LogInformation("🎲 {Count} inventários de dados criados para os heróis", inventories.Count);
+    
+        // ===== PARTY COMBOS =====
+        _logger.LogInformation("Seeding Party Combos...");
+        if (!_context.PartyCombos.Any())
+        {
+            var combos = new List<PartyCombo>
+            {
+                new PartyCombo
+                {
+                    Name = "Muralha Inabalável",
+                    RequiredClass1 = "Guerreiro",
+                    RequiredClass2 = "Paladino",
+                    Description = "A combinação de força bruta e fé divina cria uma defesa impenetrável.",
+                    Effect = "Reduz o roll necessário contra bosses pesados e tanques.",
+                    Icon = "🛡️"
+                },
+                new PartyCombo
+                {
+                    Name = "Trovão Arcano",
+                    RequiredClass1 = "Mago",
+                    RequiredClass2 = "Paladino",
+                    Description = "Magia arcana amplificada por poder divino.",
+                    Effect = "Super efetivo contra mortos-vivos e demônios.",
+                    Icon = "⚡"
+                },
+                new PartyCombo
+                {
+                    Name = "Caçadores Silenciosos",
+                    RequiredClass1 = "Arqueiro",
+                    RequiredClass2 = "Assassino",
+                    Description = "Precisão letal combinada com furtividade mortal.",
+                    Effect = "Extremamente efetivo contra dragões e bestas voadoras.",
+                    Icon = "🎯"
+                },
+                new PartyCombo
+                {
+                    Name = "Trindade Sagrada",
+                    RequiredClass1 = "Guerreiro",
+                    RequiredClass2 = "Mago",
+                    RequiredClass3 = "Paladino",
+                    Description = "A combinação perfeita: força, magia e fé.",
+                    Effect = "Bônus contra todos os tipos de bosses.",
+                    Icon = "✨"
+                },
+                new PartyCombo
+                {
+                    Name = "Sombra e Aço",
+                    RequiredClass1 = "Guerreiro",
+                    RequiredClass2 = "Assassino",
+                    Description = "Força frontal distraindo enquanto o assassino ataca pelas costas.",
+                    Effect = "Efetivo contra bosses humanoides e cavaleiros.",
+                    Icon = "⚔️"
+                },
+                new PartyCombo
+                {
+                    Name = "Destruição Elemental",
+                    RequiredClass1 = "Mago",
+                    RequiredClass2 = "Arqueiro",
+                    Description = "Flechas imbuídas com poder mágico devastador.",
+                    Effect = "Extremamente efetivo contra golens e construtos.",
+                    Icon = "🔥"
+                }
+            };
+
+            await _context.PartyCombos.AddRangeAsync(combos);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("✅ {Count} Party Combos seeded!", combos.Count);
+        }
+
+        // ===== BOSS WEAKNESSES =====
+        _logger.LogInformation("Seeding Boss Weaknesses...");
+        if (!_context.BossWeaknesses.Any())
+        {
+            var combos = await _context.PartyCombos.ToListAsync();
+            var enemies = await _context.Enemies.Where(e => e.IsBoss).ToListAsync();
+
+            var muralhaCombo = combos.FirstOrDefault(c => c.Name == "Muralha Inabalável");
+            var trovaoCombo = combos.FirstOrDefault(c => c.Name == "Trovão Arcano");
+            var cacadoresCombo = combos.FirstOrDefault(c => c.Name == "Caçadores Silenciosos");
+            var trindadeCombo = combos.FirstOrDefault(c => c.Name == "Trindade Sagrada");
+            var sombraCombo = combos.FirstOrDefault(c => c.Name == "Sombra e Aço");
+
+            var weaknesses = new List<BossWeakness>();
+
+            // Dragão Ancião
+            var dragao = enemies.FirstOrDefault(e => e.Name == "Dragão Ancião");
+            if (dragao != null && cacadoresCombo != null && trindadeCombo != null)
+            {
+                weaknesses.Add(new BossWeakness
+                {
+                    EnemyId = dragao.Id,
+                    ComboId = cacadoresCombo.Id,
+                    RollReduction = -3,
+                    DropMultiplier = 1.25m,
+                    ExpMultiplier = 1.15m,
+                    FlavorText = "Arqueiros e Assassinos exploram os pontos fracos nas escamas do dragão!"
+                });
+                weaknesses.Add(new BossWeakness
+                {
+                    EnemyId = dragao.Id,
+                    ComboId = trindadeCombo.Id,
+                    RollReduction = -2,
+                    DropMultiplier = 1.10m,
+                    ExpMultiplier = 1.10m,
+                    FlavorText = "A Trindade Sagrada une forças contra o terror alado!"
+                });
+            }
+
+            // Senhor Demônio
+            var demonio = enemies.FirstOrDefault(e => e.Name == "Senhor Demônio");
+            if (demonio != null && trovaoCombo != null && trindadeCombo != null)
+            {
+                weaknesses.Add(new BossWeakness
+                {
+                    EnemyId = demonio.Id,
+                    ComboId = trovaoCombo.Id,
+                    RollReduction = -4,
+                    DropMultiplier = 1.30m,
+                    ExpMultiplier = 1.20m,
+                    FlavorText = "Magia arcana e poder divino devastam as forças demoníacas!"
+                });
+                weaknesses.Add(new BossWeakness
+                {
+                    EnemyId = demonio.Id,
+                    ComboId = trindadeCombo.Id,
+                    RollReduction = -2,
+                    DropMultiplier = 1.15m,
+                    ExpMultiplier = 1.10m,
+                    FlavorText = "A luz da Trindade repele as trevas infernais!"
+                });
+            }
+
+            // Cavaleiro das Trevas
+            var cavaleiro = enemies.FirstOrDefault(e => e.Name == "Cavaleiro das Trevas");
+            if (cavaleiro != null && sombraCombo != null && muralhaCombo != null)
+            {
+                weaknesses.Add(new BossWeakness
+                {
+                    EnemyId = cavaleiro.Id,
+                    ComboId = sombraCombo.Id,
+                    RollReduction = -3,
+                    DropMultiplier = 1.20m,
+                    ExpMultiplier = 1.15m,
+                    FlavorText = "Força e furtividade quebram a guarda do cavaleiro sombrio!"
+                });
+                weaknesses.Add(new BossWeakness
+                {
+                    EnemyId = cavaleiro.Id,
+                    ComboId = muralhaCombo.Id,
+                    RollReduction = -2,
+                    DropMultiplier = 1.10m,
+                    ExpMultiplier = 1.05m,
+                    FlavorText = "A Muralha Inabalável resiste aos ataques das trevas!"
+                });
+            }
+
+            if (weaknesses.Any())
+            {
+                await _context.BossWeaknesses.AddRangeAsync(weaknesses);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("✅ {Count} Boss Weaknesses seeded!", weaknesses.Count);
+            }
+        }
     }
 
     private static string HashPassword(string password)

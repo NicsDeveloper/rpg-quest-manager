@@ -90,6 +90,8 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDiceService, DiceService>();
 builder.Services.AddScoped<ICombatService, CombatService>();
 builder.Services.AddScoped<IDropService, DropService>();
+builder.Services.AddScoped<IComboService, ComboService>();
+builder.Services.AddScoped<IFreeDiceService, FreeDiceService>();
 
 // Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();

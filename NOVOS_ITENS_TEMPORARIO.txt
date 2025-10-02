@@ -1,0 +1,74 @@
+            // ===== EXPANSÃO MASSIVA DE ITENS =====
+            
+            // COMUM - Poções e Consumíveis (Nível 1-5)
+            new Item { Name = "Poção de Cura Média", Description = "Restaura uma boa quantidade de vida", Type = "Poção", Rarity = ItemRarity.Common, Value = 100 },
+            new Item { Name = "Poção de Cura Grande", Description = "Restaura grande quantidade de vida", Type = "Poção", Rarity = ItemRarity.Common, Value = 200 },
+            new Item { Name = "Elixir de Força", Description = "Aumenta força temporariamente", Type = "Poção", Rarity = ItemRarity.Common, BonusStrength = 5, Value = 120 },
+            new Item { Name = "Elixir de Agilidade", Description = "Aumenta destreza temporariamente", Type = "Poção", Rarity = ItemRarity.Common, BonusDexterity = 5, Value = 120 },
+            new Item { Name = "Elixir de Sabedoria", Description = "Aumenta inteligência temporariamente", Type = "Poção", Rarity = ItemRarity.Common, BonusIntelligence = 5, Value = 120 },
+            new Item { Name = "Antídoto", Description = "Cura envenenamento", Type = "Poção", Rarity = ItemRarity.Common, Value = 80 },
+            new Item { Name = "Ração de Viagem", Description = "Comida para longas jornadas", Type = "Consumível", Rarity = ItemRarity.Common, Value = 20 },
+
+            // COMUM - Armas Iniciais (Nível 1-3)
+            new Item { Name = "Adaga Enferrujada", Description = "Uma adaga velha mas funcional", Type = "Adaga", Rarity = ItemRarity.Common, BonusDexterity = 3, Value = 50 },
+            new Item { Name = "Machado de Lenhador", Description = "Simples mas eficaz", Type = "Machado", Rarity = ItemRarity.Common, BonusStrength = 6, Value = 90 },
+            new Item { Name = "Arco Curto", Description = "Arco básico para caça", Type = "Arco", Rarity = ItemRarity.Common, BonusDexterity = 4, Value = 85 },
+            new Item { Name = "Cajado de Madeira", Description = "Cajado de aprendiz mago", Type = "Cajado", Rarity = ItemRarity.Common, BonusIntelligence = 4, Value = 75 },
+            new Item { Name = "Lança de Madeira", Description = "Lança simples de madeira endurecida", Type = "Lança", Rarity = ItemRarity.Common, BonusStrength = 5, BonusDexterity = 2, Value = 95 },
+            new Item { Name = "Martelo Ferrugem", Description = "Martelo pesado de ferro velho", Type = "Martelo", Rarity = ItemRarity.Common, BonusStrength = 7, Value = 100 },
+
+            // COMUM - Armaduras Iniciais (Nível 1-3)
+            new Item { Name = "Robes Rasgados", Description = "Vestes de mago em péssimo estado", Type = "Armadura", Rarity = ItemRarity.Common, BonusIntelligence = 2, Value = 60 },
+            new Item { Name = "Botas de Couro", Description = "Botas resistentes para viagens", Type = "Botas", Rarity = ItemRarity.Common, BonusDexterity = 3, Value = 70 },
+            new Item { Name = "Luvas de Trabalho", Description = "Luvas reforçadas", Type = "Luvas", Rarity = ItemRarity.Common, BonusStrength = 2, Value = 50 },
+            new Item { Name = "Capacete de Couro", Description = "Proteção básica para cabeça", Type = "Capacete", Rarity = ItemRarity.Common, BonusStrength = 3, Value = 90 },
+            new Item { Name = "Escudo Pequeno", Description = "Escudo leve de madeira reforçada", Type = "Escudo", Rarity = ItemRarity.Common, BonusStrength = 5, Value = 100 },
+
+            // RARO - Armas Melhoradas (Nível 5-10)
+            new Item { Name = "Espada de Aço", Description = "Espada bem forjada de aço puro", Type = "Espada", Rarity = ItemRarity.Rare, BonusStrength = 15, Value = 600 },
+            new Item { Name = "Adaga das Sombras", Description = "Adaga negra que se move como fumaça", Type = "Adaga", Rarity = ItemRarity.Rare, BonusDexterity = 18, BonusIntelligence = 5, Value = 750 },
+            new Item { Name = "Machado de Batalha", Description = "Machado pesado de duas lâminas", Type = "Machado", Rarity = ItemRarity.Rare, BonusStrength = 20, Value = 850 },
+            new Item { Name = "Arco Composto", Description = "Arco de design avançado com maior tensão", Type = "Arco", Rarity = ItemRarity.Rare, BonusDexterity = 17, BonusStrength = 6, Value = 700 },
+            new Item { Name = "Cajado de Cristal", Description = "Cajado com cristal de mana no topo", Type = "Cajado", Rarity = ItemRarity.Rare, BonusIntelligence = 20, Value = 900 },
+            new Item { Name = "Lança de Dragão", Description = "Lança com ponta de escama de dragão", Type = "Lança", Rarity = ItemRarity.Rare, BonusStrength = 16, BonusDexterity = 10, Value = 800 },
+            new Item { Name = "Martelo Trovão", Description = "Martelo que crepita com eletricidade", Type = "Martelo", Rarity = ItemRarity.Rare, BonusStrength = 22, BonusIntelligence = 8, Value = 950 },
+            new Item { Name = "Foice Lunar", Description = "Foice prateada brilhante sob a lua", Type = "Foice", Rarity = ItemRarity.Rare, BonusStrength = 17, BonusDexterity = 12, Value = 820 },
+            new Item { Name = "Alabarda Real", Description = "Arma dos guardas reais", Type = "Alabarda", Rarity = ItemRarity.Rare, BonusStrength = 19, BonusDexterity = 7, Value = 880 },
+
+            // RARO - Armaduras Melhoradas (Nível 5-10)
+            new Item { Name = "Armadura de Placas", Description = "Armadura pesada de placas de aço", Type = "Armadura", Rarity = ItemRarity.Rare, BonusStrength = 15, Value = 800 },
+            new Item { Name = "Manto Arcano", Description = "Manto imbuído com proteção mágica", Type = "Armadura", Rarity = ItemRarity.Rare, BonusIntelligence = 18, BonusDexterity = 5, Value = 950 },
+            new Item { Name = "Armadura de Escamas", Description = "Armadura feita de escamas de dragão jovem", Type = "Armadura", Rarity = ItemRarity.Rare, BonusStrength = 14, BonusDexterity = 10, Value = 1100 },
+            new Item { Name = "Botas Aladas", Description = "Botas que aumentam velocidade", Type = "Botas", Rarity = ItemRarity.Rare, BonusDexterity = 15, Value = 700 },
+            new Item { Name = "Luvas do Gladiador", Description = "Luvas reforçadas de combate", Type = "Luvas", Rarity = ItemRarity.Rare, BonusStrength = 12, Value = 600 },
+            new Item { Name = "Capacete Alado", Description = "Capacete com asas decorativas", Type = "Capacete", Rarity = ItemRarity.Rare, BonusStrength = 10, BonusDexterity = 8, Value = 750 },
+            new Item { Name = "Escudo de Aço", Description = "Escudo pesado e resistente", Type = "Escudo", Rarity = ItemRarity.Rare, BonusStrength = 16, Value = 850 },
+
+            // RARO - Acessórios (Nível 5-10)
+            new Item { Name = "Anel de Força", Description = "Anel que amplifica a força física", Type = "Anel", Rarity = ItemRarity.Rare, BonusStrength = 10, Value = 500 },
+            new Item { Name = "Anel de Agilidade", Description = "Anel que aumenta reflexos", Type = "Anel", Rarity = ItemRarity.Rare, BonusDexterity = 10, Value = 500 },
+            new Item { Name = "Anel de Sabedoria", Description = "Anel que clareia a mente", Type = "Anel", Rarity = ItemRarity.Rare, BonusIntelligence = 10, Value = 500 },
+            new Item { Name = "Colar de Proteção", Description = "Colar que protege contra dano", Type = "Colar", Rarity = ItemRarity.Rare, BonusStrength = 8, BonusDexterity = 8, Value = 700 },
+            new Item { Name = "Amuleto da Vida", Description = "Amuleto que aumenta vitalidade", Type = "Amuleto", Rarity = ItemRarity.Rare, BonusStrength = 12, Value = 800 },
+            new Item { Name = "Cinto do Aventureiro", Description = "Cinto com múltiplos compartimentos", Type = "Cinto", Rarity = ItemRarity.Rare, BonusDexterity = 12, Value = 650 },
+
+            // ÉPICO I - Armas Raras de Boss (Nível 10-15)
+            new Item { Name = "Espada do Cavaleiro Negro", Description = "Espada amaldiçoada de um cavaleiro caído", Type = "Espada", Rarity = ItemRarity.Epic, RarityTier = 1, BonusStrength = 25, BonusIntelligence = 10, Value = 2000, IsExclusiveDrop = true },
+            new Item { Name = "Adaga Vampírica", Description = "Adaga que drena vida dos inimigos", Type = "Adaga", Rarity = ItemRarity.Epic, RarityTier = 1, BonusDexterity = 23, BonusIntelligence = 12, Value = 2200, IsExclusiveDrop = true },
+            new Item { Name = "Machado do Berserker", Description = "Machado que aumenta fúria em combate", Type = "Machado", Rarity = ItemRarity.Epic, RarityTier = 1, BonusStrength = 28, Value = 2400, IsExclusiveDrop = true },
+            new Item { Name = "Arco do Caçador Fantasma", Description = "Arco que dispara flechas espectrais", Type = "Arco", Rarity = ItemRarity.Epic, RarityTier = 1, BonusDexterity = 26, BonusIntelligence = 8, Value = 2100, IsExclusiveDrop = true },
+            new Item { Name = "Cajado das Estrelas", Description = "Cajado que canaliza energia cósmica", Type = "Cajado", Rarity = ItemRarity.Epic, RarityTier = 1, BonusIntelligence = 30, Value = 2500, IsExclusiveDrop = true },
+            new Item { Name = "Lança do Leviatã", Description = "Lança forjada em escamas de monstro marinho", Type = "Lança", Rarity = ItemRarity.Epic, RarityTier = 1, BonusStrength = 24, BonusDexterity = 16, Value = 2300, IsExclusiveDrop = true },
+
+            // ÉPICO II - Armaduras de Boss (Nível 12-16)
+            new Item { Name = "Armadura do Paladino Caído", Description = "Armadura sagrada corrompida pelo mal", Type = "Armadura", Rarity = ItemRarity.Epic, RarityTier = 2, BonusStrength = 22, BonusIntelligence = 15, Value = 2800, IsExclusiveDrop = true },
+            new Item { Name = "Robes do Arquimago", Description = "Vestes imbuídas com magia ancestral", Type = "Armadura", Rarity = ItemRarity.Epic, RarityTier = 2, BonusIntelligence = 28, BonusDexterity = 12, Value = 3000, IsExclusiveDrop = true },
+            new Item { Name = "Pele do Lobisomem", Description = "Armadura feita da pele de lobisomem ancião", Type = "Armadura", Rarity = ItemRarity.Epic, RarityTier = 2, BonusStrength = 20, BonusDexterity = 18, Value = 2900, IsExclusiveDrop = true },
+            new Item { Name = "Capa do Vampiro", Description = "Capa que concede regeneração vampírica", Type = "Armadura", Rarity = ItemRarity.Epic, RarityTier = 2, BonusDexterity = 22, BonusIntelligence = 16, Value = 3100, IsExclusiveDrop = true },
+
+            // LENDÁRIO I - Armas Divinas (Nível 18-20)
+            new Item { Name = "Excalibur", Description = "A espada lendária dos reis, forjada pelos deuses", Type = "Espada", Rarity = ItemRarity.Legendary, RarityTier = 1, BonusStrength = 35, BonusDexterity = 20, BonusIntelligence = 15, Value = 8000, IsExclusiveDrop = true },
+            new Item { Name = "Mjölnir", Description = "Martelo dos deuses do trovão", Type = "Martelo", Rarity = ItemRarity.Legendary, RarityTier = 1, BonusStrength = 45, BonusIntelligence = 25, Value = 9000, IsExclusiveDrop = true },
+            new Item { Name = "Gungnir", Description = "Lança divina que nunca erra o alvo", Type = "Lança", Rarity = ItemRarity.Legendary, RarityTier = 1, BonusStrength = 35, BonusDexterity = 30, Value = 8500, IsExclusiveDrop = true },
+            new Item { Name = "Starfall - A Lâmina Estelar", Description = "Espada forjada com materiais impossíveis", Type = "Espada", Rarity = ItemRarity.Legendary, RarityTier = 3, BonusStrength = 50, BonusDexterity = 30, BonusIntelligence = 30, Value = 20000, IsExclusiveDrop = true },
+

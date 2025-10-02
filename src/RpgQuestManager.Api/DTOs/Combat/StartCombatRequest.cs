@@ -2,7 +2,6 @@ namespace RpgQuestManager.Api.DTOs.Combat;
 
 public class StartCombatRequest
 {
-    public int HeroId { get; set; }
+    public List<int> HeroIds { get; set; } = new List<int>(); // Múltiplos heróis
     public int QuestId { get; set; }
 }
-

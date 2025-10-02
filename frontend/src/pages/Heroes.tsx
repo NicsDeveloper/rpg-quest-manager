@@ -1,245 +1,364 @@
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Navbar } from '../components/Navbar';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { Modal } from '../components/Modal';
-import { Input } from '../components/Input';
-import { heroService, Hero, CreateHeroRequest } from '../services/heroService';
-import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
+
+interface Hero {
+  id: number;
+  name: string;
+  class: string;
+  level: number;
+  experience: number;
+  strength: number;
+  intelligence: number;
+  dexterity: number;
+  gold: number;
+  createdAt: string;
+}
 
 export const Heroes: React.FC = () => {
-  const { t } = useTranslation();
-  const { isAdmin } = useAuth();
   const [heroes, setHeroes] = useState<Hero[]>([]);
+  const [activeParty, setActiveParty] = useState<Hero[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedHero, setSelectedHero] = useState<Hero | null>(null);
-
-  const [formData, setFormData] = useState<CreateHeroRequest>({
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newHero, setNewHero] = useState({
     name: '',
-    class: '',
-    strength: 10,
+    class: 'Guerreiro',
+    strength: 15,
     intelligence: 10,
-    dexterity: 10,
+    dexterity: 10
   });
 
   useEffect(() => {
-    loadHeroes();
+    fetchData();
   }, []);
 
-  const loadHeroes = async () => {
+  const fetchData = async () => {
     try {
-      const data = await heroService.getAll();
-      setHeroes(data);
-    } catch (error) {
-      console.error('Error loading heroes:', error);
+      setLoading(true);
+      const [heroesRes, partyRes] = await Promise.all([
+        api.get('/profile/my-heroes'),
+        api.get('/profile/active-party')
+      ]);
+      setHeroes(heroesRes.data);
+      setActiveParty(partyRes.data);
+    } catch (err: any) {
+      console.error('Erro ao carregar dados:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOpenModal = (hero?: Hero) => {
-    if (hero) {
-      setSelectedHero(hero);
-      setFormData({
-        name: hero.name,
-        class: hero.class,
-        strength: hero.strength,
-        intelligence: hero.intelligence,
-        dexterity: hero.dexterity,
-      });
-    } else {
-      setSelectedHero(null);
-      setFormData({
-        name: '',
-        class: '',
-        strength: 10,
-        intelligence: 10,
-        dexterity: 10,
-      });
+  const handleAddToParty = async (heroId: number) => {
+    try {
+      setError('');
+      setSuccess('');
+      await api.post(`/profile/add-to-party/${heroId}`);
+      setSuccess('Herói adicionado à party!');
+      fetchData();
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.response?.data || 'Erro ao adicionar à party');
     }
-    setIsModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedHero(null);
+  const handleRemoveFromParty = async (heroId: number) => {
+    try {
+      setError('');
+      setSuccess('');
+      await api.post(`/profile/remove-from-party/${heroId}`);
+      setSuccess('Herói removido da party!');
+      fetchData();
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.response?.data || 'Erro ao remover da party');
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCreateHero = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (selectedHero) {
-        await heroService.update(selectedHero.id, formData);
-      } else {
-        await heroService.create(formData);
-      }
-      loadHeroes();
-      handleCloseModal();
-    } catch (error) {
-      console.error('Error saving hero:', error);
+      setError('');
+      setSuccess('');
+      await api.post('/profile/create-hero', newHero);
+      setSuccess('Herói criado com sucesso!');
+      setShowCreateModal(false);
+      setNewHero({
+        name: '',
+        class: 'Guerreiro',
+        strength: 15,
+        intelligence: 10,
+        dexterity: 10
+      });
+      fetchData();
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.response?.data || 'Erro ao criar herói');
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm(t('heroes.delete_confirm'))) {
-      try {
-        await heroService.delete(id);
-        loadHeroes();
-      } catch (error) {
-        console.error('Error deleting hero:', error);
-      }
-    }
+  const isInParty = (heroId: number) => {
+    return activeParty.some(h => h.id === heroId);
   };
+
+  const canAddToParty = activeParty.length < 3;
 
   if (loading) {
     return (
-      <>
-        <Navbar />
-        <div className="container mx-auto px-6 py-8">
-          <div className="text-center text-gray-400">{t('common.loading')}</div>
-        </div>
-      </>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl">Carregando...</div>
+      </div>
     );
   }
 
   return (
-    <>
-      <Navbar />
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-amber-500">{t('heroes.title')}</h1>
-          {isAdmin && (
-            <Button onClick={() => handleOpenModal()}>
-              {t('heroes.create')}
-            </Button>
-          )}
-        </div>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold">Meus Heróis</h1>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition"
+        >
+          ➕ Criar Novo Herói
+        </button>
+      </div>
 
-        {heroes.length === 0 ? (
-          <Card>
-            <p className="text-center text-gray-400">{t('heroes.no_heroes')}</p>
-          </Card>
+      {error && (
+        <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-6">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-500/20 border border-green-500 text-green-200 px-4 py-3 rounded-lg mb-6">
+          {success}
+        </div>
+      )}
+
+      {/* Active Party */}
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          ⚔️ Party Ativa ({activeParty.length}/3)
+        </h2>
+        {activeParty.length === 0 ? (
+          <div className="bg-gray-800/50 rounded-lg p-8 text-center text-gray-400">
+            Nenhum herói na party. Adicione heróis abaixo!
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {heroes.map((hero) => (
-              <Card key={hero.id}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {activeParty.map((hero) => (
+              <div
+                key={hero.id}
+                className="bg-gradient-to-br from-yellow-900/30 to-yellow-800/20 border-2 border-yellow-600 rounded-lg p-6"
+              >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-2xl font-bold text-amber-500">{hero.name}</h3>
-                    <p className="text-gray-400">{hero.class}</p>
+                    <h3 className="text-xl font-bold text-yellow-300">{hero.name}</h3>
+                    <p className="text-yellow-500">{hero.class}</p>
                   </div>
-                  <span className="bg-amber-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  <span className="bg-yellow-600 text-white px-3 py-1 rounded-full text-sm font-bold">
                     Nv. {hero.level}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-400">{t('heroes.strength')}</p>
-                    <p className="font-semibold">{hero.strength}</p>
+                <div className="space-y-2 text-sm mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">💪 Força:</span>
+                    <span className="font-bold text-red-400">{hero.strength}</span>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-400">{t('heroes.intelligence')}</p>
-                    <p className="font-semibold">{hero.intelligence}</p>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">🧠 Inteligência:</span>
+                    <span className="font-bold text-blue-400">{hero.intelligence}</span>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-400">Destreza</p>
-                    <p className="font-semibold">{hero.dexterity}</p>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">🎯 Destreza:</span>
+                    <span className="font-bold text-green-400">{hero.dexterity}</span>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-400">{t('heroes.gold')}</p>
-                    <p className="font-semibold">{hero.gold} 🪙</p>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">🪙 Ouro:</span>
+                    <span className="font-bold text-yellow-400">{hero.gold}</span>
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <p className="text-sm text-gray-400">{t('heroes.experience')}</p>
-                  <div className="bg-gray-700 rounded-full h-2 mt-1">
-                    <div
-                      className="bg-amber-600 h-2 rounded-full"
-                      style={{ width: `${(hero.experience % 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">{hero.experience} XP</p>
-                </div>
-
-                {isAdmin && (
-                  <div className="flex gap-2">
-                    <Button variant="secondary" onClick={() => handleOpenModal(hero)} className="flex-1">
-                      {t('common.edit')}
-                    </Button>
-                    <Button variant="danger" onClick={() => handleDelete(hero.id)} className="flex-1">
-                      {t('common.delete')}
-                    </Button>
-                  </div>
-                )}
-              </Card>
+                <button
+                  onClick={() => handleRemoveFromParty(hero.id)}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition"
+                >
+                  ❌ Remover da Party
+                </button>
+              </div>
             ))}
           </div>
         )}
-
-        <Modal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          title={selectedHero ? t('heroes.edit') : t('heroes.create')}
-          footer={
-            <>
-              <Button variant="secondary" onClick={handleCloseModal}>
-                {t('common.cancel')}
-              </Button>
-              <Button onClick={handleSubmit}>
-                {t('common.save')}
-              </Button>
-            </>
-          }
-        >
-          <form onSubmit={handleSubmit}>
-            <Input
-              label={t('heroes.name')}
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-
-            <Input
-              label={t('heroes.class')}
-              value={formData.class}
-              onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-              required
-            />
-
-            <Input
-              label={t('heroes.strength')}
-              type="number"
-              value={formData.strength}
-              onChange={(e) => setFormData({ ...formData, strength: parseInt(e.target.value) })}
-              required
-              min="1"
-            />
-
-            <Input
-              label={t('heroes.intelligence')}
-              type="number"
-              value={formData.intelligence}
-              onChange={(e) => setFormData({ ...formData, intelligence: parseInt(e.target.value) })}
-              required
-              min="1"
-            />
-
-            <Input
-              label="Destreza"
-              type="number"
-              value={formData.dexterity}
-              onChange={(e) => setFormData({ ...formData, dexterity: parseInt(e.target.value) })}
-              required
-              min="1"
-            />
-          </form>
-        </Modal>
       </div>
-    </>
+
+      {/* All Heroes */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4">📋 Todos os Heróis ({heroes.length})</h2>
+        {heroes.length === 0 ? (
+          <div className="bg-gray-800/50 rounded-lg p-8 text-center text-gray-400">
+            Você ainda não tem heróis. Crie um novo herói para começar!
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {heroes.map((hero) => (
+              <div
+                key={hero.id}
+                className={`rounded-lg p-6 border-2 ${
+                  isInParty(hero.id)
+                    ? 'bg-gradient-to-br from-yellow-900/20 to-yellow-800/10 border-yellow-600'
+                    : 'bg-gray-800/50 border-gray-700'
+                }`}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold">{hero.name}</h3>
+                    <p className="text-gray-400">{hero.class}</p>
+                  </div>
+                  <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                    Nv. {hero.level}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-sm mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">💪 Força:</span>
+                    <span className="font-bold">{hero.strength}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">🧠 Inteligência:</span>
+                    <span className="font-bold">{hero.intelligence}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">🎯 Destreza:</span>
+                    <span className="font-bold">{hero.dexterity}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">🪙 Ouro:</span>
+                    <span className="font-bold">{hero.gold}</span>
+                  </div>
+                </div>
+
+                {isInParty(hero.id) ? (
+                  <button
+                    onClick={() => handleRemoveFromParty(hero.id)}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition"
+                  >
+                    ❌ Remover
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleAddToParty(hero.id)}
+                    disabled={!canAddToParty}
+                    className={`w-full py-2 rounded-lg transition ${
+                      canAddToParty
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {canAddToParty ? '✅ Adicionar à Party' : '⚠️ Party Cheia'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Create Hero Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-lg p-8 max-w-md w-full border-2 border-purple-600">
+            <h2 className="text-2xl font-bold mb-6">➕ Criar Novo Herói</h2>
+
+            {error && (
+              <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-4">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateHero} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2">Nome do Herói</label>
+                <input
+                  type="text"
+                  value={newHero.name}
+                  onChange={(e) => setNewHero({ ...newHero, name: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Classe</label>
+                <select
+                  value={newHero.class}
+                  onChange={(e) => setNewHero({ ...newHero, class: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
+                >
+                  <option value="Guerreiro">⚔️ Guerreiro</option>
+                  <option value="Mago">🔮 Mago</option>
+                  <option value="Arqueiro">🏹 Arqueiro</option>
+                  <option value="Paladino">🛡️ Paladino</option>
+                  <option value="Assassino">🗡️ Assassino</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">💪 Força</label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="20"
+                    value={newHero.strength}
+                    onChange={(e) => setNewHero({ ...newHero, strength: parseInt(e.target.value) })}
+                    className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">🧠 Int</label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="20"
+                    value={newHero.intelligence}
+                    onChange={(e) => setNewHero({ ...newHero, intelligence: parseInt(e.target.value) })}
+                    className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">🎯 Dex</label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="20"
+                    value={newHero.dexterity}
+                    onChange={(e) => setNewHero({ ...newHero, dexterity: parseInt(e.target.value) })}
+                    className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-600 focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg transition font-bold"
+                >
+                  Criar Herói
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
-

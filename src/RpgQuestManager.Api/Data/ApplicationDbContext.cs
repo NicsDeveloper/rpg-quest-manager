@@ -27,6 +27,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<CombatLog> CombatLogs { get; set; }
     public DbSet<BossDropTable> BossDropTables { get; set; }
     
+    // Sistema de Combos e Party
+    public DbSet<PartyCombo> PartyCombos { get; set; }
+    public DbSet<BossWeakness> BossWeaknesses { get; set; }
+    public DbSet<ComboDiscovery> ComboDiscoveries { get; set; }
+    public DbSet<FreeDiceGrant> FreeDiceGrants { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -57,9 +63,11 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Quest>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(5000); // Aumentado para suportar lore rica
             entity.Property(e => e.Difficulty).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.RequiredClass).IsRequired().HasMaxLength(50);
         });
         
         // Configuração Enemy
@@ -162,10 +170,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<CombatSession>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasOne(e => e.Hero)
-                .WithMany()
-                .HasForeignKey(e => e.HeroId)
-                .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.HeroIds).IsRequired();
             entity.HasOne(e => e.Quest)
                 .WithMany()
                 .HasForeignKey(e => e.QuestId)
@@ -173,6 +178,10 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(e => e.CurrentEnemy)
                 .WithMany()
                 .HasForeignKey(e => e.CurrentEnemyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Combo)
+                .WithMany()
+                .HasForeignKey(e => e.ComboId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
         
@@ -204,6 +213,67 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(e => e.ItemId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.Property(e => e.DropChance).HasPrecision(5, 2);
+        });
+        
+        // Configuração PartyCombo
+        modelBuilder.Entity<PartyCombo>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.RequiredClass1).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.RequiredClass2).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.RequiredClass3).HasMaxLength(50);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Effect).IsRequired().HasMaxLength(500);
+        });
+        
+        // Configuração BossWeakness
+        modelBuilder.Entity<BossWeakness>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Enemy)
+                .WithMany()
+                .HasForeignKey(e => e.EnemyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Combo)
+                .WithMany(c => c.BossWeaknesses)
+                .HasForeignKey(e => e.ComboId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.DropMultiplier).HasPrecision(5, 2);
+            entity.Property(e => e.ExpMultiplier).HasPrecision(5, 2);
+            entity.Property(e => e.FlavorText).HasMaxLength(500);
+        });
+        
+        // Configuração ComboDiscovery
+        modelBuilder.Entity<ComboDiscovery>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Enemy)
+                .WithMany()
+                .HasForeignKey(e => e.EnemyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Combo)
+                .WithMany(c => c.ComboDiscoveries)
+                .HasForeignKey(e => e.ComboId)
+                .OnDelete(DeleteBehavior.Cascade);
+            // Índice único: usuário só pode descobrir um combo por boss uma vez
+            entity.HasIndex(e => new { e.UserId, e.EnemyId, e.ComboId }).IsUnique();
+        });
+        
+        // Configuração FreeDiceGrant
+        modelBuilder.Entity<FreeDiceGrant>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            // Índice único: um grant por tipo de dado por usuário
+            entity.HasIndex(e => new { e.UserId, e.DiceType }).IsUnique();
         });
     }
 }

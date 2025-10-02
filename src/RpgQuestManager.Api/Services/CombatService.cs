@@ -1,6 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using RpgQuestManager.Api.Data;
+using RpgQuestManager.Api.DTOs.Combat;
+using RpgQuestManager.Api.DTOs.Enemies;
+using RpgQuestManager.Api.DTOs.Heroes;
+using RpgQuestManager.Api.DTOs.Items;
 using RpgQuestManager.Api.Models;
+using AutoMapper;
 
 namespace RpgQuestManager.Api.Services;
 
@@ -9,27 +14,50 @@ public class CombatService : ICombatService
     private readonly ApplicationDbContext _context;
     private readonly IDiceService _diceService;
     private readonly IDropService _dropService;
+    private readonly IComboService _comboService;
+    private readonly INotificationService _notificationService;
+    private readonly IMapper _mapper;
     private readonly ILogger<CombatService> _logger;
+    private static readonly Random _random = new Random();
 
     public CombatService(
         ApplicationDbContext context,
         IDiceService diceService,
         IDropService dropService,
+        IComboService comboService,
+        INotificationService notificationService,
+        IMapper mapper,
         ILogger<CombatService> logger)
     {
         _context = context;
         _diceService = diceService;
         _dropService = dropService;
+        _comboService = comboService;
+        _notificationService = notificationService;
+        _mapper = mapper;
         _logger = logger;
     }
 
-    public async Task<CombatSession> StartCombatAsync(int heroId, int questId)
+    public async Task<CombatSessionDto> StartCombatAsync(int userId, List<int> heroIds, int questId)
     {
-        // Verifica se já existe uma sessão ativa
-        var existingSession = await GetActiveCombatAsync(heroId);
-        if (existingSession != null)
+        if (heroIds == null || !heroIds.Any())
         {
-            throw new InvalidOperationException("Já existe uma sessão de combate ativa para este herói.");
+            throw new InvalidOperationException("Selecione pelo menos um herói para combate.");
+        }
+
+        if (heroIds.Count > 3)
+        {
+            throw new InvalidOperationException("Máximo de 3 heróis por combate.");
+        }
+
+        // Valida que todos os heróis pertencem ao usuário
+        var heroes = await _context.Heroes
+            .Where(h => heroIds.Contains(h.Id) && h.UserId == userId)
+            .ToListAsync();
+
+        if (heroes.Count != heroIds.Count)
+        {
+            throw new InvalidOperationException("Um ou mais heróis não pertencem a você.");
         }
 
         var quest = await _context.Quests
@@ -39,197 +67,489 @@ public class CombatService : ICombatService
 
         if (quest == null)
         {
-            throw new InvalidOperationException("Quest não encontrada.");
+            throw new KeyNotFoundException("Quest não encontrada.");
         }
 
-        var session = new CombatSession
+        if (!quest.QuestEnemies.Any())
         {
-            HeroId = heroId,
+            throw new InvalidOperationException("Esta quest não possui inimigos configurados.");
+        }
+
+        // Verifica se já existe sessão ativa para algum dos heróis
+        foreach (var heroId in heroIds)
+        {
+            var existingSession = await _context.CombatSessions
+                .AnyAsync(cs => cs.HeroIds.Contains(heroId.ToString()) && cs.Status == CombatStatus.InProgress);
+            
+            if (existingSession)
+            {
+                var heroName = heroes.First(h => h.Id == heroId).Name;
+                throw new InvalidOperationException($"O herói {heroName} já está em combate.");
+            }
+        }
+
+        // Detecta combo se houver mais de um herói
+        PartyCombo? combo = null;
+        var groupBonus = 0;
+        var comboBonus = 0;
+
+        if (heroes.Count > 1)
+        {
+            var heroClasses = heroes.Select(h => h.Class).ToList();
+            combo = await _comboService.DetectComboAsync(heroClasses);
+
+            // Bônus de grupo: -1 no roll necessário por herói adicional
+            groupBonus = -(heroes.Count - 1); // -1 para 2 heróis, -2 para 3 heróis
+        }
+
+        var firstEnemy = quest.QuestEnemies.OrderBy(qe => qe.Id).Select(qe => qe.Enemy).First();
+
+        // Se tem combo, verifica fraqueza contra o primeiro boss
+        if (combo != null && firstEnemy.IsBoss)
+        {
+            var weakness = await _comboService.GetBossWeaknessAsync(firstEnemy.Id, combo.Id);
+            if (weakness != null)
+            {
+                comboBonus = -weakness.RollReduction; // RollReduction é negativo, então invertemos
+            }
+        }
+
+        var combatSession = new CombatSession
+        {
             QuestId = questId,
-            Status = CombatStatus.InProgress,
-            StartedAt = DateTime.UtcNow
+            CurrentEnemyId = firstEnemy.Id,
+            ComboId = combo?.Id,
+            GroupBonus = groupBonus,
+            ComboBonus = comboBonus,
+            StartedAt = DateTime.UtcNow,
+            Status = CombatStatus.InProgress
         };
 
-        _context.CombatSessions.Add(session);
+        combatSession.SetHeroIdsList(heroIds);
+
+        _context.CombatSessions.Add(combatSession);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Combate iniciado: Herói {HeroId} vs Quest {QuestId}", heroId, questId);
+        var heroNames = string.Join(", ", heroes.Select(h => h.Name));
+        _logger.LogInformation("🗡️ Combate iniciado! Party: [{HeroNames}] vs Quest '{QuestName}' (ID: {QuestId}). Combo: {ComboName}",
+            heroNames, quest.Name, questId, combo?.Name ?? "Nenhum");
 
-        return session;
+        return new CombatSessionDto
+        {
+            Id = combatSession.Id,
+            HeroIds = heroIds,
+            HeroNames = heroNames,
+            QuestId = questId,
+            QuestName = quest.Name,
+            CurrentEnemyId = firstEnemy.Id,
+            CurrentEnemyName = firstEnemy.Name,
+            ComboId = combo?.Id,
+            ComboName = combo?.Name,
+            GroupBonus = groupBonus,
+            ComboBonus = comboBonus,
+            Status = combatSession.Status,
+            StartedAt = combatSession.StartedAt
+        };
     }
 
-    public async Task<CombatSession?> GetActiveCombatAsync(int heroId)
+    public async Task<CombatSessionDetailDto> GetActiveCombatSessionAsync(int userId, int combatSessionId)
     {
-        return await _context.CombatSessions
+        var combatSession = await _context.CombatSessions
             .Include(cs => cs.Quest)
                 .ThenInclude(q => q.QuestEnemies)
                     .ThenInclude(qe => qe.Enemy)
-            .Include(cs => cs.CombatLogs)
             .Include(cs => cs.CurrentEnemy)
-            .FirstOrDefaultAsync(cs => cs.HeroId == heroId && cs.Status == CombatStatus.InProgress);
-    }
-
-    public async Task<(bool Success, int RollResult, string Message)> RollDiceAsync(
-        int combatSessionId, 
-        int enemyId, 
-        DiceType diceType)
-    {
-        var session = await _context.CombatSessions
-            .Include(cs => cs.Hero)
-            .Include(cs => cs.Quest)
-                .ThenInclude(q => q.QuestEnemies)
-                    .ThenInclude(qe => qe.Enemy)
-            .FirstOrDefaultAsync(cs => cs.Id == combatSessionId);
-
-        if (session == null)
-        {
-            throw new InvalidOperationException("Sessão de combate não encontrada.");
-        }
-
-        if (session.Status != CombatStatus.InProgress)
-        {
-            throw new InvalidOperationException("Esta sessão de combate já foi finalizada.");
-        }
-
-        var enemy = await _context.Enemies.FindAsync(enemyId);
-        if (enemy == null)
-        {
-            throw new InvalidOperationException("Inimigo não encontrado.");
-        }
-
-        // Verifica se o herói tem o dado necessário
-        var hasUsed = await _diceService.UseDiceAsync(session.HeroId, diceType);
-        if (!hasUsed)
-        {
-            throw new InvalidOperationException($"Você não possui dados do tipo {diceType} disponíveis.");
-        }
-
-        // Rola o dado
-        var rollResult = await _diceService.RollDiceAsync(diceType);
-        var success = rollResult >= enemy.MinimumRoll;
-
-        // Registra no log
-        var log = new CombatLog
-        {
-            CombatSessionId = combatSessionId,
-            EnemyId = enemyId,
-            Action = "ROLL",
-            DiceUsed = diceType,
-            DiceResult = rollResult,
-            RequiredRoll = enemy.MinimumRoll,
-            Success = success,
-            Details = $"Rolou {diceType}: {rollResult} (necessário: {enemy.MinimumRoll}+)",
-            Timestamp = DateTime.UtcNow
-        };
-
-        _context.CombatLogs.Add(log);
-        session.CurrentEnemyId = enemyId;
-        
-        await _context.SaveChangesAsync();
-
-        var message = success
-            ? $"🎲 Sucesso! Você rolou {rollResult} no {diceType} e derrotou {enemy.Name}!"
-            : $"💥 Falhou! Você rolou {rollResult} no {diceType}, mas precisava de {enemy.MinimumRoll}+";
-
-        _logger.LogInformation(
-            "Combate {SessionId}: Herói {HeroId} rolou {DiceType} = {Result} vs {Enemy} (necessário {MinRoll}): {Success}",
-            combatSessionId, session.HeroId, diceType, rollResult, enemy.Name, enemy.MinimumRoll, success);
-
-        return (success, rollResult, message);
-    }
-
-    public async Task<(CombatStatus Status, List<Item> Drops)> CompleteCombatAsync(int combatSessionId)
-    {
-        var session = await _context.CombatSessions
-            .Include(cs => cs.Hero)
-            .Include(cs => cs.Quest)
-                .ThenInclude(q => q.QuestEnemies)
-                    .ThenInclude(qe => qe.Enemy)
-                        .ThenInclude(e => e.BossDrops)
-                            .ThenInclude(bd => bd.Item)
+            .Include(cs => cs.Combo)
             .Include(cs => cs.CombatLogs)
-            .FirstOrDefaultAsync(cs => cs.Id == combatSessionId);
+                .ThenInclude(cl => cl.Enemy)
+            .FirstOrDefaultAsync(cs => cs.Id == combatSessionId && cs.Status == CombatStatus.InProgress);
 
-        if (session == null)
+        if (combatSession == null)
         {
-            throw new InvalidOperationException("Sessão de combate não encontrada.");
+            throw new KeyNotFoundException("Sessão de combate não encontrada ou não está ativa.");
         }
 
-        // Verifica quais inimigos foram derrotados
-        var defeatedEnemyIds = session.CombatLogs
-            .Where(log => log.Success == true && log.EnemyId.HasValue)
-            .Select(log => log.EnemyId!.Value)
+        var heroIds = combatSession.GetHeroIdsList();
+
+        // Valida que pelo menos um herói pertence ao usuário
+        var userHeroIds = await _context.Heroes
+            .Where(h => h.UserId == userId && heroIds.Contains(h.Id))
+            .Select(h => h.Id)
+            .ToListAsync();
+
+        if (!userHeroIds.Any())
+        {
+            throw new UnauthorizedAccessException("Esta sessão de combate não pertence a você.");
+        }
+
+        // Busca os heróis
+        var heroes = await _context.Heroes
+            .Where(h => heroIds.Contains(h.Id))
+            .ToListAsync();
+
+        var allQuestEnemies = combatSession.Quest.QuestEnemies.Select(qe => qe.Enemy).ToList();
+        var defeatedEnemyIds = combatSession.CombatLogs
+            .Where(cl => cl.Success == true && cl.EnemyId.HasValue)
+            .Select(cl => cl.EnemyId!.Value)
             .Distinct()
             .ToList();
 
-        var totalEnemies = session.Quest.QuestEnemies.Count;
-        var defeatedCount = defeatedEnemyIds.Count;
+        var remainingEnemies = allQuestEnemies
+            .Where(e => !defeatedEnemyIds.Contains(e.Id))
+            .OrderBy(e => e.Id)
+            .ToList();
 
-        // Determina o status
-        CombatStatus status;
-        if (defeatedCount >= totalEnemies)
+        var dto = new CombatSessionDetailDto
         {
-            status = CombatStatus.Victory;
+            Id = combatSession.Id,
+            HeroIds = heroIds,
+            Heroes = _mapper.Map<List<HeroDto>>(heroes),
+            QuestId = combatSession.QuestId,
+            QuestName = combatSession.Quest.Name,
+            CurrentEnemy = combatSession.CurrentEnemy != null ? _mapper.Map<EnemyDto>(combatSession.CurrentEnemy) : null,
+            ComboId = combatSession.ComboId,
+            ComboName = combatSession.Combo?.Name,
+            ComboDescription = combatSession.Combo?.Description,
+            GroupBonus = combatSession.GroupBonus,
+            ComboBonus = combatSession.ComboBonus,
+            Status = combatSession.Status,
+            StartedAt = combatSession.StartedAt,
+            CompletedAt = combatSession.CompletedAt,
+            CombatLogs = combatSession.CombatLogs.Select(cl => new CombatLogDto
+            {
+                Id = cl.Id,
+                Action = cl.Action,
+                EnemyId = cl.EnemyId,
+                EnemyName = cl.Enemy?.Name,
+                DiceUsed = cl.DiceUsed,
+                DiceResult = cl.DiceResult,
+                RequiredRoll = cl.RequiredRoll,
+                Success = cl.Success,
+                Details = cl.Details,
+                Timestamp = cl.Timestamp
+            }).ToList(),
+            RemainingEnemies = _mapper.Map<List<EnemyDto>>(remainingEnemies)
+        };
+
+        return dto;
+    }
+
+    public async Task<RollDiceResultDto> RollDiceAsync(int userId, int combatSessionId, DiceType diceType)
+    {
+        var combatSession = await _context.CombatSessions
+            .Include(cs => cs.CurrentEnemy)
+            .Include(cs => cs.Quest)
+                .ThenInclude(q => q.QuestEnemies)
+                    .ThenInclude(qe => qe.Enemy)
+            .Include(cs => cs.Combo)
+            .Include(cs => cs.CombatLogs)
+            .FirstOrDefaultAsync(cs => cs.Id == combatSessionId && cs.Status == CombatStatus.InProgress);
+
+        if (combatSession == null)
+        {
+            throw new KeyNotFoundException("Sessão de combate não encontrada ou não está ativa.");
         }
-        else if (defeatedCount == 0)
+
+        if (combatSession.CurrentEnemy == null)
         {
-            status = CombatStatus.Defeated;
+            throw new InvalidOperationException("Não há inimigo atual para combater.");
+        }
+
+        var heroIds = combatSession.GetHeroIdsList();
+        var heroes = await _context.Heroes
+            .Include(h => h.DiceInventory)
+            .Where(h => h.UserId == userId && heroIds.Contains(h.Id))
+            .ToListAsync();
+
+        if (!heroes.Any())
+        {
+            throw new UnauthorizedAccessException("Esta sessão de combate não pertence a você.");
+        }
+
+        // Usa o dado do primeiro herói que tiver (ou qualquer herói)
+        Hero? heroWithDice = null;
+        foreach (var hero in heroes)
+        {
+            if (hero.DiceInventory?.HasDice(diceType) == true)
+            {
+                heroWithDice = hero;
+                break;
+            }
+        }
+
+        if (heroWithDice == null)
+        {
+            throw new InvalidOperationException($"Nenhum herói da party possui dados do tipo {diceType}.");
+        }
+
+        if (combatSession.CurrentEnemy.RequiredDiceType != diceType)
+        {
+            throw new InvalidOperationException($"O inimigo {combatSession.CurrentEnemy.Name} requer um dado do tipo {combatSession.CurrentEnemy.RequiredDiceType}, mas foi usado {diceType}.");
+        }
+
+        // Usa o dado
+        heroWithDice.DiceInventory!.UseDice(diceType);
+
+        // Rola o dado
+        var rollResult = _random.Next(1, (int)diceType + 1);
+        var baseRequiredRoll = combatSession.CurrentEnemy.MinimumRoll;
+        
+        // Aplica os bônus (reduzem o roll necessário)
+        var totalBonus = combatSession.GroupBonus + combatSession.ComboBonus;
+        var adjustedRequiredRoll = Math.Max(1, baseRequiredRoll + totalBonus); // Mínimo 1
+
+        var success = rollResult >= adjustedRequiredRoll;
+
+        var combatLog = new CombatLog
+        {
+            CombatSessionId = combatSession.Id,
+            EnemyId = combatSession.CurrentEnemy.Id,
+            Action = "ROLL",
+            DiceUsed = diceType,
+            DiceResult = rollResult,
+            RequiredRoll = adjustedRequiredRoll,
+            Success = success,
+            Details = $"Rolou {diceType}, resultado {rollResult}. Necessário {adjustedRequiredRoll} (base: {baseRequiredRoll}, bônus: {totalBonus}).",
+            Timestamp = DateTime.UtcNow
+        };
+        _context.CombatLogs.Add(combatLog);
+
+        string message;
+        if (success)
+        {
+            message = $"✅ VITÓRIA! {combatSession.CurrentEnemy.Name} derrotado!";
+            _logger.LogInformation("Inimigo {EnemyName} derrotado na sessão {SessionId}", combatSession.CurrentEnemy.Name, combatSession.Id);
+
+            // Verifica se há mais inimigos
+            var allQuestEnemies = combatSession.Quest.QuestEnemies.Select(qe => qe.Enemy).ToList();
+            var defeatedEnemyIds = combatSession.CombatLogs
+                .Where(cl => cl.Success == true && cl.EnemyId.HasValue)
+                .Select(cl => cl.EnemyId!.Value)
+                .Distinct()
+                .ToList();
+            defeatedEnemyIds.Add(combatSession.CurrentEnemy.Id);
+
+            var remainingEnemies = allQuestEnemies
+                .Where(e => !defeatedEnemyIds.Contains(e.Id))
+                .OrderBy(e => e.Id)
+                .ToList();
+
+            if (remainingEnemies.Any())
+            {
+                // Avança para o próximo inimigo
+                combatSession.CurrentEnemyId = remainingEnemies.First().Id;
+                message += $" Próximo inimigo: {remainingEnemies.First().Name}";
+
+                // Recalcula bônus de combo para o novo boss
+                if (combatSession.ComboId.HasValue && remainingEnemies.First().IsBoss)
+                {
+                    var weakness = await _comboService.GetBossWeaknessAsync(remainingEnemies.First().Id, combatSession.ComboId.Value);
+                    combatSession.ComboBonus = weakness != null ? -weakness.RollReduction : 0;
+                }
+            }
+            else
+            {
+                // Todos os inimigos derrotados!
+                combatSession.Status = CombatStatus.Victory;
+                message += " 🎉 TODOS OS INIMIGOS DERROTADOS! Use o endpoint /complete para receber as recompensas.";
+            }
         }
         else
         {
-            status = CombatStatus.Fled; // Parcialmente completado = fugiu
-        }
-
-        session.Status = status;
-        session.CompletedAt = DateTime.UtcNow;
-
-        // Processa drops apenas se vitória
-        var drops = new List<Item>();
-        if (status == CombatStatus.Victory)
-        {
-            var defeatedEnemies = session.Quest.QuestEnemies
-                .Where(qe => defeatedEnemyIds.Contains(qe.EnemyId))
-                .Select(qe => qe.Enemy)
-                .ToList();
-
-            foreach (var enemy in defeatedEnemies)
-            {
-                var enemyDrops = await _dropService.ProcessDropsAsync(session.HeroId, enemy);
-                drops.AddRange(enemyDrops);
-            }
-
-            _logger.LogInformation(
-                "Combate {SessionId} completado com VITÓRIA! {DropsCount} itens dropados",
-                combatSessionId, drops.Count);
+            message = $"❌ FALHOU! Rolou {rollResult}, mas precisava de {adjustedRequiredRoll}. Tente novamente!";
         }
 
         await _context.SaveChangesAsync();
 
-        return (status, drops);
+        var updatedSession = await GetActiveCombatSessionAsync(userId, combatSessionId);
+
+        return new RollDiceResultDto
+        {
+            Roll = rollResult,
+            RequiredRoll = adjustedRequiredRoll,
+            Success = success,
+            Message = message,
+            UpdatedCombatSession = updatedSession
+        };
     }
 
-    public async Task<bool> FleeCombatAsync(int combatSessionId)
+    public async Task<CompleteCombatResultDto> CompleteCombatAsync(int userId, int combatSessionId)
     {
-        var session = await _context.CombatSessions.FindAsync(combatSessionId);
-        if (session == null) return false;
+        var combatSession = await _context.CombatSessions
+            .Include(cs => cs.Quest)
+                .ThenInclude(q => q.Rewards)
+                    .ThenInclude(r => r.Item)
+            .Include(cs => cs.Quest)
+                .ThenInclude(q => q.QuestEnemies)
+                    .ThenInclude(qe => qe.Enemy)
+            .Include(cs => cs.Combo)
+            .Include(cs => cs.CombatLogs)
+            .FirstOrDefaultAsync(cs => cs.Id == combatSessionId);
 
-        session.Status = CombatStatus.Fled;
-        session.CompletedAt = DateTime.UtcNow;
-
-        var log = new CombatLog
+        if (combatSession == null)
         {
-            CombatSessionId = combatSessionId,
-            Action = "FLEE",
-            Details = "O herói fugiu do combate",
-            Timestamp = DateTime.UtcNow
+            throw new KeyNotFoundException("Sessão de combate não encontrada.");
+        }
+
+        if (combatSession.Status != CombatStatus.Victory)
+        {
+            throw new InvalidOperationException("O combate ainda não foi vencido ou já foi completado.");
+        }
+
+        var heroIds = combatSession.GetHeroIdsList();
+        var heroes = await _context.Heroes
+            .Where(h => h.UserId == userId && heroIds.Contains(h.Id))
+            .ToListAsync();
+
+        if (!heroes.Any())
+        {
+            throw new UnauthorizedAccessException("Esta sessão de combate não pertence a você.");
+        }
+
+        // Calcula penalidade de recompensas baseado no número de heróis
+        decimal rewardMultiplier = heroes.Count switch
+        {
+            1 => 1.0m,     // 100% das recompensas
+            2 => 0.75m,    // 75% das recompensas
+            3 => 0.60m,    // 60% das recompensas
+            _ => 0.60m
         };
 
-        _context.CombatLogs.Add(log);
+        // Distribui XP e ouro
+        var baseGold = combatSession.Quest.GoldReward;
+        var baseExp = combatSession.Quest.ExperienceReward;
+
+        var goldPerHero = (int)(baseGold * rewardMultiplier / heroes.Count);
+        var expPerHero = (int)(baseExp * rewardMultiplier / heroes.Count);
+
+        foreach (var hero in heroes)
+        {
+            hero.Gold += goldPerHero;
+            hero.Experience += expPerHero;
+
+            var oldLevel = hero.Level;
+            if (hero.CanLevelUp())
+            {
+                hero.LevelUp();
+                if (hero.Level > oldLevel)
+                {
+                    await _notificationService.NotifyLevelUpAsync(hero, oldLevel, hero.Level);
+                }
+            }
+        }
+
+        // Boss drops
+        var allDroppedItems = new List<Item>();
+        var defeatedEnemies = combatSession.Quest.QuestEnemies
+            .Where(qe => combatSession.CombatLogs.Any(cl => cl.Success == true && cl.EnemyId == qe.EnemyId))
+            .Select(qe => qe.Enemy)
+            .Where(e => e.IsBoss)
+            .ToList();
+
+        foreach (var boss in defeatedEnemies)
+        {
+            var drops = await _dropService.CalculateDropsAsync(boss.Id);
+            allDroppedItems.AddRange(drops);
+        }
+
+        // Adiciona itens dropados ao primeiro herói
+        if (allDroppedItems.Any() && heroes.Any())
+        {
+            var mainHero = heroes.First();
+            foreach (var item in allDroppedItems)
+            {
+                var heroItem = await _context.HeroItems
+                    .FirstOrDefaultAsync(hi => hi.HeroId == mainHero.Id && hi.ItemId == item.Id);
+
+                if (heroItem != null)
+                {
+                    heroItem.Quantity++;
+                }
+                else
+                {
+                    _context.HeroItems.Add(new HeroItem
+                    {
+                        HeroId = mainHero.Id,
+                        ItemId = item.Id,
+                        Quantity = 1,
+                        IsEquipped = false,
+                        AcquiredAt = DateTime.UtcNow
+                    });
+                }
+            }
+        }
+
+        // Registra descoberta de combos (se aplicável)
+        if (combatSession.ComboId.HasValue && defeatedEnemies.Any())
+        {
+            foreach (var boss in defeatedEnemies)
+            {
+                var isNewDiscovery = await _comboService.RegisterDiscoveryAsync(userId, boss.Id, combatSession.ComboId.Value);
+                if (isNewDiscovery)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        userId,
+                        "🔍 Fraqueza Descoberta!",
+                        $"Você descobriu que o boss {boss.Name} é fraco contra o combo {combatSession.Combo!.Name}!",
+                        "Success"
+                    );
+                }
+            }
+        }
+
+        combatSession.Status = CombatStatus.Victory;
+        combatSession.CompletedAt = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Combate {SessionId}: Herói fugiu", combatSessionId);
+        _logger.LogInformation("💰 Combate completado! Party recebeu {Gold} ouro e {Exp} XP. Drops: {ItemCount} itens",
+            goldPerHero * heroes.Count, expPerHero * heroes.Count, allDroppedItems.Count);
 
-        return true;
+        return new CompleteCombatResultDto
+        {
+            Message = $"Combate completo! Party recebeu {goldPerHero * heroes.Count} ouro e {expPerHero * heroes.Count} XP (divididos). Recompensa ajustada para {heroes.Count} heróis ({rewardMultiplier:P0}).",
+            GoldEarned = goldPerHero * heroes.Count,
+            ExperienceEarned = expPerHero * heroes.Count,
+            HeroNewLevel = heroes.Max(h => h.Level),
+            DroppedItems = _mapper.Map<List<ItemDto>>(allDroppedItems)
+        };
+    }
+
+    public async Task FleeCombatAsync(int userId, int combatSessionId)
+    {
+        var combatSession = await _context.CombatSessions
+            .FirstOrDefaultAsync(cs => cs.Id == combatSessionId && cs.Status == CombatStatus.InProgress);
+
+        if (combatSession == null)
+        {
+            throw new KeyNotFoundException("Sessão de combate não encontrada ou não está ativa.");
+        }
+
+        var heroIds = combatSession.GetHeroIdsList();
+        var userHeroIds = await _context.Heroes
+            .Where(h => h.UserId == userId && heroIds.Contains(h.Id))
+            .Select(h => h.Id)
+            .ToListAsync();
+
+        if (!userHeroIds.Any())
+        {
+            throw new UnauthorizedAccessException("Esta sessão de combate não pertence a você.");
+        }
+
+        combatSession.Status = CombatStatus.Fled;
+        combatSession.CompletedAt = DateTime.UtcNow;
+
+        var combatLog = new CombatLog
+        {
+            CombatSessionId = combatSession.Id,
+            Action = "FLEE",
+            Details = "A party fugiu do combate.",
+            Timestamp = DateTime.UtcNow
+        };
+        _context.CombatLogs.Add(combatLog);
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Party fugiu do combate na sessão {SessionId}", combatSessionId);
     }
 }
-

@@ -27,7 +27,7 @@ public class ProfileController : ControllerBase
     }
 
     /// <summary>
-    /// Obtém o perfil do herói ativo do usuário logado
+    /// Obtém o perfil do primeiro herói na party ativa do usuário logado
     /// </summary>
     [HttpGet("my-hero")]
     [ProducesResponseType(typeof(HeroProfileDto), StatusCodes.Status200OK)]
@@ -36,16 +36,17 @@ public class ProfileController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        // Busca o primeiro herói da party ativa (PartySlot == 1)
         var hero = await _context.Heroes
             .Include(h => h.HeroItems)
                 .ThenInclude(hi => hi.Item)
             .Include(h => h.HeroQuests)
                 .ThenInclude(hq => hq.Quest)
-            .FirstOrDefaultAsync(h => h.UserId == userId && h.IsActive);
+            .FirstOrDefaultAsync(h => h.UserId == userId && h.IsInActiveParty && h.PartySlot == 1);
 
         if (hero == null)
         {
-            return NotFound("Herói ativo não encontrado para o usuário logado.");
+            return NotFound("Nenhum herói na party ativa. Adicione um herói à party primeiro.");
         }
 
         var heroProfile = new HeroProfileDto
@@ -95,9 +96,7 @@ public class ProfileController : ControllerBase
     /// Cria um novo herói para o usuário logado
     /// </summary>
     /// <remarks>
-    /// Apenas um herói pode ser criado se:
-    /// - O usuário não possui nenhum herói ainda, OU
-    /// - O herói ativo atual atingiu o nível máximo (20)
+    /// Requisito: Ter pelo menos um herói nível 5 ou superior
     /// </remarks>
     [HttpPost("create-hero")]
     [ProducesResponseType(typeof(HeroDto), StatusCodes.Status201Created)]
@@ -106,21 +105,17 @@ public class ProfileController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // Verifica se já existe um herói ativo
-        var existingHero = await _context.Heroes
-            .FirstOrDefaultAsync(h => h.UserId == userId && h.IsActive);
-
-        if (existingHero != null)
+        // Verifica se já tem pelo menos um herói nível 5+
+        var heroes = await _context.Heroes.Where(h => h.UserId == userId).ToListAsync();
+        
+        // Se já tem heróis, verifica se algum está nível 5+
+        if (heroes.Count > 0)
         {
-            // Só pode criar novo herói se o ativo estiver no nível máximo
-            if (!existingHero.IsMaxLevel())
+            var hasLevel5Hero = heroes.Any(h => h.Level >= 5);
+            if (!hasLevel5Hero)
             {
-                return BadRequest($"Você só pode criar um novo herói quando seu herói atual ({existingHero.Name}) atingir o nível máximo (20). Nível atual: {existingHero.Level}");
+                return BadRequest("Você precisa ter pelo menos um herói nível 5 ou superior para criar um novo herói.");
             }
-
-            // Desativa o herói antigo
-            existingHero.IsActive = false;
-            _logger.LogInformation("Herói {HeroName} desativado. Usuário {UserId} criou novo herói.", existingHero.Name, userId);
         }
 
         var hero = new Hero
@@ -134,7 +129,8 @@ public class ProfileController : ControllerBase
             Dexterity = request.Dexterity,
             Gold = 0,
             UserId = userId,
-            IsActive = true,
+            IsInActiveParty = false, // Criado fora da party
+            PartySlot = null,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -157,11 +153,11 @@ public class ProfileController : ControllerBase
             CreatedAt = hero.CreatedAt
         };
 
-        return CreatedAtAction(nameof(GetMyHeroProfile), new { }, heroDto);
+        return CreatedAtAction(nameof(GetMyHeroes), new { }, heroDto);
     }
 
     /// <summary>
-    /// Lista todos os heróis do usuário logado (ativos e inativos)
+    /// Lista todos os heróis do usuário logado
     /// </summary>
     [HttpGet("my-heroes")]
     [ProducesResponseType(typeof(List<HeroDto>), StatusCodes.Status200OK)]
@@ -171,7 +167,8 @@ public class ProfileController : ControllerBase
 
         var heroes = await _context.Heroes
             .Where(h => h.UserId == userId)
-            .OrderByDescending(h => h.IsActive)
+            .OrderByDescending(h => h.IsInActiveParty)
+            .ThenBy(h => h.PartySlot)
             .ThenByDescending(h => h.Level)
             .Select(h => new HeroDto
             {
@@ -189,5 +186,117 @@ public class ProfileController : ControllerBase
             .ToListAsync();
 
         return Ok(heroes);
+    }
+
+    /// <summary>
+    /// Obtém os heróis na party ativa
+    /// </summary>
+    [HttpGet("active-party")]
+    [ProducesResponseType(typeof(List<HeroDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<HeroDto>>> GetActiveParty()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var partyHeroes = await _context.Heroes
+            .Where(h => h.UserId == userId && h.IsInActiveParty)
+            .OrderBy(h => h.PartySlot)
+            .Select(h => new HeroDto
+            {
+                Id = h.Id,
+                Name = h.Name,
+                Class = h.Class,
+                Level = h.Level,
+                Experience = h.Experience,
+                Strength = h.Strength,
+                Intelligence = h.Intelligence,
+                Dexterity = h.Dexterity,
+                Gold = h.Gold,
+                CreatedAt = h.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(partyHeroes);
+    }
+
+    /// <summary>
+    /// Adiciona um herói à party ativa
+    /// </summary>
+    [HttpPost("add-to-party/{heroId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> AddToParty(int heroId)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var hero = await _context.Heroes.FindAsync(heroId);
+        if (hero == null || hero.UserId != userId)
+        {
+            return NotFound("Herói não encontrado.");
+        }
+
+        if (hero.IsInActiveParty)
+        {
+            return BadRequest("Este herói já está na party ativa.");
+        }
+
+        // Verifica se a party já está cheia (máximo 3)
+        var partyCount = await _context.Heroes
+            .CountAsync(h => h.UserId == userId && h.IsInActiveParty);
+
+        if (partyCount >= 3)
+        {
+            return BadRequest("A party já está cheia! Máximo de 3 heróis. Remova um herói primeiro.");
+        }
+
+        // Encontra o próximo slot disponível (1, 2 ou 3)
+        var usedSlots = await _context.Heroes
+            .Where(h => h.UserId == userId && h.IsInActiveParty && h.PartySlot.HasValue)
+            .Select(h => h.PartySlot!.Value)
+            .ToListAsync();
+
+        var nextSlot = Enumerable.Range(1, 3).First(s => !usedSlots.Contains(s));
+
+        hero.IsInActiveParty = true;
+        hero.PartySlot = nextSlot;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Herói {HeroName} (ID: {HeroId}) adicionado à party no slot {Slot}", 
+            hero.Name, heroId, nextSlot);
+
+        return Ok(new { message = $"Herói {hero.Name} adicionado à party no slot {nextSlot}." });
+    }
+
+    /// <summary>
+    /// Remove um herói da party ativa
+    /// </summary>
+    [HttpPost("remove-from-party/{heroId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> RemoveFromParty(int heroId)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var hero = await _context.Heroes.FindAsync(heroId);
+        if (hero == null || hero.UserId != userId)
+        {
+            return NotFound("Herói não encontrado.");
+        }
+
+        if (!hero.IsInActiveParty)
+        {
+            return BadRequest("Este herói não está na party ativa.");
+        }
+
+        hero.IsInActiveParty = false;
+        hero.PartySlot = null;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Herói {HeroName} (ID: {HeroId}) removido da party", hero.Name, heroId);
+
+        return Ok(new { message = $"Herói {hero.Name} removido da party." });
     }
 }

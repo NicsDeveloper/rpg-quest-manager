@@ -171,5 +171,36 @@ public class DropService : IDropService
 
         await _context.SaveChangesAsync();
     }
+
+    /// <summary>
+    /// Calcula todos os drops de um boss baseado na tabela de drops
+    /// </summary>
+    public async Task<List<Item>> CalculateDropsAsync(int enemyId)
+    {
+        var enemy = await _context.Enemies
+            .Include(e => e.BossDrops)
+                .ThenInclude(bd => bd.Item)
+            .FirstOrDefaultAsync(e => e.Id == enemyId);
+
+        if (enemy == null || !enemy.IsBoss || !enemy.BossDrops.Any())
+        {
+            return new List<Item>();
+        }
+
+        var droppedItems = new List<Item>();
+
+        foreach (var dropEntry in enemy.BossDrops)
+        {
+            var roll = _random.NextDouble();
+            if (roll <= (double)dropEntry.DropChance)
+            {
+                droppedItems.Add(dropEntry.Item);
+                _logger.LogInformation("🎁 Drop! {ItemName} ({Rarity}) do boss {BossName} (chance: {Chance:P0})",
+                    dropEntry.Item.Name, dropEntry.Item.Rarity, enemy.Name, dropEntry.DropChance);
+            }
+        }
+
+        return droppedItems;
+    }
 }
 

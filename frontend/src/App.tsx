@@ -13,6 +13,8 @@ import { Items } from './pages/Items';
 import { Enemies } from './pages/Enemies';
 import { Combat } from './pages/Combat';
 import { DiceShop } from './pages/DiceShop';
+import { Bestiary } from './pages/Bestiary';
+import { FreeDice } from './pages/FreeDice';
 
 const App: React.FC = () => {
   return (
@@ -99,6 +101,24 @@ const App: React.FC = () => {
             element={
               <PrivateRoute>
                 <DiceShop />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/bestiary"
+            element={
+              <PrivateRoute>
+                <Bestiary />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/free-dice"
+            element={
+              <PrivateRoute>
+                <FreeDice />
               </PrivateRoute>
             }
           />

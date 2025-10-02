@@ -14,11 +14,16 @@ public class Hero
     public int Dexterity { get; set; } = 10;
     public int Gold { get; set; } = 0;
     public int? UserId { get; set; }
-    public bool IsActive { get; set; } = true; // Herói ativo do jogador
+    
+    // Sistema de Party
+    public bool IsInActiveParty { get; set; } = false; // Se está na party ativa (máx 3)
+    public int? PartySlot { get; set; } // Slot na party: 1, 2, 3 ou null
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     // Relacionamentos
     public User? User { get; set; }
+    public DiceInventory? DiceInventory { get; set; } // Inventário de dados
     public ICollection<HeroQuest> HeroQuests { get; set; } = new List<HeroQuest>();
     public ICollection<HeroItem> HeroItems { get; set; } = new List<HeroItem>();
     
