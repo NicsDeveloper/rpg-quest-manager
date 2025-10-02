@@ -7,10 +7,13 @@ export interface Quest {
   type: string;
   difficulty: string;
   requiredLevel: number;
+  requiredClass: string;
   goldReward: number;
   experienceReward: number;
   createdAt: string;
   rewards?: Reward[];
+  isAccepted?: boolean;
+  canAccept?: boolean;
 }
 
 export interface Reward {
@@ -92,7 +95,7 @@ export const questService = {
     await api.post(`/quests/${questId}/accept`);
   },
 
-  complete: async (questId: number, heroId: number): Promise<void> => {
+  complete: async (heroId: number): Promise<void> => {
     const data: CompleteQuestRequest = { heroId };
     await api.post(`/quests/complete`, data);
   },

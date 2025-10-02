@@ -6,13 +6,9 @@ export interface Hero {
   class: string;
   level: number;
   experience: number;
-  health: number;
-  maxHealth: number;
-  mana: number;
-  maxMana: number;
   strength: number;
   intelligence: number;
-  agility: number;
+  dexterity: number;
   gold: number;
   createdAt: string;
   items?: HeroItem[];
@@ -37,17 +33,15 @@ export interface CreateHeroRequest {
   class: string;
   strength: number;
   intelligence: number;
-  agility: number;
+  dexterity: number;
 }
 
 export interface UpdateHeroRequest {
   name?: string;
   class?: string;
-  health?: number;
-  mana?: number;
   strength?: number;
   intelligence?: number;
-  agility?: number;
+  dexterity?: number;
   gold?: number;
 }
 

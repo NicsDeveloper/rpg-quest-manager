@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/Navbar';
 import { Card } from '../components/Card';
 import { Loading } from '../components/Loading';
 import { profileService, MyHero, MyQuest, MyStats } from '../services/profileService';
 
+const getExperienceForNextLevel = (level: number): number => {
+  return level * 100;
+};
+
 export const Profile: React.FC = () => {
-  const { t } = useTranslation();
   const [hero, setHero] = useState<MyHero | null>(null);
   const [quests, setQuests] = useState<MyQuest[]>([]);
   const [stats, setStats] = useState<MyStats | null>(null);
@@ -62,7 +64,7 @@ export const Profile: React.FC = () => {
     );
   }
 
-  const xpProgress = (hero.experience / hero.getExperienceForNextLevel()) * 100;
+  const xpProgress = (hero.experience / getExperienceForNextLevel(hero.level)) * 100;
 
   return (
     <>
@@ -98,7 +100,7 @@ export const Profile: React.FC = () => {
             <div className="mb-6">
               <div className="flex justify-between text-sm text-gray-400 mb-2">
                 <span className="font-semibold">Experiência</span>
-                <span className="font-mono">{hero.experience} / {hero.getExperienceForNextLevel()} XP</span>
+                <span className="font-mono">{hero.experience} / {getExperienceForNextLevel(hero.level)} XP</span>
               </div>
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${xpProgress}%` }} />

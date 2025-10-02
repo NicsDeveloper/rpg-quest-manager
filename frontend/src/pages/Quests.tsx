@@ -111,7 +111,7 @@ export const Quests: React.FC = () => {
     if (!selectedQuest || !selectedHeroId) return;
 
     try {
-      await questService.complete(selectedQuest.id, selectedHeroId);
+      await questService.complete(selectedHeroId);
       alert(t('quests.complete_success'));
       handleCloseCompleteModal();
       loadData();

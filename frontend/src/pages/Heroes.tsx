@@ -21,7 +21,7 @@ export const Heroes: React.FC = () => {
     class: '',
     strength: 10,
     intelligence: 10,
-    agility: 10,
+    dexterity: 10,
   });
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export const Heroes: React.FC = () => {
         class: hero.class,
         strength: hero.strength,
         intelligence: hero.intelligence,
-        agility: hero.agility,
+        dexterity: hero.dexterity,
       });
     } else {
       setSelectedHero(null);
@@ -56,7 +56,7 @@ export const Heroes: React.FC = () => {
         class: '',
         strength: 10,
         intelligence: 10,
-        agility: 10,
+        dexterity: 10,
       });
     }
     setIsModalOpen(true);
@@ -137,14 +137,6 @@ export const Heroes: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="text-sm text-gray-400">{t('heroes.health')}</p>
-                    <p className="font-semibold">{hero.health}/{hero.maxHealth}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">{t('heroes.mana')}</p>
-                    <p className="font-semibold">{hero.mana}/{hero.maxMana}</p>
-                  </div>
-                  <div>
                     <p className="text-sm text-gray-400">{t('heroes.strength')}</p>
                     <p className="font-semibold">{hero.strength}</p>
                   </div>
@@ -153,8 +145,8 @@ export const Heroes: React.FC = () => {
                     <p className="font-semibold">{hero.intelligence}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">{t('heroes.agility')}</p>
-                    <p className="font-semibold">{hero.agility}</p>
+                    <p className="text-sm text-gray-400">Destreza</p>
+                    <p className="font-semibold">{hero.dexterity}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-400">{t('heroes.gold')}</p>
@@ -237,10 +229,10 @@ export const Heroes: React.FC = () => {
             />
 
             <Input
-              label={t('heroes.agility')}
+              label="Destreza"
               type="number"
-              value={formData.agility}
-              onChange={(e) => setFormData({ ...formData, agility: parseInt(e.target.value) })}
+              value={formData.dexterity}
+              onChange={(e) => setFormData({ ...formData, dexterity: parseInt(e.target.value) })}
               required
               min="1"
             />
