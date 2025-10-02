@@ -43,17 +43,90 @@
 
 ## 🎯 Sobre o Projeto
 
-O **RPG Quest Manager** é uma API RESTful completa desenvolvida em .NET 8 que implementa um sistema de gerenciamento de RPG. O projeto demonstra a aplicação de conceitos avançados de arquitetura de software, boas práticas de desenvolvimento e tecnologias modernas.
+O **RPG Quest Manager** é um sistema completo de gerenciamento de RPG com **API REST (.NET 8)** e **Frontend React 18**. O projeto demonstra a aplicação de conceitos avançados de arquitetura de software, boas práticas de desenvolvimento e tecnologias modernas.
 
 ### 🎮 Conceito
 
-Inspirado em jogos de RPG clássicos, a API permite:
-- Criar e gerenciar heróis com diferentes classes e atributos
-- Definir quests (missões) com níveis de dificuldade variados
-- Cadastrar inimigos e recompensas
-- Sistema automático de progressão de nível baseado em XP
-- Gerenciamento de inventário com itens equipáveis
-- Eventos assíncronos para notificações em tempo real
+Inspirado em jogos de RPG clássicos, o sistema permite:
+- 🦸 Criar e gerenciar heróis com diferentes classes e atributos
+- 🎯 Definir quests (missões) com requisitos de nível e classe
+- 👹 Cadastrar inimigos e recompensas vinculadas a itens reais
+- 📈 Sistema automático de progressão de nível baseado em XP
+- 🎒 Gerenciamento de inventário com itens equipáveis
+- 🔔 Sistema de notificações em tempo real
+- 📚 Catálogo de missões com sistema de aceitação
+- 🎓 Tutorial interativo para novos jogadores
+
+---
+
+## 🚀 Quick Start (2 minutos!)
+
+### Pré-requisitos
+
+- **Docker Desktop** instalado e rodando
+
+**Isso é TUDO que você precisa!** 🎉
+
+### Iniciar o Sistema Completo
+
+```bash
+# Clone o repositório
+git clone https://github.com/seu-usuario/rpg-quest-manager.git
+cd rpg-quest-manager
+
+# Inicie TODOS os serviços (API + Frontend + Banco + Redis + RabbitMQ)
+docker-compose up -d --build
+```
+
+Aguarde ~1-2 minutos. Verifique o status com:
+```bash
+docker-compose ps
+```
+
+### 🌐 Acessos
+
+| Serviço | URL | Descrição |
+|---------|-----|-----------|
+| **Frontend React** | http://localhost:3000 | ⭐ **COMECE AQUI!** Interface completa |
+| **Swagger UI** | http://localhost:5000/swagger | Documentação interativa da API |
+| **API REST** | http://localhost:5000/api/v1 | Backend .NET 8 |
+| **RabbitMQ** | http://localhost:15672 | Management UI (guest/guest) |
+
+### 👤 Usuários de Teste
+
+O banco já vem populado! Use:
+
+| Username | Password | Role | Herói Vinculado |
+|----------|----------|------|-----------------|
+| `admin` | `admin123` | **Admin** | - (controle total) |
+| `player1` | `senha123` | **Player** | Aragorn (Guerreiro Nv.15) |
+| `gamer` | `senha456` | **Player** | Gandalf (Mago Nv.20) |
+
+**Ou registre um novo usuário** pela interface (será criado como Player).
+
+### 🎮 Experiência do Jogador
+
+1. Acesse http://localhost:3000
+2. Faça login com `player1` / `senha123`
+3. **Tutorial interativo** aparece automaticamente! 🎓
+4. Explore:
+   - 👤 **Meu Perfil**: Veja seu herói, inventário e missões
+   - 📚 **Catálogo de Missões**: Aceite missões compatíveis
+   - 🔔 **Notificações**: Avisos de level up e novas missões
+   - 📊 **Dashboard**: Estatísticas gerais
+
+### 🛠️ Comandos Úteis
+
+```bash
+# Parar tudo
+docker-compose down
+
+# Ver logs
+docker-compose logs -f
+
+# Rebuild completo
+docker-compose down && docker-compose up -d --build
+```
 
 ---
 
@@ -61,24 +134,42 @@ Inspirado em jogos de RPG clássicos, a API permite:
 
 ### 🎯 Funcionalidades Principais
 
+#### Backend (.NET 8)
 - ✅ **Sistema de Autenticação JWT com Roles** - Login, registro e controle de permissões (Admin/Player)
 - ✅ **CRUD Completo de Heróis** - Gerenciamento de personagens com atributos customizáveis
-- ✅ **CRUD Completo de Quests** - Criação de missões com recompensas vinculadas a itens reais
-- ✅ **CRUD Completo de Inimigos** - Cadastro de adversários com características únicas
+- ✅ **CRUD Completo de Quests** - Criação de missões com requisitos de nível e classe
+- ✅ **Sistema de Catálogo de Missões** - Endpoint dedicado com flags `isAccepted` e `canAccept`
+- ✅ **Sistema de Aceitação de Missões** - Validação automática de requisitos
 - ✅ **Sistema de Recompensas Inteligente** - Itens reais adicionados automaticamente ao inventário
 - ✅ **Sistema de Inventário Completo** - Gerenciamento de itens com equipamento e bônus
-- ✅ **Progressão Automática** - Level up automático ao ganhar XP suficiente
+- ✅ **Progressão Automática** - Level up automático com recompensas (XP, ouro, atributos)
+- ✅ **Sistema de Notificações** - Avisos de level up e novas missões disponíveis
 - ✅ **Cache Inteligente** - Redis para otimizar consultas frequentes (Top 10 heróis, Quests mais jogadas)
 - ✅ **Eventos Assíncronos** - RabbitMQ para notificações de conclusão de quests
 - ✅ **Validações Robustas** - FluentValidation em todas as entradas
 - ✅ **Logs Estruturados** - Serilog para rastreabilidade completa
 - ✅ **Documentação Swagger Completa** - API totalmente documentada com exemplos e descrições detalhadas
 
-### 🌟 Missões Secretas (Recursos Avançados)
+#### Frontend (React 18)
+- ✅ **Interface Moderna e Responsiva** - Design "épico" com Tailwind CSS e animações
+- ✅ **Sistema de Autenticação** - Login, registro e controle de sessão
+- ✅ **Dashboard Interativo** - Estatísticas gerais com top heróis e missões
+- ✅ **Perfil do Jogador** - Visualização completa do herói, inventário e missões completadas
+- ✅ **Catálogo de Missões com Abas** - "Catálogo" (todas) e "Minhas Missões" (aceitas)
+- ✅ **Sistema de Aceitação Visual** - Badges de status (Disponível, Aceita, Bloqueada)
+- ✅ **Notificações em Tempo Real** - Sino com contador e painel dropdown
+- ✅ **Tutorial Interativo** - Wizard de 7 passos para novos jogadores
+- ✅ **Internacionalização (i18n)** - Suporte a múltiplos idiomas
+- ✅ **Rotas Protegidas** - Controle de acesso baseado em roles
+- ✅ **Panel Admin** - Interface completa para gerenciamento (apenas Admin)
+
+### 🌟 Recursos Avançados
 
 - 🔮 **Sistema de Progressão Automática por XP**
   - Fórmula: `XP Necessário = Nível × 100`
   - Level up automático com aumento de atributos (+2 Força, +2 Inteligência, +2 Destreza)
+  - Recompensa de ouro ao subir de nível (Nível × 50 ouro)
+  - **Notificações automáticas** ao jogador com detalhes das recompensas
   - Suporte a múltiplos níveis em uma única quest
   
 - 🎒 **Sistema de Inventário Completo**
@@ -86,22 +177,49 @@ Inspirado em jogos de RPG clássicos, a API permite:
   - Equipar/desequipar itens
   - Itens com bônus de atributos (Força, Inteligência, Destreza)
   - **Itens de recompensa adicionados automaticamente ao completar quests**
+  - Stacking de itens duplicados
   
-- 🔐 **Sistema de Roles e Permissões**
-  - **Admin**: Controle total (CRUD de heróis, quests, inimigos, itens)
-  - **Player**: Visualização e gameplay (ver dados, completar quests, gerenciar inventário)
+- 📚 **Sistema de Catálogo e Aceitação de Missões**
+  - Missões com requisitos de **nível** e **classe** (Guerreiro, Mago, Arqueiro, Any)
+  - Endpoint `/catalog` com flags `isAccepted` e `canAccept` para cada missão
+  - Validação automática de requisitos ao aceitar
+  - Feedback visual no frontend (badges de status)
+  
+- 🔔 **Sistema de Notificações em Tempo Real**
+  - Notificações de level up com detalhes completos
+  - Lista de novas missões disponíveis após subir de nível
+  - Contador de não lidas no frontend
+  - Marcar como lida individual ou em massa
+  
+- 🎓 **Tutorial Interativo para Novos Jogadores**
+  - Wizard de 7 passos explicando o sistema
+  - Salvo no backend (flag `HasSeenTutorial`)
+  - Apenas aparece uma vez por usuário
+  - Pode ser pulado a qualquer momento
+  
+- 🔐 **Sistema de Roles e Permissões Granular**
+  - **Admin**: CRUD completo + completar missões para jogadores
+  - **Player**: Visualizar perfil, aceitar missões, gerenciar inventário
   - Tokens JWT com 24h de validade
   - Hash seguro de senhas (SHA256)
+  - Controle de acesso em nível de endpoint e frontend
   
 - 🎁 **Sistema de Recompensas Inteligente**
   - Recompensas vinculadas a itens **reais** da tabela Items
   - Itens automaticamente adicionados ao inventário do herói
   - Suporte a quantidade de itens (stackable)
+  - Ouro e XP creditados automaticamente
   
-- 📨 **Eventos Assíncronos**
-  - Publicação no RabbitMQ ao completar quests
+- 📨 **Eventos Assíncronos com RabbitMQ**
+  - Publicação ao completar quests
   - Consumer para processamento de eventos
   - Logs estruturados de eventos
+  
+- 👤 **Perfil de Jogador Personalizado**
+  - Heróis vinculados a usuários via `UserId`
+  - Endpoint dedicado `/profile/my-hero`
+  - Visualização de inventário e histórico de missões
+  - Estatísticas pessoais
 
 ---
 
@@ -110,7 +228,16 @@ Inspirado em jogos de RPG clássicos, a API permite:
 ### Backend & Framework
 - **.NET 8** - Framework moderno e performático
 - **C# 12** - Últimas features da linguagem
-- **ASP.NET Core** - Web API
+- **ASP.NET Core** - Web API RESTful
+
+### Frontend & UI
+- **React 18** - Biblioteca JavaScript moderna
+- **TypeScript 5** - Type safety
+- **Vite** - Build tool rápida
+- **Tailwind CSS** - Utility-first CSS framework
+- **React Router** - Navegação SPA
+- **Axios** - Cliente HTTP
+- **i18next** - Internacionalização
 
 ### Banco de Dados & Cache
 - **PostgreSQL 15** - Banco relacional robusto
@@ -125,77 +252,46 @@ Inspirado em jogos de RPG clássicos, a API permite:
 - **JWT Bearer** - Autenticação baseada em tokens
 - **FluentValidation** - Validação declarativa
 - **SHA256** - Hash de senhas
+- **CORS** - Políticas de segurança
 
 ### Ferramentas & Qualidade
-- **AutoMapper** - Mapeamento de objetos
+- **AutoMapper** - Mapeamento de objetos (backend)
 - **Serilog** - Logs estruturados
 - **Swagger/OpenAPI** - Documentação interativa
-- **xUnit** - Framework de testes
+- **xUnit** - Framework de testes (backend)
 - **Moq** - Mocking para testes
 - **FluentAssertions** - Assertions legíveis
 
 ### DevOps & Infraestrutura
 - **Docker** - Containerização
 - **Docker Compose** - Orquestração multi-container
+- **Nginx** - Proxy reverso e servidor web (frontend)
 - **Health Checks** - Monitoramento de serviços
 
 ---
 
-## 🚀 Instalação Rápida
+## 📦 Estrutura de Containers
 
-### Pré-requisitos
+Quando você executa `docker-compose up -d`, os seguintes containers são criados:
 
-Certifique-se de ter instalado:
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) (Windows, Mac ou Linux)
-- [Git](https://git-scm.com/downloads) (para clonar o repositório)
+| Container | Porta | Descrição |
+|-----------|-------|-----------|
+| `rpg-postgres` | 5432 | PostgreSQL 15 (banco de dados) |
+| `rpg-redis` | 6379 | Redis 7 (cache) |
+| `rpg-rabbitmq` | 5672, 15672 | RabbitMQ 3 (mensageria) |
+| `rpg-api` | 5000, 5001 | API .NET 8 (backend) |
+| `rpg-frontend` | 3000 (80 interno) | React 18 + Nginx (frontend) |
 
-> 💡 **Nota**: Não é necessário instalar .NET, PostgreSQL, Redis ou RabbitMQ localmente. Tudo roda via Docker!
-
-### Passo a Passo
-
-1. **Clone o repositório**
-   ```bash
-   git clone https://github.com/seu-usuario/rpg-quest-manager.git
-   cd rpg-quest-manager
-   ```
-
-2. **Inicie o Docker Desktop**
-   - Aguarde até o Docker estar completamente iniciado (ícone verde)
-
-3. **Suba os containers**
-   ```bash
-   docker-compose up --build
-   ```
-
-4. **Aguarde a inicialização** (pode levar 1-2 minutos na primeira vez)
-   
-   Você verá mensagens como:
-   ```
-   rpg-postgres  | database system is ready to accept connections
-   rpg-redis     | Ready to accept connections
-   rpg-rabbitmq  | Server startup complete
-   rpg-api       | 🐉 RPG Quest Manager API iniciada!
-   ```
-
-5. **Acesse a API**
-   ```
-   http://localhost:5000
-   ```
-
-### ✅ Verificação
-
-Se tudo estiver funcionando, você verá:
-- 🌐 **Swagger UI** em http://localhost:5000
-- 🐰 **RabbitMQ Management** em http://localhost:15672 (guest/guest)
-- ✅ **Health Check** em http://localhost:5000/health
+Todos os containers estão na mesma rede Docker (`rpg-network`) e se comunicam entre si.  
+O frontend utiliza **Nginx** como proxy reverso para comunicar com a API.
 
 ### 🗄️ Dados Iniciais (Seeder)
 
 O banco de dados é automaticamente populado com dados de exemplo:
-- 👤 **3 usuários**: `admin` (Admin), `player1` e `gamer` (Players)
+- 👤 **3 usuários**: `admin` (Admin), `player1` e `gamer` (Players com heróis)
 - ⚔️ **12 heróis** de diferentes classes e níveis (1-20)
 - 👹 **15 inimigos** variados (Goblins, Orcs, Dragões, Balrog, etc)
-- 🎯 **13 quests** de todas as dificuldades (Fácil até Épico)
+- 🎯 **13 quests** de todas as dificuldades e tipos (Main, Side, Daily)
 - 🗡️ **15 itens** equipáveis (Espadas, Armaduras, Poções, etc)
 - 💰 **Recompensas vinculadas** a itens reais
 
