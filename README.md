@@ -61,35 +61,42 @@ Inspirado em jogos de RPG clássicos, a API permite:
 
 ### 🎯 Funcionalidades Principais
 
-- ✅ **Sistema de Autenticação JWT** - Registro, login e proteção de rotas
+- ✅ **Sistema de Autenticação JWT com Roles** - Login, registro e controle de permissões (Admin/Player)
 - ✅ **CRUD Completo de Heróis** - Gerenciamento de personagens com atributos customizáveis
-- ✅ **CRUD Completo de Quests** - Criação de missões com recompensas
+- ✅ **CRUD Completo de Quests** - Criação de missões com recompensas vinculadas a itens reais
 - ✅ **CRUD Completo de Inimigos** - Cadastro de adversários com características únicas
-- ✅ **CRUD Completo de Recompensas** - Sistema de premiação (ouro, XP, itens)
-- ✅ **Sistema de Inventário** - Gerenciamento de itens com equipamento
+- ✅ **Sistema de Recompensas Inteligente** - Itens reais adicionados automaticamente ao inventário
+- ✅ **Sistema de Inventário Completo** - Gerenciamento de itens com equipamento e bônus
 - ✅ **Progressão Automática** - Level up automático ao ganhar XP suficiente
-- ✅ **Cache Inteligente** - Redis para otimizar consultas frequentes
+- ✅ **Cache Inteligente** - Redis para otimizar consultas frequentes (Top 10 heróis, Quests mais jogadas)
 - ✅ **Eventos Assíncronos** - RabbitMQ para notificações de conclusão de quests
 - ✅ **Validações Robustas** - FluentValidation em todas as entradas
 - ✅ **Logs Estruturados** - Serilog para rastreabilidade completa
-- ✅ **Documentação Swagger** - API totalmente documentada com exemplos
+- ✅ **Documentação Swagger Completa** - API totalmente documentada com exemplos e descrições detalhadas
 
 ### 🌟 Missões Secretas (Recursos Avançados)
 
 - 🔮 **Sistema de Progressão Automática por XP**
   - Fórmula: `XP Necessário = Nível × 100`
-  - Level up automático com aumento de atributos
+  - Level up automático com aumento de atributos (+2 Força, +2 Inteligência, +2 Destreza)
   - Suporte a múltiplos níveis em uma única quest
   
 - 🎒 **Sistema de Inventário Completo**
   - Adicionar/remover itens
   - Equipar/desequipar itens
-  - Itens com bônus de atributos
+  - Itens com bônus de atributos (Força, Inteligência, Destreza)
+  - **Itens de recompensa adicionados automaticamente ao completar quests**
   
-- 🔐 **Autenticação JWT Completa**
-  - Tokens com 24h de validade
-  - Proteção de rotas sensíveis
+- 🔐 **Sistema de Roles e Permissões**
+  - **Admin**: Controle total (CRUD de heróis, quests, inimigos, itens)
+  - **Player**: Visualização e gameplay (ver dados, completar quests, gerenciar inventário)
+  - Tokens JWT com 24h de validade
   - Hash seguro de senhas (SHA256)
+  
+- 🎁 **Sistema de Recompensas Inteligente**
+  - Recompensas vinculadas a itens **reais** da tabela Items
+  - Itens automaticamente adicionados ao inventário do herói
+  - Suporte a quantidade de itens (stackable)
   
 - 📨 **Eventos Assíncronos**
   - Publicação no RabbitMQ ao completar quests
@@ -182,6 +189,53 @@ Se tudo estiver funcionando, você verá:
 - 🐰 **RabbitMQ Management** em http://localhost:15672 (guest/guest)
 - ✅ **Health Check** em http://localhost:5000/health
 
+### 🗄️ Dados Iniciais (Seeder)
+
+O banco de dados é automaticamente populado com dados de exemplo:
+- 👤 **3 usuários**: `admin` (Admin), `player1` e `gamer` (Players)
+- ⚔️ **12 heróis** de diferentes classes e níveis (1-20)
+- 👹 **15 inimigos** variados (Goblins, Orcs, Dragões, Balrog, etc)
+- 🎯 **13 quests** de todas as dificuldades (Fácil até Épico)
+- 🗡️ **15 itens** equipáveis (Espadas, Armaduras, Poções, etc)
+- 💰 **Recompensas vinculadas** a itens reais
+
+---
+
+## 🔐 Sistema de Permissões
+
+O sistema possui dois tipos de usuários com permissões diferentes:
+
+### 👤 Player (Usuário Comum)
+
+**PODE:**
+- ✅ Visualizar heróis, quests, inimigos, itens, recompensas
+- ✅ Completar quests e ganhar recompensas
+- ✅ Gerenciar inventário (adicionar/equipar itens nos heróis)
+
+**NÃO PODE:**
+- ❌ Criar, editar ou deletar heróis
+- ❌ Criar, editar ou deletar quests
+- ❌ Criar, editar ou deletar inimigos
+- ❌ Criar ou deletar itens
+- ❌ Criar ou deletar recompensas
+
+### 🛡️ Admin (Administrador)
+
+**PODE TUDO:**
+- 🔐 CRUD completo de heróis, quests, inimigos, itens e recompensas
+- 🔐 Todas as funcionalidades de Player
+
+### 📊 Matriz de Permissões
+
+| Recurso | Player | Admin |
+|---------|--------|-------|
+| **Heróis** | 👁️ Ver | ✅ CRUD Completo |
+| **Quests** | 👁️ Ver + ✅ Completar | ✅ CRUD Completo |
+| **Inimigos** | 👁️ Ver | ✅ CRUD Completo |
+| **Itens** | 👁️ Ver | ✅ Criar/Deletar |
+| **Recompensas** | 👁️ Ver | ✅ Criar/Deletar |
+| **Inventário** | ✅ Gerenciar | ✅ Gerenciar |
+
 ---
 
 ## 📚 Documentação da API
@@ -197,7 +251,36 @@ http://localhost:5000
 
 Todos os endpoints (exceto `/auth/register` e `/auth/login`) requerem autenticação JWT.
 
-#### 1. Registrar um Usuário
+#### 🔑 Usuários Pré-cadastrados (Seeder)
+
+| Username | Password | Role | Descrição |
+|----------|----------|------|-----------|
+| `admin` | `admin123` | **Admin** | Acesso total ao sistema |
+| `player1` | `senha123` | **Player** | Jogador comum |
+| `gamer` | `senha123` | **Player** | Jogador comum |
+
+#### 1. Login (Usuário Existente)
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+**Resposta:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "username": "admin",
+  "expiresAt": "2025-10-03T10:30:00Z"
+}
+```
+
+#### 2. Registrar um Novo Usuário
 
 ```http
 POST /api/v1/auth/register
@@ -210,24 +293,14 @@ Content-Type: application/json
 }
 ```
 
+> ⚠️ **Nota**: Novos usuários são criados automaticamente como **Player** (sem permissões de Admin).
+
 **Resposta:**
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "username": "aragorn",
   "expiresAt": "2025-10-03T12:00:00Z"
-}
-```
-
-#### 2. Fazer Login
-
-```http
-POST /api/v1/auth/login
-Content-Type: application/json
-
-{
-  "username": "aragorn",
-  "password": "senha123"
 }
 ```
 
@@ -246,70 +319,107 @@ Ou use o botão **"Authorize"** no Swagger UI.
 
 #### 🗡️ Heróis
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| `GET` | `/api/v1/heroes` | Lista todos os heróis |
-| `GET` | `/api/v1/heroes/{id}` | Busca herói por ID |
-| `GET` | `/api/v1/heroes/strongest` | Top heróis (CACHED) |
-| `POST` | `/api/v1/heroes` | Cria novo herói |
-| `PUT` | `/api/v1/heroes/{id}` | Atualiza herói |
-| `DELETE` | `/api/v1/heroes/{id}` | Remove herói |
-| `GET` | `/api/v1/heroes/{id}/inventory` | Lista inventário |
-| `POST` | `/api/v1/heroes/{id}/inventory/{itemId}` | Adiciona item |
-| `PUT` | `/api/v1/heroes/{id}/inventory/{heroItemId}/equip` | Equipa/desequipa item |
+| Método | Endpoint | Descrição | Permissão |
+|--------|----------|-----------|-----------|
+| `GET` | `/api/v1/heroes` | Lista todos os heróis | Player |
+| `GET` | `/api/v1/heroes/{id}` | Busca herói por ID | Player |
+| `GET` | `/api/v1/heroes/strongest` | Top heróis (CACHED) | Player |
+| `POST` | `/api/v1/heroes` | Cria novo herói | 🔐 **Admin** |
+| `PUT` | `/api/v1/heroes/{id}` | Atualiza herói | 🔐 **Admin** |
+| `DELETE` | `/api/v1/heroes/{id}` | Remove herói | 🔐 **Admin** |
+| `GET` | `/api/v1/heroes/{id}/inventory` | Lista inventário | Player |
+| `POST` | `/api/v1/heroes/{id}/inventory/{itemId}` | Adiciona item | Player |
+| `PUT` | `/api/v1/heroes/{id}/inventory/{heroItemId}/equip` | Equipa/desequipa item | Player |
 
 #### 📜 Quests
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| `GET` | `/api/v1/quests` | Lista todas as quests |
-| `GET` | `/api/v1/quests/{id}` | Busca quest por ID |
-| `GET` | `/api/v1/quests/most-played` | Top quests (CACHED) |
-| `POST` | `/api/v1/quests` | Cria nova quest |
-| `PUT` | `/api/v1/quests/{id}` | Atualiza quest |
-| `DELETE` | `/api/v1/quests/{id}` | Remove quest |
-| `POST` | `/api/v1/quests/complete` | **Completa quest (Level Up!)** |
+| Método | Endpoint | Descrição | Permissão |
+|--------|----------|-----------|-----------|
+| `GET` | `/api/v1/quests` | Lista todas as quests (com recompensas e itens) | Player |
+| `GET` | `/api/v1/quests/{id}` | Busca quest por ID | Player |
+| `GET` | `/api/v1/quests/most-played` | Top quests (CACHED) | Player |
+| `POST` | `/api/v1/quests` | Cria nova quest | 🔐 **Admin** |
+| `PUT` | `/api/v1/quests/{id}` | Atualiza quest | 🔐 **Admin** |
+| `DELETE` | `/api/v1/quests/{id}` | Remove quest | 🔐 **Admin** |
+| `POST` | `/api/v1/quests/complete` | **🔥 Completa quest (XP + Ouro + Item!)** | Player |
 
 #### 👹 Inimigos
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| `GET` | `/api/v1/enemies` | Lista todos os inimigos |
-| `POST` | `/api/v1/enemies` | Cria novo inimigo |
-| `PUT` | `/api/v1/enemies/{id}` | Atualiza inimigo |
-| `DELETE` | `/api/v1/enemies/{id}` | Remove inimigo |
+| Método | Endpoint | Descrição | Permissão |
+|--------|----------|-----------|-----------|
+| `GET` | `/api/v1/enemies` | Lista todos os inimigos | Player |
+| `GET` | `/api/v1/enemies/{id}` | Busca inimigo por ID | Player |
+| `POST` | `/api/v1/enemies` | Cria novo inimigo | 🔐 **Admin** |
+| `PUT` | `/api/v1/enemies/{id}` | Atualiza inimigo | 🔐 **Admin** |
+| `DELETE` | `/api/v1/enemies/{id}` | Remove inimigo | 🔐 **Admin** |
 
-#### 💰 Recompensas & Itens
+#### 🗡️ Itens
 
-Similar aos endpoints acima. Veja a documentação completa no Swagger.
+| Método | Endpoint | Descrição | Permissão |
+|--------|----------|-----------|-----------|
+| `GET` | `/api/v1/items` | Lista todos os itens | Player |
+| `GET` | `/api/v1/items/{id}` | Busca item por ID | Player |
+| `POST` | `/api/v1/items` | Cria novo item | 🔐 **Admin** |
+| `DELETE` | `/api/v1/items/{id}` | Remove item | 🔐 **Admin** |
+
+#### 💰 Recompensas
+
+| Método | Endpoint | Descrição | Permissão |
+|--------|----------|-----------|-----------|
+| `GET` | `/api/v1/rewards` | Lista todas as recompensas (com itens) | Player |
+| `GET` | `/api/v1/rewards/{id}` | Busca recompensa por ID | Player |
+| `GET` | `/api/v1/rewards/quest/{questId}` | Recompensas de uma quest | Player |
+| `POST` | `/api/v1/rewards` | Cria nova recompensa | 🔐 **Admin** |
+| `DELETE` | `/api/v1/rewards/{id}` | Remove recompensa | 🔐 **Admin** |
 
 ---
 
 ### Exemplo de Uso Completo
 
 ```bash
-# 1. Registrar
-curl -X POST http://localhost:5000/api/v1/auth/register \
+# 1. Login como Admin
+curl -X POST http://localhost:5000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"gandalf","email":"gandalf@eldoria.com","password":"youshallnotpass"}'
+  -d '{"username":"admin","password":"admin123"}'
 
-# 2. Criar Herói (use o token recebido)
-curl -X POST http://localhost:5000/api/v1/heroes \
-  -H "Authorization: Bearer SEU_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Gandalf","class":"Mago","strength":8,"intelligence":20,"dexterity":12}'
+# Resposta: { "token": "eyJhbGc...", "username": "admin", ... }
 
-# 3. Criar Quest
-curl -X POST http://localhost:5000/api/v1/quests \
-  -H "Authorization: Bearer SEU_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Derrotar Balrog","description":"Enfrentar o demônio das profundezas","difficulty":"Épico","experienceReward":500,"goldReward":1000}'
+# 2. Buscar Quests Disponíveis (com recompensas)
+curl -X GET http://localhost:5000/api/v1/quests \
+  -H "Authorization: Bearer SEU_TOKEN_ADMIN"
 
-# 4. Completar Quest (Herói ganha XP e pode subir de nível!)
+# Resposta:
+# [
+#   {
+#     "id": 1,
+#     "name": "Caça aos Goblins",
+#     "rewards": [{
+#       "gold": 100,
+#       "experience": 50,
+#       "item": {
+#         "name": "Espada de Ferro",
+#         "bonusStrength": 5
+#       }
+#     }]
+#   }
+# ]
+
+# 3. Completar Quest (Herói ganha XP, Ouro E o Item automaticamente!)
 curl -X POST http://localhost:5000/api/v1/quests/complete \
-  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Authorization: Bearer SEU_TOKEN_ADMIN" \
   -H "Content-Type: application/json" \
-  -d '{"heroId":1,"questId":1}'
+  -d '{"heroId":12,"questId":1}'
+
+# ✅ Resultado:
+# - Herói ganhou 50 XP (pode subir de nível!)
+# - Herói ganhou 100 de ouro
+# - Espada de Ferro foi adicionada automaticamente ao inventário!
+
+# 4. Verificar Inventário do Herói
+curl -X GET http://localhost:5000/api/v1/heroes/12 \
+  -H "Authorization: Bearer SEU_TOKEN_ADMIN"
+
+# Resposta mostra o herói com novo nível, XP, ouro e item no inventário!
 ```
 
 ---
@@ -382,16 +492,32 @@ sequenceDiagram
 
     C->>API: POST /quests/complete
     API->>S: CompleteQuestAsync(heroId, questId)
-    S->>DB: Busca Hero e Quest
+    S->>DB: Busca Hero e Quest (com Rewards e Items)
     S->>S: Aplica recompensas (XP + Gold)
+    
+    Note over S: 🎁 Sistema de Recompensas
+    loop Para cada Reward da Quest
+        alt Reward tem Item vinculado
+            S->>DB: Busca HeroItem no inventário
+            alt Item já existe
+                S->>DB: Aumenta quantidade do item
+            else Item novo
+                S->>DB: Adiciona item ao inventário
+            end
+        end
+    end
+    
+    Note over S: 🔮 Sistema de Level Up
     S->>S: Verifica level up
     alt Tem XP suficiente
         S->>S: Hero.LevelUp() (recursivo)
+        Note over S: +2 STR, +2 INT, +2 DEX
     end
+    
     S->>DB: SaveChanges()
     S->>R: Publica QuestCompletedEvent
     S->>Cache: Invalida cache do herói
-    S-->>API: QuestDto
+    S-->>API: QuestDto (com rewards e items)
     API-->>C: 200 OK
 ```
 
