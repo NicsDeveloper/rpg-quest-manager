@@ -36,6 +36,14 @@ export interface MyStats {
   powerRating: number;
 }
 
+export interface CreateHeroData {
+  name: string;
+  class: string;
+  strength: number;
+  intelligence: number;
+  dexterity: number;
+}
+
 export const profileService = {
   getMyHero: async (): Promise<MyHero> => {
     const response = await api.get<MyHero>('/profile/my-hero');
@@ -49,6 +57,16 @@ export const profileService = {
 
   getMyStats: async (): Promise<MyStats> => {
     const response = await api.get<MyStats>('/profile/stats');
+    return response.data;
+  },
+
+  createHero: async (data: CreateHeroData): Promise<MyHero> => {
+    const response = await api.post<MyHero>('/profile/create-hero', data);
+    return response.data;
+  },
+
+  getMyHeroes: async (): Promise<MyHero[]> => {
+    const response = await api.get<MyHero[]>('/profile/my-heroes');
     return response.data;
   },
 };

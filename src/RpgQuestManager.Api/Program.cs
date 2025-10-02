@@ -87,6 +87,9 @@ builder.Services.AddMassTransit(x =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IQuestService, QuestService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IDiceService, DiceService>();
+builder.Services.AddScoped<ICombatService, CombatService>();
+builder.Services.AddScoped<IDropService, DropService>();
 
 // Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
