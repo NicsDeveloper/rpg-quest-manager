@@ -5,7 +5,9 @@ import { Card } from '../components/Card';
 import { heroService, Hero } from '../services/heroService';
 import { questService, Quest } from '../services/questService';
 import { itemService, Item } from '../services/itemService';
+import { userService } from '../services/userService';
 import { Navbar } from '../components/Navbar';
+import { Tutorial } from '../components/Tutorial';
 
 export const Dashboard: React.FC = () => {
   const { t } = useTranslation();
@@ -13,10 +15,23 @@ export const Dashboard: React.FC = () => {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
+    checkTutorial();
     loadData();
   }, []);
+
+  const checkTutorial = async () => {
+    try {
+      const user = await userService.getCurrentUser();
+      if (!user.hasSeenTutorial) {
+        setTimeout(() => setShowTutorial(true), 1000);
+      }
+    } catch (error) {
+      console.error('Error checking tutorial:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -33,6 +48,14 @@ export const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+  };
+
+  const handleTutorialSkip = () => {
+    setShowTutorial(false);
   };
 
   const strongestHeroes = [...heroes].sort((a, b) => b.level - a.level).slice(0, 5);
@@ -58,6 +81,9 @@ export const Dashboard: React.FC = () => {
 
   return (
     <>
+      {showTutorial && (
+        <Tutorial onComplete={handleTutorialComplete} onSkip={handleTutorialSkip} />
+      )}
       <Navbar />
       <div className="container mx-auto px-6 py-8">
         <div className="mb-12 text-center">
