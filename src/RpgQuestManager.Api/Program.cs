@@ -222,7 +222,7 @@ app.MapControllers();
 
 app.MapHealthChecks("/health");
 
-// Aplicar migrations automaticamente em desenvolvimento
+// Aplicar migrations e seed automaticamente em desenvolvimento
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -231,10 +231,17 @@ if (app.Environment.IsDevelopment())
     {
         dbContext.Database.Migrate();
         Log.Information("Database migrations aplicadas com sucesso");
+        
+        // Executar seed
+        var seeder = new DatabaseSeeder(
+            dbContext, 
+            scope.ServiceProvider.GetRequiredService<ILogger<DatabaseSeeder>>()
+        );
+        await seeder.SeedAsync();
     }
     catch (Exception ex)
     {
-        Log.Error(ex, "Erro ao aplicar migrations do banco de dados");
+        Log.Error(ex, "Erro ao aplicar migrations ou seed do banco de dados");
     }
 }
 
