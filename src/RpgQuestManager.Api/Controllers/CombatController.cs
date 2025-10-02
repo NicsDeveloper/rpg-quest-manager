@@ -186,4 +186,24 @@ public class CombatController : ControllerBase
             return Forbid(ex.Message);
         }
     }
+
+    /// <summary>
+    /// Usa um item consumível durante o combate
+    /// </summary>
+    [HttpPost("{combatSessionId}/use-item")]
+    public async Task<ActionResult<CombatItemUsageResultDto>> UseItemInCombat(
+        int combatSessionId, 
+        [FromBody] UseItemInCombatRequest request)
+    {
+        try
+        {
+            var result = await _combatService.UseItemInCombat(combatSessionId, request.ItemId, request.HeroId);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao usar item no combate");
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

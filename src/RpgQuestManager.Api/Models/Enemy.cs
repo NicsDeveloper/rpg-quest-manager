@@ -11,6 +11,7 @@ public class Enemy
     // Sistema de Dados
     public DiceType RequiredDiceType { get; set; } = DiceType.D6; // Tipo de dado necessário
     public int MinimumRoll { get; set; } = 4; // Valor mínimo para vencer (ex: 4+ no d6)
+    public CombatType CombatType { get; set; } = CombatType.Physical; // Tipo de combate (Physical, Magical, Agile)
     
     public bool IsBoss { get; set; } = false; // Se é um boss (tem drops especiais)
     

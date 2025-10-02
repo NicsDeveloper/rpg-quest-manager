@@ -28,6 +28,7 @@ export const Quests: React.FC = () => {
     requiredLevel: 1,
     goldReward: 0,
     experienceReward: 0,
+    isRepeatable: false,
   });
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export const Quests: React.FC = () => {
         requiredLevel: quest.requiredLevel,
         goldReward: quest.goldReward,
         experienceReward: quest.experienceReward,
+        isRepeatable: quest.isRepeatable,
       });
     } else {
       setSelectedQuest(null);
@@ -71,6 +73,7 @@ export const Quests: React.FC = () => {
         requiredLevel: 1,
         goldReward: 0,
         experienceReward: 0,
+        isRepeatable: false,
       });
     }
     setIsModalOpen(true);
@@ -176,7 +179,14 @@ export const Quests: React.FC = () => {
               <Card key={quest.id}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-amber-500 mb-2">{quest.name}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-2xl font-bold text-amber-500">{quest.name}</h3>
+                      {quest.isRepeatable && (
+                        <span className="px-2 py-1 bg-blue-900 text-blue-300 rounded text-xs font-medium">
+                          🔄 Diária
+                        </span>
+                      )}
+                    </div>
                     <p className="text-gray-400 text-sm mb-3">{quest.description}</p>
                   </div>
                   <span className={`${getDifficultyColor(quest.difficulty)} text-white px-3 py-1 rounded-full text-sm font-semibold ml-3`}>
@@ -317,6 +327,19 @@ export const Quests: React.FC = () => {
               required
               min="0"
             />
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isRepeatable"
+                checked={formData.isRepeatable}
+                onChange={(e) => setFormData({ ...formData, isRepeatable: e.target.checked })}
+                className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="isRepeatable" className="text-sm font-medium text-gray-300">
+                Quest Diária (Repetível)
+              </label>
+            </div>
           </form>
         </Modal>
 

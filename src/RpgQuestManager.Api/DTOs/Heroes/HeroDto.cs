@@ -12,5 +12,10 @@ public class HeroDto
     public int Dexterity { get; set; }
     public int Gold { get; set; }
     public DateTime CreatedAt { get; set; }
+    
+    // Atributos de combate calculados
+    public int TotalAttack { get; set; }
+    public int TotalDefense { get; set; }
+    public int TotalMagic { get; set; }
 }
 

@@ -49,6 +49,9 @@ export const Navbar: React.FC = () => {
           <Link to="/items" className="text-gray-300 hover:text-amber-500 transition-colors">
             {t('nav.items')}
           </Link>
+          <Link to="/shop" className="text-gray-300 hover:text-amber-500 transition-colors">
+            🛒 Loja
+          </Link>
           {isAdmin && (
             <Link to="/enemies" className="text-gray-300 hover:text-amber-500 transition-colors">
               {t('nav.enemies')}

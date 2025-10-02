@@ -359,14 +359,23 @@ export const Combat: React.FC = () => {
                       <div className="bg-red-900/30 rounded py-1">
                         <p className="text-red-400 font-bold">{hero.strength}</p>
                         <p className="text-gray-500">FOR</p>
+                        {combat.heroes && combat.heroes.find(h => h.id === hero.id)?.totalAttack !== hero.strength && (
+                          <p className="text-green-400 text-xs">+{combat.heroes.find(h => h.id === hero.id)?.totalAttack - hero.strength}</p>
+                        )}
                       </div>
                       <div className="bg-blue-900/30 rounded py-1">
                         <p className="text-blue-400 font-bold">{hero.intelligence}</p>
                         <p className="text-gray-500">INT</p>
+                        {combat.heroes && combat.heroes.find(h => h.id === hero.id)?.totalMagic !== hero.intelligence && (
+                          <p className="text-green-400 text-xs">+{combat.heroes.find(h => h.id === hero.id)?.totalMagic - hero.intelligence}</p>
+                        )}
                       </div>
                       <div className="bg-green-900/30 rounded py-1">
                         <p className="text-green-400 font-bold">{hero.dexterity}</p>
                         <p className="text-gray-500">DEX</p>
+                        {combat.heroes && combat.heroes.find(h => h.id === hero.id)?.totalDefense !== hero.dexterity && (
+                          <p className="text-green-400 text-xs">+{combat.heroes.find(h => h.id === hero.id)?.totalDefense - hero.dexterity}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -456,8 +465,24 @@ export const Combat: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-400">Tipo de Combate:</span>
+                          <span className="text-sm font-bold text-blue-400">
+                            {enemy.combatType === 'Physical' && '⚔️ Físico'}
+                            {enemy.combatType === 'Magical' && '🔮 Mágico'}
+                            {enemy.combatType === 'Agile' && '🏃 Ágil'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-400">Rolagem Mínima:</span>
                           <span className="text-2xl font-bold text-yellow-400">{enemy.minimumRoll}+</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-400">Poder:</span>
+                          <span className="text-sm font-bold text-red-400">{enemy.power}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-400">Vida:</span>
+                          <span className="text-sm font-bold text-green-400">{enemy.health}</span>
                         </div>
                       </div>
                       
@@ -521,11 +546,14 @@ export const Combat: React.FC = () => {
                     <p className="text-sm text-gray-400 mb-1">🎯 Alvo Selecionado:</p>
                     <p className="text-2xl font-bold text-red-300 mb-3">{selectedEnemy.name}</p>
                     <div className="bg-gray-900/50 rounded-lg p-3">
-                      <p className="text-sm text-gray-400 text-center">
-                        Você precisa rolar <span className="text-yellow-400 font-bold text-lg">{selectedEnemy.minimumRoll}+</span>
+                      <p className="text-sm text-gray-400 text-center mb-2">
+                        Você precisa rolar <span className="text-yellow-400 font-bold text-lg">{combat.requiredRoll}+</span>
                       </p>
-                      <p className="text-sm text-gray-400 text-center">
+                      <p className="text-sm text-gray-400 text-center mb-2">
                         no dado <span className="text-yellow-400 font-bold">{selectedEnemy.requiredDiceType}</span>
+                      </p>
+                      <p className="text-xs text-blue-400 text-center">
+                        {combat.combatTypeDescription}
                       </p>
                     </div>
                   </div>
@@ -547,6 +575,29 @@ export const Combat: React.FC = () => {
                       >
                         {lastRoll.message}
                       </p>
+                    </div>
+                  )}
+
+                  {/* Bônus de Atributos */}
+                  {combat.heroBonuses && combat.heroBonuses.length > 0 && (
+                    <div className="mb-4 p-4 bg-gradient-to-r from-purple-900/30 to-indigo-900/30 border border-purple-500/30 rounded-lg">
+                      <h3 className="text-lg font-bold text-purple-400 mb-3 flex items-center gap-2">
+                        ⚡ Bônus de Atributos
+                      </h3>
+                      <div className="space-y-2">
+                        {combat.heroBonuses.map((bonus) => (
+                          <div key={bonus.heroId} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-300">{bonus.heroName}:</span>
+                            <div className="flex gap-2">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                bonus.combatBonus < 0 ? 'bg-green-900/50 text-green-400' : 'bg-gray-700 text-gray-400'
+                              }`}>
+                                {bonus.combatBonus < 0 ? `+${Math.abs(bonus.combatBonus)}` : bonus.combatBonus} {bonus.relevantStat}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

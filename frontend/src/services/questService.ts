@@ -10,6 +10,7 @@ export interface Quest {
   requiredClass: string;
   goldReward: number;
   experienceReward: number;
+  isRepeatable: boolean;
   createdAt: string;
   rewards?: Reward[];
   isAccepted?: boolean;
@@ -40,6 +41,7 @@ export interface CreateQuestRequest {
   requiredLevel: number;
   goldReward: number;
   experienceReward: number;
+  isRepeatable: boolean;
 }
 
 export interface UpdateQuestRequest {

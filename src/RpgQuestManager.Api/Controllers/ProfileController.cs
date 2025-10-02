@@ -223,15 +223,19 @@ public class ProfileController : ControllerBase
             }
         }
 
+        // Aplica atributos base por classe
+        var (baseStr, baseInt, baseDex) = Hero.GetBaseAttributesForClass(request.Class);
+        
         var hero = new Hero
         {
             Name = request.Name,
             Class = request.Class,
             Level = 0,
             Experience = 0,
-            Strength = request.Strength,
-            Intelligence = request.Intelligence,
-            Dexterity = request.Dexterity,
+            Strength = baseStr,
+            Intelligence = baseInt,
+            Dexterity = baseDex,
+            UnallocatedAttributePoints = 0, // Começa sem pontos não alocados
             Gold = 0, // Ouro está no player, não no herói
             UserId = userId,
             IsInActiveParty = false, // Criado fora da party

@@ -17,6 +17,8 @@ public class Item
     public int Value { get; set; } = 0;
     
     public bool IsExclusiveDrop { get; set; } = false; // Se é exclusivo de um boss específico
+    public bool IsConsumable { get; set; } = false; // Se é consumível (poções, etc)
+    public decimal? PercentageXpBonus { get; set; } // Para poções de XP (ex: 0.05 = 5%)
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     

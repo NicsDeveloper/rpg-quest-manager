@@ -9,7 +9,7 @@ using AutoMapper;
 
 namespace RpgQuestManager.Api.Services;
 
-public class CombatService : ICombatService
+public class CombatServiceNew : ICombatService
 {
     private readonly ApplicationDbContext _context;
     private readonly IDiceService _diceService;
@@ -17,17 +17,17 @@ public class CombatService : ICombatService
     private readonly IComboService _comboService;
     private readonly INotificationService _notificationService;
     private readonly IMapper _mapper;
-    private readonly ILogger<CombatService> _logger;
+    private readonly ILogger<CombatServiceNew> _logger;
     private static readonly Random _random = new Random();
 
-    public CombatService(
+    public CombatServiceNew(
         ApplicationDbContext context,
         IDiceService diceService,
         IDropService dropService,
         IComboService comboService,
         INotificationService notificationService,
         IMapper mapper,
-        ILogger<CombatService> logger)
+        ILogger<CombatServiceNew> logger)
     {
         _context = context;
         _diceService = diceService;
@@ -57,12 +57,14 @@ public class CombatService : ICombatService
 
         // Valida que todos os heróis pertencem ao usuário
         var heroes = await _context.Heroes
+            .Include(h => h.HeroItems)
+                .ThenInclude(hi => hi.Item)
             .Where(h => heroIds.Contains(h.Id) && h.UserId == userId && !h.IsDeleted)
             .ToListAsync();
 
         _logger.LogInformation("🔍 Heróis encontrados: {Count}/{Expected}", heroes.Count, heroIds.Count);
 
-        if (heroes.Count != heroIds.Count)
+        if (heroIds.Count != heroIds.Count)
         {
             _logger.LogWarning("❌ Heróis não encontrados ou não pertencem ao usuário");
             throw new InvalidOperationException("Um ou mais heróis não pertencem a você.");
@@ -193,8 +195,10 @@ public class CombatService : ICombatService
             throw new UnauthorizedAccessException("Esta sessão de combate não pertence a você.");
         }
 
-        // Busca os heróis
+        // Busca os heróis com itens equipados
         var heroes = await _context.Heroes
+            .Include(h => h.HeroItems)
+                .ThenInclude(hi => hi.Item)
             .Where(h => heroIds.Contains(h.Id))
             .ToListAsync();
 
@@ -210,11 +214,71 @@ public class CombatService : ICombatService
             .OrderBy(e => e.Id)
             .ToList();
 
+        // Calcula bônus de atributos para cada herói
+        var heroBonuses = new List<CombatBonusDto>();
+        var currentEnemy = combatSession.CurrentEnemy;
+        
+        foreach (var heroForBonus in heroes)
+        {
+            var attackBonus = heroForBonus.GetCombatBonus(CombatType.Physical);
+            var defenseBonus = heroForBonus.GetCombatBonus(CombatType.Agile);
+            var magicBonus = heroForBonus.GetCombatBonus(CombatType.Magical);
+            
+            var combatBonus = currentEnemy != null ? heroForBonus.GetCombatBonus(currentEnemy.CombatType) : 0;
+            var relevantStat = currentEnemy?.CombatType switch
+            {
+                CombatType.Physical => "Força",
+                CombatType.Magical => "Inteligência",
+                CombatType.Agile => "Destreza",
+                _ => "Força"
+            };
+
+            heroBonuses.Add(new CombatBonusDto
+            {
+                HeroId = heroForBonus.Id,
+                HeroName = heroForBonus.Name,
+                AttackBonus = attackBonus,
+                DefenseBonus = defenseBonus,
+                MagicBonus = magicBonus,
+                CombatBonus = combatBonus,
+                RelevantStat = relevantStat
+            });
+        }
+
+        // Calcula roll necessário considerando todos os bônus
+        var baseRequiredRoll = currentEnemy?.MinimumRoll ?? 1;
+        var totalAttributeBonus = heroBonuses.Sum(hb => hb.CombatBonus);
+        var totalBonus = combatSession.GroupBonus + combatSession.ComboBonus + totalAttributeBonus;
+        var adjustedRequiredRoll = Math.Max(1, baseRequiredRoll + totalBonus);
+
+        var combatTypeDescription = currentEnemy?.CombatType switch
+        {
+            CombatType.Physical => "Combate Físico (usa Força)",
+            CombatType.Magical => "Combate Mágico (usa Inteligência)",
+            CombatType.Agile => "Combate Ágil (usa Destreza)",
+            _ => "Combate Físico"
+        };
+
         var dto = new CombatSessionDetailDto
         {
             Id = combatSession.Id,
             HeroIds = heroIds,
-            Heroes = _mapper.Map<List<HeroDto>>(heroes),
+            Heroes = heroes.Select(h => new HeroDto
+            {
+                Id = h.Id,
+                Name = h.Name,
+                Class = h.Class,
+                Level = h.Level,
+                Experience = h.Experience,
+                Strength = h.Strength,
+                Intelligence = h.Intelligence,
+                Dexterity = h.Dexterity,
+                Gold = h.Gold,
+                CreatedAt = h.CreatedAt,
+                TotalAttack = h.GetTotalAttack(),
+                TotalDefense = h.GetTotalDefense(),
+                TotalMagic = h.GetTotalMagic()
+            }).ToList(),
             QuestId = combatSession.QuestId,
             QuestName = combatSession.Quest.Name,
             CurrentEnemy = combatSession.CurrentEnemy != null ? _mapper.Map<EnemyDto>(combatSession.CurrentEnemy) : null,
@@ -239,7 +303,10 @@ public class CombatService : ICombatService
                 Details = cl.Details,
                 Timestamp = cl.Timestamp
             }).ToList(),
-            RemainingEnemies = _mapper.Map<List<EnemyDto>>(remainingEnemies)
+            RemainingEnemies = _mapper.Map<List<EnemyDto>>(remainingEnemies),
+            RequiredRoll = adjustedRequiredRoll,
+            CombatTypeDescription = combatTypeDescription,
+            HeroBonuses = heroBonuses
         };
 
         return dto;
@@ -277,6 +344,8 @@ public class CombatService : ICombatService
         // Retorna os detalhes da sessão
         var heroIds = combatSession.GetHeroIdsList();
         var heroes = await _context.Heroes
+            .Include(h => h.HeroItems)
+                .ThenInclude(hi => hi.Item)
             .Where(h => heroIds.Contains(h.Id))
             .ToListAsync();
 
@@ -292,11 +361,71 @@ public class CombatService : ICombatService
             .OrderBy(e => e.Id)
             .ToList();
 
+        // Calcula bônus de atributos para cada herói
+        var heroBonuses = new List<CombatBonusDto>();
+        var currentEnemy = combatSession.CurrentEnemy;
+        
+        foreach (var heroForBonus in heroes)
+        {
+            var attackBonus = heroForBonus.GetCombatBonus(CombatType.Physical);
+            var defenseBonus = heroForBonus.GetCombatBonus(CombatType.Agile);
+            var magicBonus = heroForBonus.GetCombatBonus(CombatType.Magical);
+            
+            var combatBonus = currentEnemy != null ? heroForBonus.GetCombatBonus(currentEnemy.CombatType) : 0;
+            var relevantStat = currentEnemy?.CombatType switch
+            {
+                CombatType.Physical => "Força",
+                CombatType.Magical => "Inteligência",
+                CombatType.Agile => "Destreza",
+                _ => "Força"
+            };
+
+            heroBonuses.Add(new CombatBonusDto
+            {
+                HeroId = heroForBonus.Id,
+                HeroName = heroForBonus.Name,
+                AttackBonus = attackBonus,
+                DefenseBonus = defenseBonus,
+                MagicBonus = magicBonus,
+                CombatBonus = combatBonus,
+                RelevantStat = relevantStat
+            });
+        }
+
+        // Calcula roll necessário considerando todos os bônus
+        var baseRequiredRoll = currentEnemy?.MinimumRoll ?? 1;
+        var totalAttributeBonus = heroBonuses.Sum(hb => hb.CombatBonus);
+        var totalBonus = combatSession.GroupBonus + combatSession.ComboBonus + totalAttributeBonus;
+        var adjustedRequiredRoll = Math.Max(1, baseRequiredRoll + totalBonus);
+
+        var combatTypeDescription = currentEnemy?.CombatType switch
+        {
+            CombatType.Physical => "Combate Físico (usa Força)",
+            CombatType.Magical => "Combate Mágico (usa Inteligência)",
+            CombatType.Agile => "Combate Ágil (usa Destreza)",
+            _ => "Combate Físico"
+        };
+
         var dto = new CombatSessionDetailDto
         {
             Id = combatSession.Id,
             HeroIds = heroIds,
-            Heroes = _mapper.Map<List<HeroDto>>(heroes),
+            Heroes = heroes.Select(h => new HeroDto
+            {
+                Id = h.Id,
+                Name = h.Name,
+                Class = h.Class,
+                Level = h.Level,
+                Experience = h.Experience,
+                Strength = h.Strength,
+                Intelligence = h.Intelligence,
+                Dexterity = h.Dexterity,
+                Gold = h.Gold,
+                CreatedAt = h.CreatedAt,
+                TotalAttack = h.GetTotalAttack(),
+                TotalDefense = h.GetTotalDefense(),
+                TotalMagic = h.GetTotalMagic()
+            }).ToList(),
             QuestId = combatSession.QuestId,
             QuestName = combatSession.Quest.Name,
             CurrentEnemy = combatSession.CurrentEnemy != null ? _mapper.Map<EnemyDto>(combatSession.CurrentEnemy) : null,
@@ -321,7 +450,10 @@ public class CombatService : ICombatService
                 Details = cl.Details,
                 Timestamp = cl.Timestamp
             }).ToList(),
-            RemainingEnemies = _mapper.Map<List<EnemyDto>>(remainingEnemies)
+            RemainingEnemies = _mapper.Map<List<EnemyDto>>(remainingEnemies),
+            RequiredRoll = adjustedRequiredRoll,
+            CombatTypeDescription = combatTypeDescription,
+            HeroBonuses = heroBonuses
         };
 
         return dto;
@@ -377,6 +509,8 @@ public class CombatService : ICombatService
 
         var heroIds = combatSession.GetHeroIdsList();
         var heroes = await _context.Heroes
+            .Include(h => h.HeroItems)
+                .ThenInclude(hi => hi.Item)
             .Where(h => h.UserId == userId && heroIds.Contains(h.Id) && !h.IsDeleted)
             .ToListAsync();
 
@@ -406,9 +540,12 @@ public class CombatService : ICombatService
         var rollResult = _random.Next(1, (int)diceType + 1);
         var baseRequiredRoll = combatSession.CurrentEnemy.MinimumRoll;
         
+        // Calcula bônus de atributos dos heróis
+        var heroAttributeBonus = heroes.Sum(h => h.GetCombatBonus(combatSession.CurrentEnemy.CombatType));
+        
         // Aplica os bônus (reduzem o roll necessário)
-        var totalBonus = combatSession.GroupBonus + combatSession.ComboBonus;
-        var adjustedRequiredRoll = Math.Max(1, baseRequiredRoll + totalBonus); // Mínimo 1
+        var totalBonus = combatSession.GroupBonus + combatSession.ComboBonus + heroAttributeBonus;
+        var adjustedRequiredRoll = Math.Max(1, baseRequiredRoll + totalBonus);
 
         var success = rollResult >= adjustedRequiredRoll;
 
@@ -513,6 +650,8 @@ public class CombatService : ICombatService
     {
         var sessionHeroIds = combatSession.GetHeroIdsList();
         var sessionHeroes = await _context.Heroes
+            .Include(h => h.HeroItems)
+                .ThenInclude(hi => hi.Item)
             .Where(h => sessionHeroIds.Contains(h.Id))
             .ToListAsync();
 
@@ -528,6 +667,51 @@ public class CombatService : ICombatService
             .OrderBy(e => e.Id)
             .ToList();
 
+        // Calcula bônus de atributos para cada herói
+        var heroBonuses = new List<CombatBonusDto>();
+        var currentEnemy = combatSession.CurrentEnemy;
+        
+        foreach (var hero in sessionHeroes)
+        {
+            var attackBonus = hero.GetCombatBonus(CombatType.Physical);
+            var defenseBonus = hero.GetCombatBonus(CombatType.Agile);
+            var magicBonus = hero.GetCombatBonus(CombatType.Magical);
+            
+            var combatBonus = currentEnemy != null ? hero.GetCombatBonus(currentEnemy.CombatType) : 0;
+            var relevantStat = currentEnemy?.CombatType switch
+            {
+                CombatType.Physical => "Força",
+                CombatType.Magical => "Inteligência",
+                CombatType.Agile => "Destreza",
+                _ => "Força"
+            };
+
+            heroBonuses.Add(new CombatBonusDto
+            {
+                HeroId = hero.Id,
+                HeroName = hero.Name,
+                AttackBonus = attackBonus,
+                DefenseBonus = defenseBonus,
+                MagicBonus = magicBonus,
+                CombatBonus = combatBonus,
+                RelevantStat = relevantStat
+            });
+        }
+
+        // Calcula roll necessário considerando todos os bônus
+        var baseRequiredRoll = currentEnemy?.MinimumRoll ?? 1;
+        var totalAttributeBonus = heroBonuses.Sum(hb => hb.CombatBonus);
+        var totalBonus = combatSession.GroupBonus + combatSession.ComboBonus + totalAttributeBonus;
+        var adjustedRequiredRoll = Math.Max(1, baseRequiredRoll + totalBonus);
+
+        var combatTypeDescription = currentEnemy?.CombatType switch
+        {
+            CombatType.Physical => "Combate Físico (usa Força)",
+            CombatType.Magical => "Combate Mágico (usa Inteligência)",
+            CombatType.Agile => "Combate Ágil (usa Destreza)",
+            _ => "Combate Físico"
+        };
+
         var dto = new CombatSessionDetailDto
         {
             Id = combatSession.Id,
@@ -538,9 +722,15 @@ public class CombatService : ICombatService
                 Name = h.Name,
                 Class = h.Class,
                 Level = h.Level,
+                Experience = h.Experience,
                 Strength = h.Strength,
                 Intelligence = h.Intelligence,
-                Dexterity = h.Dexterity
+                Dexterity = h.Dexterity,
+                Gold = h.Gold,
+                CreatedAt = h.CreatedAt,
+                TotalAttack = h.GetTotalAttack(),
+                TotalDefense = h.GetTotalDefense(),
+                TotalMagic = h.GetTotalMagic()
             }).ToList(),
             QuestId = combatSession.QuestId,
             QuestName = combatSession.Quest.Name,
@@ -548,7 +738,14 @@ public class CombatService : ICombatService
             {
                 Id = combatSession.CurrentEnemy.Id,
                 Name = combatSession.CurrentEnemy.Name,
-                Type = combatSession.CurrentEnemy.Type
+                Type = combatSession.CurrentEnemy.Type,
+                Power = combatSession.CurrentEnemy.Power,
+                Health = combatSession.CurrentEnemy.Health,
+                RequiredDiceType = combatSession.CurrentEnemy.RequiredDiceType,
+                MinimumRoll = combatSession.CurrentEnemy.MinimumRoll,
+                CombatType = combatSession.CurrentEnemy.CombatType,
+                IsBoss = combatSession.CurrentEnemy.IsBoss,
+                CreatedAt = combatSession.CurrentEnemy.CreatedAt
             } : null,
             ComboId = combatSession.ComboId,
             ComboName = combatSession.Combo?.Name,
@@ -575,8 +772,18 @@ public class CombatService : ICombatService
             {
                 Id = e.Id,
                 Name = e.Name,
-                Type = e.Type
-            }).ToList()
+                Type = e.Type,
+                Power = e.Power,
+                Health = e.Health,
+                RequiredDiceType = e.RequiredDiceType,
+                MinimumRoll = e.MinimumRoll,
+                CombatType = e.CombatType,
+                IsBoss = e.IsBoss,
+                CreatedAt = e.CreatedAt
+            }).ToList(),
+            RequiredRoll = adjustedRequiredRoll,
+            CombatTypeDescription = combatTypeDescription,
+            HeroBonuses = heroBonuses
         };
 
         return dto;
@@ -641,17 +848,17 @@ public class CombatService : ICombatService
         }
 
         // XP vai para cada herói
-        foreach (var hero in heroes)
+        foreach (var heroToLevel in heroes)
         {
-            hero.Experience += expPerHero;
+            heroToLevel.Experience += expPerHero;
 
-            var oldLevel = hero.Level;
-            if (hero.CanLevelUp())
+            var oldLevel = heroToLevel.Level;
+            if (heroToLevel.CanLevelUp())
             {
-                hero.LevelUp();
-                if (hero.Level > oldLevel)
+                heroToLevel.LevelUp();
+                if (heroToLevel.Level > oldLevel)
                 {
-                    await _notificationService.NotifyLevelUpAsync(hero, oldLevel, hero.Level);
+                    await _notificationService.NotifyLevelUpAsync(heroToLevel, oldLevel, heroToLevel.Level);
                 }
             }
         }
@@ -821,5 +1028,128 @@ public class CombatService : ICombatService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Party fugiu do combate na sessão {SessionId}", combatSessionId);
+    }
+
+    /// <summary>
+    /// Usa um item consumível durante o combate
+    /// </summary>
+    public async Task<ActionResult<CombatItemUsageResultDto>> UseItemInCombat(int combatSessionId, int itemId, int heroId)
+    {
+        var combatSession = await _context.CombatSessions
+            .Include(cs => cs.Quest)
+            .FirstOrDefaultAsync(cs => cs.Id == combatSessionId);
+
+        if (combatSession == null)
+        {
+            return NotFound("Sessão de combate não encontrada");
+        }
+
+        if (combatSession.Status != "Active")
+        {
+            return BadRequest("A sessão de combate não está ativa");
+        }
+
+        var hero = await _context.Heroes.FindAsync(heroId);
+        if (hero == null)
+        {
+            return NotFound("Herói não encontrado");
+        }
+
+        var heroItem = await _context.HeroItems
+            .Include(hi => hi.Item)
+            .FirstOrDefaultAsync(hi => hi.HeroId == heroId && hi.ItemId == itemId);
+
+        if (heroItem == null)
+        {
+            return NotFound("Item não encontrado no inventário do herói");
+        }
+
+        if (!heroItem.Item.IsConsumable)
+        {
+            return BadRequest("Este item não é consumível");
+        }
+
+        if (heroItem.Quantity <= 0)
+        {
+            return BadRequest("Item não disponível");
+        }
+
+        // Aplicar efeitos do item
+        var result = new CombatItemUsageResultDto
+        {
+            Success = true,
+            ItemName = heroItem.Item.Name,
+            Message = $"{heroItem.Item.Name} usado com sucesso!"
+        };
+
+        // Aplicar bônus de XP se for poção de XP
+        if (heroItem.Item.PercentageXpBonus.HasValue && heroItem.Item.PercentageXpBonus > 0)
+        {
+            var xpNeeded = hero.GetExperienceForNextLevel();
+            var xpGained = (int)(xpNeeded * heroItem.Item.PercentageXpBonus.Value);
+            
+            hero.Experience += xpGained;
+            result.XpGained = xpGained;
+            result.Message += $" Ganhou {xpGained} XP!";
+            
+            // Verificar level up
+            var oldLevel = hero.Level;
+            if (hero.CanLevelUp())
+            {
+                hero.LevelUp();
+                if (hero.Level > oldLevel)
+                {
+                    result.LeveledUp = true;
+                    result.NewLevel = hero.Level;
+                    result.Message += $" Subiu para o nível {hero.Level}!";
+                }
+            }
+        }
+
+        // Aplicar bônus de atributos temporários (reduzir RequiredRoll)
+        if (heroItem.Item.BonusStrength > 0 || heroItem.Item.BonusIntelligence > 0 || heroItem.Item.BonusDexterity > 0)
+        {
+            var currentEnemy = combatSession.CurrentEnemy;
+            if (currentEnemy != null)
+            {
+                var relevantBonus = currentEnemy.CombatType switch
+                {
+                    CombatType.Physical => heroItem.Item.BonusStrength,
+                    CombatType.Magical => heroItem.Item.BonusIntelligence,
+                    CombatType.Agile => heroItem.Item.BonusDexterity,
+                    _ => 0
+                };
+
+                if (relevantBonus > 0)
+                {
+                    result.CombatBonus = -(relevantBonus / 5); // Cada 5 pontos = -1 no roll
+                    result.Message += $" Bônus de combate: {Math.Abs(result.CombatBonus)}!";
+                }
+            }
+        }
+
+        // Remover item do inventário
+        heroItem.Quantity -= 1;
+        if (heroItem.Quantity <= 0)
+        {
+            _context.HeroItems.Remove(heroItem);
+        }
+
+        // Registrar uso no log de combate
+        var combatLog = new CombatLog
+        {
+            CombatSessionId = combatSessionId,
+            Action = "ItemUsed",
+            Details = $"{hero.Name} usou {heroItem.Item.Name}",
+            Timestamp = DateTime.UtcNow
+        };
+        _context.CombatLogs.Add(combatLog);
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("🧪 Item {ItemName} usado no combate por herói {HeroName}. XP: {XpGained}, Bônus: {CombatBonus}", 
+            heroItem.Item.Name, hero.Name, result.XpGained, result.CombatBonus);
+
+        return Ok(result);
     }
 }

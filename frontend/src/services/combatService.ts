@@ -13,9 +13,13 @@ export interface EnemyInfo {
   id: number;
   name: string;
   type: string;
+  power: number;
+  health: number;
   requiredDiceType: string;
   minimumRoll: number;
+  combatType: string;
   isBoss: boolean;
+  createdAt: string;
 }
 
 export interface CombatLog {
@@ -30,10 +34,37 @@ export interface CombatLog {
   timestamp: string;
 }
 
+export interface HeroCombatInfo {
+  id: number;
+  name: string;
+  class: string;
+  level: number;
+  experience: number;
+  strength: number;
+  intelligence: number;
+  dexterity: number;
+  gold: number;
+  createdAt: string;
+  totalAttack: number;
+  totalDefense: number;
+  totalMagic: number;
+}
+
+export interface CombatBonus {
+  heroId: number;
+  heroName: string;
+  attackBonus: number;
+  defenseBonus: number;
+  magicBonus: number;
+  combatBonus: number;
+  relevantStat: string;
+}
+
 export interface CombatSessionDetail {
   id: number;
   heroId: number;
   heroIds: number[];
+  heroes: HeroCombatInfo[];
   questId: number;
   questName: string;
   status: string;
@@ -41,6 +72,9 @@ export interface CombatSessionDetail {
   enemies?: EnemyInfo[]; // Legacy - mapeado de remainingEnemies
   remainingEnemies: EnemyInfo[];
   combatLogs: CombatLog[];
+  requiredRoll: number;
+  combatTypeDescription: string;
+  heroBonuses: CombatBonus[];
 }
 
 export interface RollDiceRequest {

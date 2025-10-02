@@ -16,6 +16,7 @@ import { Combat } from './pages/Combat';
 import { DiceShop } from './pages/DiceShop';
 import { Bestiary } from './pages/Bestiary';
 import { FreeDice } from './pages/FreeDice';
+import { Shop } from './pages/Shop';
 
 const App: React.FC = () => {
   return (
@@ -84,6 +85,15 @@ const App: React.FC = () => {
             element={
               <PrivateRoute>
                 <Items />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/shop"
+            element={
+              <PrivateRoute>
+                <Shop />
               </PrivateRoute>
             }
           />

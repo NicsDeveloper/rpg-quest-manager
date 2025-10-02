@@ -11,6 +11,7 @@ public class Quest
     public int RequiredLevel { get; set; } = 1;
     public int ExperienceReward { get; set; }
     public int GoldReward { get; set; }
+    public bool IsRepeatable { get; set; } = false; // Se pode ser repetida diariamente
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public ICollection<HeroQuest> HeroQuests { get; set; } = new List<HeroQuest>();

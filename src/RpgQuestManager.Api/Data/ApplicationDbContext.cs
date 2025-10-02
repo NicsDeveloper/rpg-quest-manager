@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<QuestEnemy> QuestEnemies { get; set; }
     public DbSet<Item> Items { get; set; }
     public DbSet<HeroItem> HeroItems { get; set; }
+    public DbSet<HeroTraining> HeroTrainings { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     
     // Sistema de Combate e Dados
@@ -140,6 +141,17 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(e => e.Item)
                 .WithMany(i => i.HeroItems)
                 .HasForeignKey(e => e.ItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        
+        // Configuração HeroTraining
+        modelBuilder.Entity<HeroTraining>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TrainingType).IsRequired().HasMaxLength(50);
+            entity.HasOne(e => e.Hero)
+                .WithMany()
+                .HasForeignKey(e => e.HeroId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
         

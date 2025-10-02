@@ -11,6 +11,7 @@ public class QuestDto
     public int RequiredLevel { get; set; }
     public int ExperienceReward { get; set; }
     public int GoldReward { get; set; }
+    public bool IsRepeatable { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool? IsAccepted { get; set; }
     public bool? CanAccept { get; set; }

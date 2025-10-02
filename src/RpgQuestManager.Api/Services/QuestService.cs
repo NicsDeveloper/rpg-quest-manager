@@ -44,29 +44,70 @@ public class QuestService : IQuestService
             throw new Exception($"Quest com ID {questId} não encontrada");
         }
         
-        // Verificar se a quest já foi completada
-        var existingHeroQuest = await _context.HeroQuests
-            .FirstOrDefaultAsync(hq => hq.HeroId == heroId && hq.QuestId == questId);
-            
-        if (existingHeroQuest?.IsCompleted == true)
+        // Verificar se a quest já foi completada (apenas para quests não repetíveis)
+        if (!quest.IsRepeatable)
         {
-            throw new Exception("Quest já foi completada por este herói");
+            var existingHeroQuest = await _context.HeroQuests
+                .FirstOrDefaultAsync(hq => hq.HeroId == heroId && hq.QuestId == questId);
+                
+            if (existingHeroQuest?.IsCompleted == true)
+            {
+                throw new Exception("Quest já foi completada por este herói");
+            }
+        }
+        else
+        {
+            // Para quests repetíveis, verificar se já foi completada hoje
+            var today = DateTime.UtcNow.Date;
+            var todayCompletion = await _context.HeroQuests
+                .FirstOrDefaultAsync(hq => hq.HeroId == heroId && 
+                                         hq.QuestId == questId && 
+                                         hq.IsCompleted == true &&
+                                         hq.CompletedAt.HasValue &&
+                                         hq.CompletedAt.Value.Date == today);
+                                         
+            if (todayCompletion != null)
+            {
+                throw new Exception("Quest diária já foi completada hoje. Tente novamente amanhã!");
+            }
         }
         
-        // Criar ou atualizar HeroQuest
-        if (existingHeroQuest == null)
+        // Para quests repetíveis, sempre criar uma nova entrada
+        // Para quests normais, usar a lógica existente
+        HeroQuest heroQuest;
+        
+        if (quest.IsRepeatable)
         {
-            existingHeroQuest = new HeroQuest
+            // Quest repetível - sempre criar nova entrada
+            heroQuest = new HeroQuest
             {
                 HeroId = heroId,
                 QuestId = questId,
                 StartedAt = DateTime.UtcNow
             };
-            _context.HeroQuests.Add(existingHeroQuest);
+            _context.HeroQuests.Add(heroQuest);
+        }
+        else
+        {
+            // Quest normal - usar lógica existente
+            var existingHeroQuest = await _context.HeroQuests
+                .FirstOrDefaultAsync(hq => hq.HeroId == heroId && hq.QuestId == questId);
+                
+            if (existingHeroQuest == null)
+            {
+                existingHeroQuest = new HeroQuest
+                {
+                    HeroId = heroId,
+                    QuestId = questId,
+                    StartedAt = DateTime.UtcNow
+                };
+                _context.HeroQuests.Add(existingHeroQuest);
+            }
+            heroQuest = existingHeroQuest;
         }
         
-        existingHeroQuest.IsCompleted = true;
-        existingHeroQuest.CompletedAt = DateTime.UtcNow;
+        heroQuest.IsCompleted = true;
+        heroQuest.CompletedAt = DateTime.UtcNow;
         
         // Aplicar recompensas
         var oldLevel = hero.Level;

@@ -1,5 +1,15 @@
 namespace RpgQuestManager.Api.Models;
 
+/// <summary>
+/// Tipos de combate que afetam qual atributo é usado
+/// </summary>
+public enum CombatType
+{
+    Physical, // Usa Strength
+    Magical,  // Usa Intelligence  
+    Agile     // Usa Dexterity
+}
+
 public class Hero
 {
     public const int MaxLevel = 20;
@@ -13,6 +23,7 @@ public class Hero
     public int Intelligence { get; set; } = 10;
     public int Dexterity { get; set; } = 10;
     public int Gold { get; set; } = 0;
+    public int UnallocatedAttributePoints { get; set; } = 0; // Pontos de atributo não alocados
     public int? UserId { get; set; }
     
     // Sistema de Party
@@ -50,6 +61,53 @@ public class Hero
         return Level < MaxLevel && Experience >= GetExperienceForNextLevel();
     }
     
+    /// <summary>
+    /// Calcula o ataque total do herói (baseado em Strength + bônus de itens equipados)
+    /// </summary>
+    public int GetTotalAttack()
+    {
+        var equippedItems = HeroItems.Where(hi => hi.IsEquipped);
+        var itemBonus = equippedItems.Sum(hi => hi.Item.BonusStrength);
+        return Strength + itemBonus;
+    }
+
+    /// <summary>
+    /// Calcula a defesa total do herói (baseado em Dexterity + bônus de itens equipados)
+    /// </summary>
+    public int GetTotalDefense()
+    {
+        var equippedItems = HeroItems.Where(hi => hi.IsEquipped);
+        var itemBonus = equippedItems.Sum(hi => hi.Item.BonusDexterity);
+        return Dexterity + itemBonus;
+    }
+
+    /// <summary>
+    /// Calcula a magia total do herói (baseado em Intelligence + bônus de itens equipados)
+    /// </summary>
+    public int GetTotalMagic()
+    {
+        var equippedItems = HeroItems.Where(hi => hi.IsEquipped);
+        var itemBonus = equippedItems.Sum(hi => hi.Item.BonusIntelligence);
+        return Intelligence + itemBonus;
+    }
+
+    /// <summary>
+    /// Calcula o bônus de rolagem baseado nos atributos do herói
+    /// Cada 5 pontos de atributo relevante = -1 no roll necessário
+    /// </summary>
+    public int GetCombatBonus(CombatType combatType)
+    {
+        var relevantStat = combatType switch
+        {
+            CombatType.Physical => GetTotalAttack(),
+            CombatType.Magical => GetTotalMagic(),
+            CombatType.Agile => GetTotalDefense(),
+            _ => GetTotalAttack()
+        };
+
+        return -(relevantStat / 5); // Cada 5 pontos = -1 no roll
+    }
+
     /// <summary>
     /// Verifica se o herói atingiu o nível máximo
     /// </summary>
@@ -90,11 +148,9 @@ public class Hero
         Level++;
         Experience -= xpNeeded;
         
-        // Recompensa de atributos escalada
-        var attributeBonus = GetLevelUpAttributeBonus();
-        Strength += attributeBonus;
-        Intelligence += attributeBonus;
-        Dexterity += attributeBonus;
+        // MUDANÇA: Ao invés de aplicar atributos automaticamente, dá pontos não alocados
+        var attributePoints = GetLevelUpAttributeBonus();
+        UnallocatedAttributePoints += attributePoints;
         
         // Recompensa de ouro escalada
         Gold += GetLevelUpGoldReward();
@@ -104,6 +160,43 @@ public class Hero
         {
             LevelUp();
         }
+    }
+    
+    /// <summary>
+    /// Obtém os atributos base para cada classe
+    /// </summary>
+    public static (int Strength, int Intelligence, int Dexterity) GetBaseAttributesForClass(string heroClass)
+    {
+        return heroClass switch
+        {
+            "Guerreiro" => (18, 8, 12),    // Foco em força
+            "Mago" => (6, 20, 10),          // Foco em inteligência
+            "Arqueiro" => (10, 10, 18),     // Foco em destreza
+            "Paladino" => (15, 12, 10),     // Balanceado força/int
+            "Ladino" => (10, 8, 20),        // Foco extremo em destreza
+            _ => (10, 10, 10)               // Padrão balanceado
+        };
+    }
+    
+    /// <summary>
+    /// Distribui pontos de atributo não alocados
+    /// </summary>
+    public bool AllocateAttributePoints(int strengthPoints, int intelligencePoints, int dexterityPoints)
+    {
+        var totalPoints = strengthPoints + intelligencePoints + dexterityPoints;
+        
+        if (totalPoints > UnallocatedAttributePoints)
+            return false; // Não tem pontos suficientes
+        
+        if (strengthPoints < 0 || intelligencePoints < 0 || dexterityPoints < 0)
+            return false; // Não pode alocar valores negativos
+        
+        Strength += strengthPoints;
+        Intelligence += intelligencePoints;
+        Dexterity += dexterityPoints;
+        UnallocatedAttributePoints -= totalPoints;
+        
+        return true;
     }
 }
 

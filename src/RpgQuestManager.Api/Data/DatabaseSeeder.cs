@@ -228,25 +228,25 @@ public class DatabaseSeeder
         var enemies = new List<Enemy>
         {
             // Inimigos Fracos (D6 - fácil)
-            new Enemy { Name = "Goblin Raider", Type = "Goblin", Power = 15, Health = 50, RequiredDiceType = DiceType.D6, MinimumRoll = 3, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
-            new Enemy { Name = "Orc Scout", Type = "Orc", Power = 25, Health = 80, RequiredDiceType = DiceType.D6, MinimumRoll = 4, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
-            new Enemy { Name = "Skeleton Warrior", Type = "Morto-Vivo", Power = 20, Health = 60, RequiredDiceType = DiceType.D6, MinimumRoll = 3, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
-            new Enemy { Name = "Wolf", Type = "Besta", Power = 18, Health = 55, RequiredDiceType = DiceType.D6, MinimumRoll = 3, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
-            new Enemy { Name = "Giant Spider", Type = "Aranha", Power = 22, Health = 70, RequiredDiceType = DiceType.D6, MinimumRoll = 4, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
+            new Enemy { Name = "Goblin Raider", Type = "Goblin", Power = 15, Health = 50, RequiredDiceType = DiceType.D6, MinimumRoll = 3, CombatType = CombatType.Physical, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
+            new Enemy { Name = "Orc Scout", Type = "Orc", Power = 25, Health = 80, RequiredDiceType = DiceType.D6, MinimumRoll = 4, CombatType = CombatType.Physical, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
+            new Enemy { Name = "Skeleton Warrior", Type = "Morto-Vivo", Power = 20, Health = 60, RequiredDiceType = DiceType.D6, MinimumRoll = 3, CombatType = CombatType.Magical, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
+            new Enemy { Name = "Wolf", Type = "Besta", Power = 18, Health = 55, RequiredDiceType = DiceType.D6, MinimumRoll = 3, CombatType = CombatType.Agile, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
+            new Enemy { Name = "Giant Spider", Type = "Aranha", Power = 22, Health = 70, RequiredDiceType = DiceType.D6, MinimumRoll = 4, CombatType = CombatType.Agile, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-20) },
             
             // Inimigos Médios (D10 - médio)
-            new Enemy { Name = "Orc Warlord", Type = "Orc", Power = 45, Health = 150, RequiredDiceType = DiceType.D10, MinimumRoll = 5, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
-            new Enemy { Name = "Dark Wizard", Type = "Humano", Power = 50, Health = 120, RequiredDiceType = DiceType.D10, MinimumRoll = 6, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
-            new Enemy { Name = "Troll", Type = "Troll", Power = 55, Health = 200, RequiredDiceType = DiceType.D10, MinimumRoll = 5, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
-            new Enemy { Name = "Vampire", Type = "Morto-Vivo", Power = 48, Health = 140, RequiredDiceType = DiceType.D10, MinimumRoll = 6, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
-            new Enemy { Name = "Werewolf", Type = "Besta", Power = 52, Health = 160, RequiredDiceType = DiceType.D10, MinimumRoll = 5, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            new Enemy { Name = "Orc Warlord", Type = "Orc", Power = 45, Health = 150, RequiredDiceType = DiceType.D10, MinimumRoll = 5, CombatType = CombatType.Physical, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            new Enemy { Name = "Dark Wizard", Type = "Humano", Power = 50, Health = 120, RequiredDiceType = DiceType.D10, MinimumRoll = 6, CombatType = CombatType.Magical, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            new Enemy { Name = "Troll", Type = "Troll", Power = 55, Health = 200, RequiredDiceType = DiceType.D10, MinimumRoll = 5, CombatType = CombatType.Physical, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            new Enemy { Name = "Vampire", Type = "Morto-Vivo", Power = 48, Health = 140, RequiredDiceType = DiceType.D10, MinimumRoll = 6, CombatType = CombatType.Magical, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
+            new Enemy { Name = "Werewolf", Type = "Besta", Power = 52, Health = 160, RequiredDiceType = DiceType.D10, MinimumRoll = 5, CombatType = CombatType.Agile, IsBoss = false, CreatedAt = DateTime.UtcNow.AddDays(-18) },
             
             // BOSSES (D12 e D20 - muito difícil, com drops especiais)
-            new Enemy { Name = "Demon Lord", Type = "Demônio", Power = 75, Health = 300, RequiredDiceType = DiceType.D12, MinimumRoll = 8, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) },
-            new Enemy { Name = "Elder Dragon", Type = "Dragão", Power = 90, Health = 500, RequiredDiceType = DiceType.D20, MinimumRoll = 15, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) },
-            new Enemy { Name = "Lich King", Type = "Morto-Vivo", Power = 80, Health = 350, RequiredDiceType = DiceType.D12, MinimumRoll = 9, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) },
-            new Enemy { Name = "Balrog", Type = "Demônio", Power = 95, Health = 450, RequiredDiceType = DiceType.D20, MinimumRoll = 16, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) },
-            new Enemy { Name = "Kraken", Type = "Besta", Power = 85, Health = 400, RequiredDiceType = DiceType.D12, MinimumRoll = 10, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) }
+            new Enemy { Name = "Demon Lord", Type = "Demônio", Power = 75, Health = 300, RequiredDiceType = DiceType.D12, MinimumRoll = 8, CombatType = CombatType.Magical, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) },
+            new Enemy { Name = "Elder Dragon", Type = "Dragão", Power = 90, Health = 500, RequiredDiceType = DiceType.D20, MinimumRoll = 15, CombatType = CombatType.Physical, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) },
+            new Enemy { Name = "Lich King", Type = "Morto-Vivo", Power = 80, Health = 350, RequiredDiceType = DiceType.D12, MinimumRoll = 9, CombatType = CombatType.Magical, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) },
+            new Enemy { Name = "Balrog", Type = "Demônio", Power = 95, Health = 450, RequiredDiceType = DiceType.D20, MinimumRoll = 16, CombatType = CombatType.Physical, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) },
+            new Enemy { Name = "Kraken", Type = "Besta", Power = 85, Health = 400, RequiredDiceType = DiceType.D12, MinimumRoll = 10, CombatType = CombatType.Agile, IsBoss = true, CreatedAt = DateTime.UtcNow.AddDays(-15) }
         };
 
         _context.Enemies.AddRange(enemies);
@@ -292,7 +292,11 @@ public class DatabaseSeeder
             
             // Itens gerais adicionais
             new Item { Name = "Escudo de Madeira", Description = "Escudo básico de proteção", Type = "Escudo", Rarity = ItemRarity.Common, BonusStrength = 4, Value = 80 },
-            new Item { Name = "Manto Mágico", Description = "Manto que amplifica poderes mágicos", Type = "Armadura", Rarity = ItemRarity.Rare, BonusIntelligence = 12, Value = 900 }
+            new Item { Name = "Manto Mágico", Description = "Manto que amplifica poderes mágicos", Type = "Armadura", Rarity = ItemRarity.Rare, BonusIntelligence = 12, Value = 900 },
+            
+            // Poções de XP (Consumíveis que dão XP em porcentagem)
+            new Item { Name = "Poção de Experiência Menor", Description = "Concede 5% do XP necessário para o próximo nível", Type = "Poção", Rarity = ItemRarity.Rare, Value = 200, IsConsumable = true, PercentageXpBonus = 0.05m },
+            new Item { Name = "Poção de Experiência Maior", Description = "Concede 10% do XP necessário para o próximo nível", Type = "Poção", Rarity = ItemRarity.Epic, RarityTier = 1, Value = 500, IsConsumable = true, PercentageXpBonus = 0.10m }
         };
 
         _context.Items.AddRange(items);
@@ -314,7 +318,7 @@ public class DatabaseSeeder
 
         var quests = new List<Quest>
         {
-            // ===== QUEST TUTORIAL (Nível 1 - SEMPRE DISPONÍVEL) =====
+            // ===== QUEST TUTORIAL (Nível 0 - SEMPRE DISPONÍVEL) =====
             new Quest
             {
                 Name = "Os Primeiros Passos: Bem-vindo à Guilda",
@@ -338,7 +342,7 @@ Ele aponta para um mapa na parede, mostrando a **Vila de Thornwood**, rodeada po
                 RequiredLevel = 0,
                 RequiredClass = "Any",
                 Type = "Main",
-                ExperienceReward = 100,
+                ExperienceReward = 120, // Aumentado para garantir level up
                 GoldReward = 50,
                 CreatedAt = DateTime.UtcNow.AddDays(-30)
             },
@@ -1022,8 +1026,69 @@ Ela se recompõe, secando as lágrimas.
                 RequiredLevel = 0,
                 RequiredClass = "Any",
                 Type = "Side",
-                ExperienceReward = 50,
+                ExperienceReward = 80, // Aumentado
                 GoldReward = 100,
+                CreatedAt = DateTime.UtcNow.AddDays(-30)
+            },
+            
+            // ===== QUESTS DIÁRIAS NÍVEL 0-1 (Para evitar empacamento) =====
+            new Quest
+            {
+                Name = "[DIÁRIA] Coleta de Recursos da Floresta",
+                Description = @"🌳 **TRABALHO DIÁRIO**
+
+O Mestre da Guilda precisa de recursos básicos:
+
+'Heróis também precisam treinar as bases! Vá à floresta e colete **madeira** e **ervas medicinais**. Simples, mas essencial.'
+
+**Recompensa:** XP e ouro garantidos
+**Pode ser repetida:** Sim (reinicia diariamente)",
+                Difficulty = "Trivial",
+                RequiredLevel = 0,
+                RequiredClass = "Any",
+                Type = "Daily",
+                ExperienceReward = 60,
+                GoldReward = 30,
+                CreatedAt = DateTime.UtcNow.AddDays(-30)
+            },
+            
+            new Quest
+            {
+                Name = "[DIÁRIA] Treinamento Básico de Combate",
+                Description = @"⚔️ **TREINO DIÁRIO**
+
+O mestre de armas oferece treinamento diário:
+
+'Todo herói precisa praticar! Venha ao campo de treino e enfrente os bonecos de palha. Mantenha suas habilidades afiadas!'
+
+**Recompensa:** XP de treino
+**Pode ser repetida:** Sim (reinicia diariamente)",
+                Difficulty = "Trivial",
+                RequiredLevel = 0,
+                RequiredClass = "Any",
+                Type = "Daily",
+                ExperienceReward = 80,
+                GoldReward = 40,
+                CreatedAt = DateTime.UtcNow.AddDays(-30)
+            },
+            
+            new Quest
+            {
+                Name = "[DIÁRIA] Patrulha nas Estradas",
+                Description = @"🛣️ **PATRULHA DIÁRIA**
+
+Guardas da cidade precisam de reforços:
+
+'As estradas sempre têm bandidos e criaturas menores. Faça uma patrulha rápida e mantenha os viajantes seguros!'
+
+**Recompensa:** XP e ouro
+**Pode ser repetida:** Sim (reinicia diariamente)",
+                Difficulty = "Fácil",
+                RequiredLevel = 1,
+                RequiredClass = "Any",
+                Type = "Daily",
+                ExperienceReward = 100,
+                GoldReward = 50,
                 CreatedAt = DateTime.UtcNow.AddDays(-30)
             },
 
@@ -1138,6 +1203,156 @@ Lágrimas.
                 ExperienceReward = 1100,
                 GoldReward = 1800,
                 CreatedAt = DateTime.UtcNow.AddDays(-14)
+            },
+
+            // ===== QUESTS DIÁRIAS (REPETÍVEIS) =====
+            new Quest
+            {
+                Name = "Treinamento Matinal",
+                Description = @"🌅 **ROTINA DE GUERREIRO**
+
+O **Mestre de Armas Thorgrim** te cumprimenta no campo de treinamento ao amanhecer.
+
+'Disciplina é a base de todo guerreiro! Todos os dias, antes do sol nascer, venha aqui treinar. A consistência é mais valiosa que a força bruta.'
+
+**Objetivos:**
+• Treine por 1 hora no campo de treinamento
+• Execute 100 golpes de espada
+• Complete exercícios de resistência
+
+**Recompensa Diária:**
+• 50 XP (sempre útil para progressão)
+• 25 Gold (para comprar equipamentos)
+
+'Lembre-se: grandes guerreiros não nascem prontos. Eles se forjam no fogo da disciplina diária!'",
+                Difficulty = "Fácil",
+                RequiredLevel = 1,
+                RequiredClass = "Any",
+                Type = "Daily",
+                ExperienceReward = 50,
+                GoldReward = 25,
+                IsRepeatable = true,
+                CreatedAt = DateTime.UtcNow.AddDays(-5)
+            },
+
+            new Quest
+            {
+                Name = "Patrulha da Cidade",
+                Description = @"🛡️ **GUARDIÃO DA PAZ**
+
+O **Capitão da Guarda Marcus** te chama para uma patrulha rotineira.
+
+'Valestra precisa de heróis vigilantes! Monstros menores às vezes invadem a cidade. Sua missão: patrulhar os bairros e eliminar qualquer ameaça.'
+
+**Objetivos:**
+• Patrulhe 3 bairros da cidade
+• Elimine 2-3 criaturas menores
+• Reporte qualquer atividade suspeita
+
+**Recompensa Diária:**
+• 75 XP (progressão constante)
+• 40 Gold (salário da guarda)
+• Chance de encontrar itens úteis
+
+'Cada dia que passamos sem incidentes é uma vitória. Continue assim!'",
+                Difficulty = "Fácil",
+                RequiredLevel = 2,
+                RequiredClass = "Any",
+                Type = "Daily",
+                ExperienceReward = 75,
+                GoldReward = 40,
+                IsRepeatable = true,
+                CreatedAt = DateTime.UtcNow.AddDays(-5)
+            },
+
+            new Quest
+            {
+                Name = "Caça aos Goblins Diária",
+                Description = @"⚔️ **PESTE VERDE PERSISTENTE**
+
+O **Vigilante da Floresta Elara** te informa sobre a situação.
+
+'Os goblins são como ervas daninhas - cortamos um, nascem dez! Eles continuam atacando as fazendas. Precisamos de alguém para manter a população controlada.'
+
+**Objetivos:**
+• Elimine 5 Goblin Raiders na Floresta de Thornwood
+• Colete 3 troféus de goblin como prova
+• Retorne antes do anoitecer
+
+**Recompensa Diária:**
+• 100 XP (boa progressão)
+• 60 Gold (recompensa da guilda)
+• Chance de loot de goblins
+
+'É um trabalho sujo, mas alguém tem que fazer. Obrigado por manter nossa região segura!'",
+                Difficulty = "Médio",
+                RequiredLevel = 3,
+                RequiredClass = "Any",
+                Type = "Daily",
+                ExperienceReward = 100,
+                GoldReward = 60,
+                IsRepeatable = true,
+                CreatedAt = DateTime.UtcNow.AddDays(-5)
+            },
+
+            new Quest
+            {
+                Name = "Estudos Mágicos",
+                Description = @"📚 **CONHECIMENTO É PODER**
+
+A **Arquimaga Lyanna** te convida para estudos diários.
+
+'Magia não é apenas força bruta - é compreensão, estudo, dedicação. Venha todos os dias à biblioteca mágica e expanda seus conhecimentos.'
+
+**Objetivos:**
+• Estude por 2 horas na biblioteca
+• Pratique 3 feitiços básicos
+• Complete exercícios de concentração
+
+**Recompensa Diária:**
+• 80 XP (conhecimento vira poder)
+• 35 Gold (bolsa de estudos)
+• Chance de aprender novos feitiços
+
+'Cada página lida te torna mais sábio. Cada feitiço praticado te torna mais poderoso!'",
+                Difficulty = "Fácil",
+                RequiredLevel = 4,
+                RequiredClass = "Any",
+                Type = "Daily",
+                ExperienceReward = 80,
+                GoldReward = 35,
+                IsRepeatable = true,
+                CreatedAt = DateTime.UtcNow.AddDays(-5)
+            },
+
+            new Quest
+            {
+                Name = "Missão de Resgate",
+                Description = @"🚨 **SALVAMENTO URGENTE**
+
+O **Mensageiro da Guilda** chega correndo com notícias urgentes.
+
+'Aventureiros inexperientes se perderam na Caverna dos Lobos! Precisamos de alguém experiente para resgatá-los antes que seja tarde demais.'
+
+**Objetivos:**
+• Encontre os aventureiros perdidos
+• Derrote 3 Lobos Selvagens
+• Escolte os resgatados de volta à cidade
+
+**Recompensa Diária:**
+• 120 XP (missão de risco)
+• 80 Gold (recompensa generosa)
+• Gratidão dos resgatados
+
+'Vidas estão em jogo! Cada segundo conta. Que a sorte esteja com você!'",
+                Difficulty = "Médio",
+                RequiredLevel = 5,
+                RequiredClass = "Any",
+                Type = "Daily",
+                ExperienceReward = 120,
+                GoldReward = 80,
+                IsRepeatable = true,
+                CreatedAt = DateTime.UtcNow.AddDays(-5)
             }
         };
 
@@ -1205,47 +1420,63 @@ Lágrimas.
             return;
         }
 
-        var quests = await _context.Quests.ToListAsync();
-        var enemies = await _context.Enemies.ToListAsync();
+        var quests = await _context.Quests.OrderBy(q => q.Id).ToListAsync();
+        var enemies = await _context.Enemies.OrderBy(e => e.Id).ToListAsync();
         var questEnemies = new List<QuestEnemy>();
 
-        // Quest 1: Caça aos Goblins
-        questEnemies.Add(new QuestEnemy { QuestId = quests[0].Id, EnemyId = enemies[0].Id, Quantity = 10 });
-        
-        // Quest 2: Limpeza do Cemitério
-        questEnemies.Add(new QuestEnemy { QuestId = quests[2].Id, EnemyId = enemies[2].Id, Quantity = 15 });
-        
-        // Quest 3: A Invasão Orc
-        questEnemies.Add(new QuestEnemy { QuestId = quests[3].Id, EnemyId = enemies[1].Id, Quantity = 5 });
-        questEnemies.Add(new QuestEnemy { QuestId = quests[3].Id, EnemyId = enemies[5].Id, Quantity = 1 });
-        
-        // Quest 4: O Feiticeiro das Sombras
-        questEnemies.Add(new QuestEnemy { QuestId = quests[4].Id, EnemyId = enemies[6].Id, Quantity = 1 });
-        
-        // Quest 5: Caçada ao Lobisomem
-        questEnemies.Add(new QuestEnemy { QuestId = quests[5].Id, EnemyId = enemies[9].Id, Quantity = 1 });
-        
-        // Quest 6: O Covil do Troll
-        questEnemies.Add(new QuestEnemy { QuestId = quests[6].Id, EnemyId = enemies[7].Id, Quantity = 1 });
-        
-        // Quest 7: O Vampiro Ancestral
-        questEnemies.Add(new QuestEnemy { QuestId = quests[7].Id, EnemyId = enemies[8].Id, Quantity = 1 });
-        
-        // Quest 8: O Dragão das Montanhas
-        questEnemies.Add(new QuestEnemy { QuestId = quests[9].Id, EnemyId = enemies[11].Id, Quantity = 1 });
-        
-        // Quest 9: O Despertar do Balrog
-        questEnemies.Add(new QuestEnemy { QuestId = quests[10].Id, EnemyId = enemies[13].Id, Quantity = 1 });
-        
-        // Quest 10: O Senhor dos Liches
-        questEnemies.Add(new QuestEnemy { QuestId = quests[11].Id, EnemyId = enemies[12].Id, Quantity = 1 });
-        
-        // Quest 11: Kraken dos Mares
-        questEnemies.Add(new QuestEnemy { QuestId = quests[12].Id, EnemyId = enemies[14].Id, Quantity = 1 });
+        // Tutorial Quest (índice 0)
+        var goblinRaider = enemies.FirstOrDefault(e => e.Name == "Goblin Raider");
+        if (goblinRaider != null)
+        {
+            questEnemies.Add(new QuestEnemy { QuestId = quests[0].Id, EnemyId = goblinRaider.Id, Quantity = 1 });
+            _logger.LogInformation("✅ Quest '{QuestName}' (Nível {Level}) -> Enemy '{EnemyName}'", quests[0].Name, quests[0].RequiredLevel, goblinRaider.Name);
+        }
+
+        // Para TODAS as outras quests, vamos adicionar inimigos apropriados baseados no nível
+        for (int i = 1; i < quests.Count; i++)
+        {
+            var quest = quests[i];
+            
+            // Seleciona nome do inimigo baseado no nível da quest (nomes reais do banco)
+            string enemyName = quest.RequiredLevel switch
+            {
+                0 => "Goblin Raider",
+                1 => "Wolf",
+                2 => "Skeleton Warrior",
+                3 => "Orc Scout",
+                4 or 5 => "Giant Spider",
+                6 or 7 => "Troll",
+                8 or 9 => "Dark Wizard",
+                10 or 11 => "Vampire",
+                12 or 13 => "Werewolf",
+                14 or 15 => "Elder Dragon",
+                16 or 17 => "Lich King",
+                18 or 19 => "Balrog",
+                >= 20 => "Kraken",
+                _ => "Goblin Raider"
+            };
+
+            var enemy = enemies.FirstOrDefault(e => e.Name == enemyName);
+
+            if (enemy != null)
+            {
+                questEnemies.Add(new QuestEnemy 
+                { 
+                    QuestId = quest.Id, 
+                    EnemyId = enemy.Id, 
+                    Quantity = enemy.IsBoss ? 1 : (quest.RequiredLevel < 5 ? 5 : 3)
+                });
+                _logger.LogInformation("✅ Quest '{QuestName}' (Nível {Level}) -> Enemy '{EnemyName}'", quest.Name, quest.RequiredLevel, enemy.Name);
+            }
+            else
+            {
+                _logger.LogWarning("❌ Quest '{QuestName}' (Nível {Level}) - Inimigo '{EnemyName}' NÃO ENCONTRADO!", quest.Name, quest.RequiredLevel, enemyName);
+            }
+        }
 
         _context.QuestEnemies.AddRange(questEnemies);
         await _context.SaveChangesAsync();
-        _logger.LogInformation("⚔️ {Count} relacionamentos quest-inimigo criados", questEnemies.Count);
+        _logger.LogInformation("⚔️ {Count} relacionamentos quest-inimigo criados para {QuestCount} quests", questEnemies.Count, quests.Count);
     }
 
     private async Task SeedHeroItemsAsync()
@@ -1352,19 +1583,38 @@ Lágrimas.
 
         var dropTables = new List<BossDropTable>();
 
-        // Itens comuns que todos os bosses podem dropar (60% chance)
+        // ===== DROPS DE INIMIGOS NORMAIS (NÃO-BOSSES) =====
+        // Itens comuns para inimigos normais (80% chance - MUITO GENEROSO)
         var commonItems = items.Where(i => i.Rarity == ItemRarity.Common).ToList();
+        var normalEnemies = enemies.Where(e => !e.IsBoss).ToList();
 
+        foreach (var enemy in normalEnemies)
+        {
+            // Cada inimigo normal pode dropar 2 itens comuns diferentes
+            for (int i = 0; i < Math.Min(2, commonItems.Count); i++)
+            {
+                dropTables.Add(new BossDropTable
+                {
+                    EnemyId = enemy.Id,
+                    ItemId = commonItems[i].Id,
+                    DropChance = 0.80m, // 80% - MUITO GENEROSO!
+                    IsExclusive = false
+                });
+            }
+        }
+
+        // ===== DROPS DE BOSSES =====
+        // Itens comuns que todos os bosses podem dropar (90% chance - GARANTIDO quase)
         foreach (var boss in bosses)
         {
-            // Cada boss dropa 2-3 itens comuns
+            // Cada boss dropa 3 itens comuns com chance MUITO alta
             for (int i = 0; i < Math.Min(3, commonItems.Count); i++)
             {
                 dropTables.Add(new BossDropTable
                 {
                     EnemyId = boss.Id,
                     ItemId = commonItems[i].Id,
-                    DropChance = 0.60m, // 60%
+                    DropChance = 0.90m, // 90% - QUASE GARANTIDO!
                     IsExclusive = false
                 });
             }
@@ -1430,6 +1680,28 @@ Lágrimas.
             
             if (tentaculoKraken != null)
                 dropTables.Add(new BossDropTable { EnemyId = kraken.Id, ItemId = tentaculoKraken.Id, DropChance = 0.12m, IsExclusive = true });
+        }
+
+        // Poções de XP - Todos os inimigos podem dropar
+        var pocaoXpMenor = items.FirstOrDefault(i => i.Name == "Poção de Experiência Menor");
+        var pocaoXpMaior = items.FirstOrDefault(i => i.Name == "Poção de Experiência Maior");
+
+        // Inimigos normais: chance menor de poções de XP
+        foreach (var enemy in normalEnemies)
+        {
+            if (pocaoXpMenor != null)
+                dropTables.Add(new BossDropTable { EnemyId = enemy.Id, ItemId = pocaoXpMenor.Id, DropChance = 0.15m, IsExclusive = false }); // 15%
+            if (pocaoXpMaior != null)
+                dropTables.Add(new BossDropTable { EnemyId = enemy.Id, ItemId = pocaoXpMaior.Id, DropChance = 0.05m, IsExclusive = false }); // 5%
+        }
+
+        // Bosses: chance MUITO maior de poções de XP
+        foreach (var boss in bosses)
+        {
+            if (pocaoXpMenor != null)
+                dropTables.Add(new BossDropTable { EnemyId = boss.Id, ItemId = pocaoXpMenor.Id, DropChance = 0.50m, IsExclusive = false }); // 50%!
+            if (pocaoXpMaior != null)
+                dropTables.Add(new BossDropTable { EnemyId = boss.Id, ItemId = pocaoXpMaior.Id, DropChance = 0.30m, IsExclusive = false }); // 30%!
         }
 
         _context.BossDropTables.AddRange(dropTables);

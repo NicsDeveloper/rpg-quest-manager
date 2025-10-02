@@ -85,15 +85,17 @@ public class QuestsController : ControllerBase
     public async Task<ActionResult<List<QuestDto>>> GetMyQuests()
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+        var hero = await _context.Heroes
+            .FirstOrDefaultAsync(h => h.UserId == userId && h.PartySlot != null && !h.IsDeleted);
         
         if (hero == null)
         {
             return Ok(new List<QuestDto>());
         }
 
+        // Filtra apenas missões NÃO completadas (ativas)
         var heroQuestIds = await _context.HeroQuests
-            .Where(hq => hq.HeroId == hero.Id)
+            .Where(hq => hq.HeroId == hero.Id && !hq.IsCompleted)
             .Select(hq => hq.QuestId)
             .ToListAsync();
 

@@ -38,4 +38,20 @@ public class CombatSessionDetailDto
     public DateTime? CompletedAt { get; set; }
     public List<CombatLogDto> CombatLogs { get; set; } = new List<CombatLogDto>();
     public List<EnemyDto> RemainingEnemies { get; set; } = new List<EnemyDto>();
+    
+    // Informações de combate calculadas
+    public int RequiredRoll { get; set; } // Roll necessário para vencer o inimigo atual
+    public string CombatTypeDescription { get; set; } = string.Empty; // Descrição do tipo de combate
+    public List<CombatBonusDto> HeroBonuses { get; set; } = new List<CombatBonusDto>(); // Bônus de cada herói
+}
+
+public class CombatBonusDto
+{
+    public int HeroId { get; set; }
+    public string HeroName { get; set; } = string.Empty;
+    public int AttackBonus { get; set; }
+    public int DefenseBonus { get; set; }
+    public int MagicBonus { get; set; }
+    public int CombatBonus { get; set; } // Bônus específico para o tipo de combate atual
+    public string RelevantStat { get; set; } = string.Empty; // Nome do atributo relevante
 }
