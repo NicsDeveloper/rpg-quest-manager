@@ -11,9 +11,11 @@ public class Hero
     public int Intelligence { get; set; } = 10;
     public int Dexterity { get; set; } = 10;
     public int Gold { get; set; } = 0;
+    public int? UserId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     // Relacionamentos
+    public User? User { get; set; }
     public ICollection<HeroQuest> HeroQuests { get; set; } = new List<HeroQuest>();
     public ICollection<HeroItem> HeroItems { get; set; } = new List<HeroItem>();
     

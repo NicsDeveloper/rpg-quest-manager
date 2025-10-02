@@ -77,9 +77,13 @@ public class DatabaseSeeder
 
     private async Task SeedHeroesAsync()
     {
+        var users = await _context.Users.ToListAsync();
+        var player1 = users.FirstOrDefault(u => u.Username == "player1");
+        var gamer = users.FirstOrDefault(u => u.Username == "gamer");
+
         var heroes = new List<Hero>
         {
-            // Heróis Lendários (Alto Nível)
+            // Herói do player1
             new Hero
             {
                 Name = "Aragorn",
@@ -90,8 +94,10 @@ public class DatabaseSeeder
                 Intelligence = 22,
                 Dexterity = 28,
                 Gold = 5000,
+                UserId = player1?.Id,
                 CreatedAt = DateTime.UtcNow.AddDays(-25)
             },
+            // Herói do gamer
             new Hero
             {
                 Name = "Gandalf",
@@ -102,6 +108,7 @@ public class DatabaseSeeder
                 Intelligence = 50,
                 Dexterity = 24,
                 Gold = 8000,
+                UserId = gamer?.Id,
                 CreatedAt = DateTime.UtcNow.AddDays(-28)
             },
             new Hero
