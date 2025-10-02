@@ -22,6 +22,7 @@ public class CombatLogDto
 public class CombatSessionDetailDto
 {
     public int Id { get; set; }
+    public int HeroId => HeroIds.FirstOrDefault(); // Compatibilidade com frontend antigo
     public List<int> HeroIds { get; set; } = new List<int>();
     public List<HeroDto> Heroes { get; set; } = new List<HeroDto>(); // Detalhes dos heróis
     public int QuestId { get; set; }

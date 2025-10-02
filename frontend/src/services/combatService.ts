@@ -49,10 +49,11 @@ export interface RollDiceRequest {
 }
 
 export interface RollDiceResult {
+  roll: number;
+  requiredRoll: number;
   success: boolean;
-  rollResult: number;
-  diceType: string;
   message: string;
+  updatedCombatSession: CombatSessionDetail;
 }
 
 export interface DroppedItem {

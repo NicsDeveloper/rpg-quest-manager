@@ -318,6 +318,9 @@ public class CombatService : ICombatService
 
     public async Task<RollDiceResultDto> RollDiceAsync(int userId, int combatSessionId, DiceType diceType)
     {
+        _logger.LogInformation("🎲 RollDice chamado: UserId={UserId}, CombatSessionId={CombatSessionId}, DiceType={DiceType}", 
+            userId, combatSessionId, diceType);
+
         var combatSession = await _context.CombatSessions
             .Include(cs => cs.CurrentEnemy)
             .Include(cs => cs.Quest)
@@ -329,7 +332,31 @@ public class CombatService : ICombatService
 
         if (combatSession == null)
         {
-            throw new KeyNotFoundException("Sessão de combate não encontrada ou não está ativa.");
+            // Verifica se a sessão existe mas com status diferente
+            var anySession = await _context.CombatSessions.FirstOrDefaultAsync(cs => cs.Id == combatSessionId);
+            if (anySession != null)
+            {
+                _logger.LogWarning("❌ Sessão {CombatSessionId} encontrada mas com status {Status}", 
+                    combatSessionId, anySession.Status);
+                
+                if (anySession.Status == CombatStatus.Victory)
+                {
+                    throw new InvalidOperationException("🎉 Combate já foi concluído com VITÓRIA! Use o endpoint /complete para receber as recompensas.");
+                }
+                else if (anySession.Status == CombatStatus.Fled)
+                {
+                    throw new InvalidOperationException("A party fugiu deste combate.");
+                }
+                else if (anySession.Status == CombatStatus.Defeated)
+                {
+                    throw new InvalidOperationException("A party foi derrotada neste combate.");
+                }
+                
+                throw new KeyNotFoundException($"Sessão de combate não está ativa (Status: {anySession.Status}).");
+            }
+            
+            _logger.LogWarning("❌ Sessão {CombatSessionId} não existe no banco", combatSessionId);
+            throw new KeyNotFoundException("Sessão de combate não encontrada.");
         }
 
         if (combatSession.CurrentEnemy == null)
@@ -425,7 +452,7 @@ public class CombatService : ICombatService
             {
                 // Todos os inimigos derrotados!
                 combatSession.Status = CombatStatus.Victory;
-                message += " 🎉 TODOS OS INIMIGOS DERROTADOS! Use o endpoint /complete para receber as recompensas.";
+                message += " 🎉 TODOS OS INIMIGOS DERROTADOS! Clique no botão 'Completar Combate' para receber suas recompensas!";
             }
         }
         else
@@ -435,7 +462,9 @@ public class CombatService : ICombatService
 
         await _context.SaveChangesAsync();
 
-        var updatedSession = await GetActiveCombatSessionAsync(userId, combatSessionId);
+        // Recarrega a sessão atualizada sem filtrar por status
+        // (necessário porque após vitória o status muda para Victory)
+        var updatedSession = await GetCombatSessionDetailAsync(combatSessionId);
 
         return new RollDiceResultDto
         {
@@ -445,6 +474,101 @@ public class CombatService : ICombatService
             Message = message,
             UpdatedCombatSession = updatedSession
         };
+    }
+
+    // Método auxiliar para buscar sessão sem filtrar por status
+    private async Task<CombatSessionDetailDto> GetCombatSessionDetailAsync(int combatSessionId)
+    {
+        var combatSession = await _context.CombatSessions
+            .Include(cs => cs.Quest)
+                .ThenInclude(q => q.QuestEnemies)
+                    .ThenInclude(qe => qe.Enemy)
+            .Include(cs => cs.CurrentEnemy)
+            .Include(cs => cs.Combo)
+            .Include(cs => cs.CombatLogs)
+                .ThenInclude(cl => cl.Enemy)
+            .FirstOrDefaultAsync(cs => cs.Id == combatSessionId);
+
+        if (combatSession == null)
+        {
+            throw new KeyNotFoundException("Sessão de combate não encontrada.");
+        }
+
+        return await BuildCombatSessionDetailDto(combatSession);
+    }
+
+    // Constrói o DTO a partir da entidade
+    private async Task<CombatSessionDetailDto> BuildCombatSessionDetailDto(CombatSession combatSession)
+    {
+        var sessionHeroIds = combatSession.GetHeroIdsList();
+        var sessionHeroes = await _context.Heroes
+            .Where(h => sessionHeroIds.Contains(h.Id))
+            .ToListAsync();
+
+        var allEnemies = combatSession.Quest.QuestEnemies.Select(qe => qe.Enemy).ToList();
+        var defeatedIds = combatSession.CombatLogs
+            .Where(cl => cl.Success == true && cl.EnemyId.HasValue)
+            .Select(cl => cl.EnemyId!.Value)
+            .Distinct()
+            .ToList();
+
+        var remaining = allEnemies
+            .Where(e => !defeatedIds.Contains(e.Id))
+            .OrderBy(e => e.Id)
+            .ToList();
+
+        var dto = new CombatSessionDetailDto
+        {
+            Id = combatSession.Id,
+            HeroIds = sessionHeroIds,
+            Heroes = sessionHeroes.Select(h => new HeroDto
+            {
+                Id = h.Id,
+                Name = h.Name,
+                Class = h.Class,
+                Level = h.Level,
+                Strength = h.Strength,
+                Intelligence = h.Intelligence,
+                Dexterity = h.Dexterity
+            }).ToList(),
+            QuestId = combatSession.QuestId,
+            QuestName = combatSession.Quest.Name,
+            CurrentEnemy = combatSession.CurrentEnemy != null ? new EnemyDto
+            {
+                Id = combatSession.CurrentEnemy.Id,
+                Name = combatSession.CurrentEnemy.Name,
+                Type = combatSession.CurrentEnemy.Type
+            } : null,
+            ComboId = combatSession.ComboId,
+            ComboName = combatSession.Combo?.Name,
+            ComboDescription = combatSession.Combo?.Description,
+            GroupBonus = combatSession.GroupBonus,
+            ComboBonus = combatSession.ComboBonus,
+            Status = combatSession.Status,
+            StartedAt = combatSession.StartedAt,
+            CompletedAt = combatSession.CompletedAt,
+            CombatLogs = combatSession.CombatLogs.OrderByDescending(cl => cl.Timestamp).Select(cl => new CombatLogDto
+            {
+                Id = cl.Id,
+                Action = cl.Action,
+                EnemyId = cl.EnemyId,
+                EnemyName = cl.Enemy?.Name,
+                DiceUsed = cl.DiceUsed,
+                DiceResult = cl.DiceResult,
+                RequiredRoll = cl.RequiredRoll,
+                Success = cl.Success,
+                Details = cl.Details,
+                Timestamp = cl.Timestamp
+            }).ToList(),
+            RemainingEnemies = remaining.Select(e => new EnemyDto
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Type = e.Type
+            }).ToList()
+        };
+
+        return dto;
     }
 
     public async Task<CompleteCombatResultDto> CompleteCombatAsync(int userId, int combatSessionId)
@@ -571,6 +695,22 @@ public class CombatService : ICombatService
             }
         }
 
+        // Marca a quest como completada para todos os heróis que participaram
+        foreach (var hero in heroes)
+        {
+            var heroQuest = await _context.HeroQuests
+                .FirstOrDefaultAsync(hq => hq.HeroId == hero.Id && hq.QuestId == combatSession.QuestId);
+
+            if (heroQuest != null && !heroQuest.IsCompleted)
+            {
+                heroQuest.IsCompleted = true;
+                heroQuest.CompletedAt = DateTime.UtcNow;
+                
+                _logger.LogInformation("✅ Quest {QuestName} marcada como completada para herói {HeroName}", 
+                    combatSession.Quest.Name, hero.Name);
+            }
+        }
+
         combatSession.Status = CombatStatus.Victory;
         combatSession.CompletedAt = DateTime.UtcNow;
 
@@ -581,7 +721,8 @@ public class CombatService : ICombatService
 
         return new CompleteCombatResultDto
         {
-            Message = $"Combate completo! Party recebeu {goldPerHero * heroes.Count} ouro e {expPerHero * heroes.Count} XP (divididos). Recompensa ajustada para {heroes.Count} heróis ({rewardMultiplier:P0}).",
+            Status = "Victory",
+            Message = $"🎉 Combate completo! Party recebeu {goldPerHero * heroes.Count} ouro e {expPerHero * heroes.Count} XP (divididos). Recompensa ajustada para {heroes.Count} heróis ({rewardMultiplier:P0}).",
             GoldEarned = goldPerHero * heroes.Count,
             ExperienceEarned = expPerHero * heroes.Count,
             HeroNewLevel = heroes.Max(h => h.Level),

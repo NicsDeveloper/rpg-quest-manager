@@ -101,13 +101,19 @@ export const Combat: React.FC = () => {
       const updatedInventory = await diceService.getInventory();
       setInventory(updatedInventory);
 
-      // Recarrega a sessão de combate para ver os logs
-      const updatedCombat = await combatService.getActiveCombat(combat.heroId);
-      if (updatedCombat) {
-        setCombat(updatedCombat);
+      // Usa o combate atualizado que já vem na resposta
+      if (result.updatedCombatSession) {
+        setCombat(result.updatedCombatSession);
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || error.message || 'Erro ao rolar dado');
+      const errorMsg = error.response?.data?.message || error.message || 'Erro ao rolar dado';
+      alert(errorMsg);
+      
+      // Se o combate já terminou, tenta recarregar a página do catálogo
+      if (errorMsg.includes('concluído com VITÓRIA')) {
+        alert('🎉 Combate já foi concluído! Redirecionando...');
+        navigate('/quests/catalog');
+      }
     } finally {
       setRolling(false);
     }
@@ -533,7 +539,7 @@ export const Combat: React.FC = () => {
                       }`}
                     >
                       <p className="text-sm text-gray-300 text-center mb-2">Resultado:</p>
-                      <p className="text-6xl font-black text-center my-4 animate-bounce">{lastRoll.rollResult}</p>
+                      <p className="text-6xl font-black text-center my-4 animate-bounce">{lastRoll.roll}</p>
                       <p
                         className={`text-lg font-bold text-center ${
                           lastRoll.success ? 'text-green-300' : 'text-red-300'
