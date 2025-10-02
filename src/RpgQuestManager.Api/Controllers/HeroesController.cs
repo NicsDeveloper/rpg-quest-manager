@@ -10,10 +10,14 @@ using RpgQuestManager.Api.Services;
 
 namespace RpgQuestManager.Api.Controllers;
 
+/// <summary>
+/// Gerenciamento de heróis com atributos, níveis e inventário
+/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Authorize]
 [Produces("application/json")]
+[ApiExplorerSettings(GroupName = "⚔️ Heróis")]
 public class HeroesController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -34,9 +38,22 @@ public class HeroesController : ControllerBase
     }
     
     /// <summary>
-    /// Obtém todos os heróis
+    /// Lista todos os heróis cadastrados no sistema
     /// </summary>
+    /// <returns>Lista de heróis com atributos, nível, XP e ouro</returns>
+    /// <remarks>
+    /// Retorna todos os heróis sem paginação.
+    /// 
+    /// Cada herói contém:
+    /// * Atributos: Força, Inteligência, Destreza
+    /// * Progressão: Nível atual e experiência
+    /// * Riqueza: Total de ouro acumulado
+    /// </remarks>
+    /// <response code="200">Lista de heróis retornada com sucesso</response>
+    /// <response code="401">Token JWT inválido ou ausente</response>
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<HeroDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IEnumerable<HeroDto>>> GetAll()
     {
         var heroes = await _context.Heroes.ToListAsync();
@@ -75,9 +92,27 @@ public class HeroesController : ControllerBase
     }
     
     /// <summary>
-    /// Obtém os heróis mais fortes (cache)
+    /// Obtém o ranking dos heróis mais fortes (CACHED por 10 minutos)
     /// </summary>
+    /// <param name="limit">Quantidade de heróis no ranking (padrão: 10)</param>
+    /// <returns>Lista dos heróis mais fortes ordenados por nível e XP</returns>
+    /// <remarks>
+    /// Este endpoint utiliza cache Redis para melhor performance.
+    /// 
+    /// Critérios de ordenação:
+    /// 1. Nível (descendente)
+    /// 2. Experiência (descendente)
+    /// 
+    /// Cache: 10 minutos
+    /// 
+    /// Exemplo:
+    /// 
+    ///     GET /api/v1/heroes/strongest?limit=5
+    ///     
+    /// </remarks>
+    /// <response code="200">Ranking retornado com sucesso (pode vir do cache)</response>
     [HttpGet("strongest")]
+    [ProducesResponseType(typeof(IEnumerable<HeroDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<HeroDto>>> GetStrongest([FromQuery] int limit = 10)
     {
         var cacheKey = $"heroes:strongest:{limit}";
@@ -104,9 +139,41 @@ public class HeroesController : ControllerBase
     }
     
     /// <summary>
-    /// Cria um novo herói
+    /// Cria um novo herói no sistema
     /// </summary>
+    /// <param name="request">Dados do herói a ser criado</param>
+    /// <returns>Herói criado com ID gerado</returns>
+    /// <remarks>
+    /// Exemplo de requisição:
+    /// 
+    ///     POST /api/v1/heroes
+    ///     {
+    ///         "name": "Aragorn",
+    ///         "class": "Guerreiro",
+    ///         "strength": 18,
+    ///         "intelligence": 12,
+    ///         "dexterity": 15
+    ///     }
+    ///     
+    /// Classes disponíveis:
+    /// * Guerreiro - Focado em força e resistência
+    /// * Mago - Focado em inteligência e magia
+    /// * Arqueiro - Focado em destreza e precisão
+    /// * Paladino - Balanceado entre força e magia
+    /// * Ladino - Focado em agilidade e furtividade
+    /// 
+    /// Atributos:
+    /// * Valor mínimo: 1
+    /// * Valor máximo: 100
+    /// * Padrão: 10 se não informado
+    /// 
+    /// O herói começa no nível 1 com 0 XP e 0 ouro.
+    /// </remarks>
+    /// <response code="201">Herói criado com sucesso</response>
+    /// <response code="400">Dados inválidos (classe inexistente ou atributos fora do range)</response>
     [HttpPost]
+    [ProducesResponseType(typeof(HeroDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<HeroDto>> Create([FromBody] CreateHeroRequest request)
     {
         var hero = _mapper.Map<Hero>(request);

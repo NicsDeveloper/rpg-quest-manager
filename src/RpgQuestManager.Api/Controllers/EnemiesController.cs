@@ -8,10 +8,14 @@ using RpgQuestManager.Api.Models;
 
 namespace RpgQuestManager.Api.Controllers;
 
+/// <summary>
+/// Gerenciamento de inimigos e adversários do jogo
+/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Authorize]
 [Produces("application/json")]
+[ApiExplorerSettings(GroupName = "👹 Inimigos")]
 public class EnemiesController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

@@ -9,10 +9,14 @@ using RpgQuestManager.Api.Services;
 
 namespace RpgQuestManager.Api.Controllers;
 
+/// <summary>
+/// Gerenciamento de missões (quests) e conclusão com recompensas
+/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Authorize]
 [Produces("application/json")]
+[ApiExplorerSettings(GroupName = "🎯 Quests")]
 public class QuestsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -154,9 +158,48 @@ public class QuestsController : ControllerBase
     }
     
     /// <summary>
-    /// Completa uma quest e recompensa o herói
+    /// Completa uma quest e aplica recompensas ao herói (🔥 SISTEMA DE PROGRESSÃO AUTOMÁTICA)
     /// </summary>
+    /// <param name="request">IDs do herói e da quest</param>
+    /// <returns>Quest completada</returns>
+    /// <remarks>
+    /// Este endpoint realiza todo o processo de conclusão de quest:
+    /// 
+    /// 1. Valida se o herói e a quest existem
+    /// 2. Verifica se a quest já foi completada
+    /// 3. Aplica recompensas (ouro e XP)
+    /// 4. **Level Up Automático** se tiver XP suficiente
+    /// 5. Publica evento no RabbitMQ
+    /// 6. Invalida cache do herói
+    /// 
+    /// Exemplo:
+    /// 
+    ///     POST /api/v1/quests/complete
+    ///     {
+    ///         "heroId": 1,
+    ///         "questId": 1
+    ///     }
+    ///     
+    /// ### Sistema de Level Up
+    /// 
+    /// Fórmula de XP por nível: **Nível Atual × 100**
+    /// 
+    /// * Nível 1 → 2: 100 XP
+    /// * Nível 2 → 3: 200 XP
+    /// * Nível 3 → 4: 300 XP
+    /// 
+    /// Ao subir de nível, o herói ganha:
+    /// * +2 Força
+    /// * +2 Inteligência
+    /// * +2 Destreza
+    /// 
+    /// Se tiver XP para múltiplos níveis, sobe todos automaticamente!
+    /// </remarks>
+    /// <response code="200">Quest completada, herói recompensado e pode ter subido de nível</response>
+    /// <response code="400">Herói ou quest não encontrados, ou quest já completada</response>
     [HttpPost("complete")]
+    [ProducesResponseType(typeof(QuestDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<QuestDto>> CompleteQuest([FromBody] CompleteQuestRequest request)
     {
         var result = await _questService.CompleteQuestAsync(request.HeroId, request.QuestId);

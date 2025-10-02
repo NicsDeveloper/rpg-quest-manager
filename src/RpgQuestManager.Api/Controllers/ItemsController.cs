@@ -8,10 +8,14 @@ using RpgQuestManager.Api.Models;
 
 namespace RpgQuestManager.Api.Controllers;
 
+/// <summary>
+/// Gerenciamento de itens equipáveis (espadas, poções, armaduras, etc)
+/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Authorize]
 [Produces("application/json")]
+[ApiExplorerSettings(GroupName = "🗡️ Itens")]
 public class ItemsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

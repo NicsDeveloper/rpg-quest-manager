@@ -93,24 +93,68 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo 
     { 
-        Title = "RPG Quest Manager API", 
-        Version = "v1",
-        Description = "API para gerenciamento de heróis, quests, inimigos e recompensas em um RPG",
+        Title = "🐉 RPG Quest Manager API", 
+        Version = "v1.0",
+        Description = @"
+# API para Gerenciamento de RPG - O Livro de Eldoria
+
+Esta API permite gerenciar um sistema completo de RPG, incluindo:
+
+## ⚔️ Funcionalidades Principais
+* **Heróis**: Crie e gerencie heróis com classes, atributos e progressão de nível
+* **Quests**: Crie missões com diferentes dificuldades e recompensas
+* **Inimigos**: Cadastre adversários com poder e vida
+* **Recompensas**: Configure prêmios em ouro, XP e itens
+* **Inventário**: Sistema completo de itens equipáveis
+* **Sistema de Progressão**: Level up automático baseado em XP
+
+## 🎯 Recursos Especiais
+* ✅ Autenticação JWT
+* ✅ Cache com Redis (heróis mais fortes, quests mais jogadas)
+* ✅ Eventos assíncronos com RabbitMQ
+* ✅ Validações com FluentValidation
+* ✅ Logs estruturados com Serilog
+
+## 🚀 Como Usar
+1. Registre-se em `/api/v1/auth/register`
+2. Faça login em `/api/v1/auth/login` e obtenha o token JWT
+3. Use o token no botão 'Authorize' acima
+4. Explore os endpoints disponíveis!
+
+---
+**Desenvolvido com ⚔️ por Eldoria Dev Team**
+",
         Contact = new OpenApiContact
         {
             Name = "Eldoria Dev Team",
-            Email = "dev@eldoria.com"
+            Email = "dev@eldoria.com",
+            Url = new Uri("https://github.com/seu-usuario/rpg-quest-manager")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "MIT License",
+            Url = new Uri("https://opensource.org/licenses/MIT")
         }
     });
+    
+    // Incluir comentários XML
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
     
     // Configuração JWT no Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header usando o esquema Bearer. Exemplo: \"Authorization: Bearer {token}\"",
+        Description = @"JWT Authorization header usando o esquema Bearer.
+                      
+Entre com 'Bearer' [espaço] e então seu token.
+                      
+Exemplo: 'Bearer 12345abcdef'",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
     });
     
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -127,6 +171,10 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+    
+    // Tags organizadas
+    c.TagActionsBy(api => new[] { api.GroupName ?? api.ActionDescriptor.RouteValues["controller"] });
+    c.DocInclusionPredicate((name, api) => true);
 });
 
 // CORS

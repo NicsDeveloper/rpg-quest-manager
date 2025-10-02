@@ -8,10 +8,14 @@ using RpgQuestManager.Api.Models;
 
 namespace RpgQuestManager.Api.Controllers;
 
+/// <summary>
+/// Gerenciamento de recompensas vinculadas às quests
+/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Authorize]
 [Produces("application/json")]
+[ApiExplorerSettings(GroupName = "💰 Recompensas")]
 public class RewardsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
