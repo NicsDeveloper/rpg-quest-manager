@@ -81,6 +81,19 @@ services:
       - rpg-network
     restart: on-failure
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: rpg-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - rpg-network
+    restart: on-failure
+
 networks:
   rpg-network:
     driver: bridge
