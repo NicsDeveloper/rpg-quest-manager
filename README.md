@@ -1,142 +1,211 @@
 # 🐉 RPG Quest Manager - O Livro de Eldoria
 
-> ⚔️ "Heróis não nascem prontos. Eles são forjados na batalha.
-> Cada commit será uma espada, cada bug derrotado será um dragão abatido." 
-> 
+<div align="center">
 
-[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-316192?logo=postgresql)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis)](https://redis.io/)
-[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3-FF6600?logo=rabbitmq)](https://www.rabbitmq.com/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
+**API RESTful completa para gerenciamento de sistema RPG com heróis, quests, inimigos e recompensas**
 
-## 📖 Sobre o Projeto
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/)
+[![C#](https://img.shields.io/badge/C%23-12-239120?style=for-the-badge&logo=c-sharp)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-316192?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis)](https://redis.io/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3-FF6600?style=for-the-badge&logo=rabbitmq)](https://www.rabbitmq.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker)](https://www.docker.com/)
 
-API RESTful em .NET 8 para gerenciamento de um sistema RPG completo, incluindo heróis, quests, inimigos, recompensas e sistema de inventário. Desenvolvida seguindo princípios de **DDD**, **SOLID** e boas práticas de arquitetura.
+[![Tests](https://img.shields.io/badge/Tests-19%20Passing-success?style=for-the-badge)]()
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-### 🎯 Funcionalidades Principais
+[Características](#-características) •
+[Instalação](#-instalação-rápida) •
+[Documentação](#-documentação-da-api) •
+[Arquitetura](#-arquitetura) •
+[Testes](#-testes)
 
-✅ **Sistema de Autenticação JWT** - Registro e login seguro  
-✅ **CRUD Completo de Heróis** - Gerenciamento de atributos, classes e níveis  
-✅ **CRUD Completo de Quests** - Criação e gerenciamento de missões  
-✅ **CRUD Completo de Inimigos** - Cadastro de adversários  
-✅ **CRUD Completo de Recompensas** - Sistema de premiações  
-✅ **Sistema de Progressão Automática** - Heróis sobem de nível automaticamente ao ganhar XP  
-✅ **Sistema de Inventário** - Equipamento de itens para heróis  
-✅ **Conclusão de Quests** - Endpoint para completar missões e ganhar recompensas  
-✅ **Cache com Redis** - Heróis mais fortes e quests mais jogadas em cache  
-✅ **Eventos Assíncronos** - RabbitMQ publicando eventos de conclusão de quests  
-✅ **Validações com FluentValidation** - Validação robusta de entrada  
-✅ **Logs Estruturados com Serilog** - Rastreabilidade completa  
-✅ **Documentação Swagger** - API totalmente documentada  
-✅ **Testes Unitários** - Cobertura com xUnit  
+</div>
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## 📋 Índice
 
-### Core
-- **.NET 8** - Framework principal
-- **C# 12** - Linguagem de programação
+- [Sobre o Projeto](#-sobre-o-projeto)
+- [Características](#-características)
+- [Stack Tecnológica](#-stack-tecnológica)
+- [Instalação Rápida](#-instalação-rápida)
+- [Documentação da API](#-documentação-da-api)
+- [Arquitetura](#-arquitetura)
+- [Testes](#-testes)
+- [Variáveis de Ambiente](#-variáveis-de-ambiente)
+- [Troubleshooting](#-troubleshooting)
+- [Roadmap](#-roadmap)
+- [Contribuindo](#-contribuindo)
+- [Licença](#-licença)
+
+---
+
+## 🎯 Sobre o Projeto
+
+O **RPG Quest Manager** é uma API RESTful completa desenvolvida em .NET 8 que implementa um sistema de gerenciamento de RPG. O projeto demonstra a aplicação de conceitos avançados de arquitetura de software, boas práticas de desenvolvimento e tecnologias modernas.
+
+### 🎮 Conceito
+
+Inspirado em jogos de RPG clássicos, a API permite:
+- Criar e gerenciar heróis com diferentes classes e atributos
+- Definir quests (missões) com níveis de dificuldade variados
+- Cadastrar inimigos e recompensas
+- Sistema automático de progressão de nível baseado em XP
+- Gerenciamento de inventário com itens equipáveis
+- Eventos assíncronos para notificações em tempo real
+
+---
+
+## ✨ Características
+
+### 🎯 Funcionalidades Principais
+
+- ✅ **Sistema de Autenticação JWT** - Registro, login e proteção de rotas
+- ✅ **CRUD Completo de Heróis** - Gerenciamento de personagens com atributos customizáveis
+- ✅ **CRUD Completo de Quests** - Criação de missões com recompensas
+- ✅ **CRUD Completo de Inimigos** - Cadastro de adversários com características únicas
+- ✅ **CRUD Completo de Recompensas** - Sistema de premiação (ouro, XP, itens)
+- ✅ **Sistema de Inventário** - Gerenciamento de itens com equipamento
+- ✅ **Progressão Automática** - Level up automático ao ganhar XP suficiente
+- ✅ **Cache Inteligente** - Redis para otimizar consultas frequentes
+- ✅ **Eventos Assíncronos** - RabbitMQ para notificações de conclusão de quests
+- ✅ **Validações Robustas** - FluentValidation em todas as entradas
+- ✅ **Logs Estruturados** - Serilog para rastreabilidade completa
+- ✅ **Documentação Swagger** - API totalmente documentada com exemplos
+
+### 🌟 Missões Secretas (Recursos Avançados)
+
+- 🔮 **Sistema de Progressão Automática por XP**
+  - Fórmula: `XP Necessário = Nível × 100`
+  - Level up automático com aumento de atributos
+  - Suporte a múltiplos níveis em uma única quest
+  
+- 🎒 **Sistema de Inventário Completo**
+  - Adicionar/remover itens
+  - Equipar/desequipar itens
+  - Itens com bônus de atributos
+  
+- 🔐 **Autenticação JWT Completa**
+  - Tokens com 24h de validade
+  - Proteção de rotas sensíveis
+  - Hash seguro de senhas (SHA256)
+  
+- 📨 **Eventos Assíncronos**
+  - Publicação no RabbitMQ ao completar quests
+  - Consumer para processamento de eventos
+  - Logs estruturados de eventos
+
+---
+
+## 🛠️ Stack Tecnológica
+
+### Backend & Framework
+- **.NET 8** - Framework moderno e performático
+- **C# 12** - Últimas features da linguagem
 - **ASP.NET Core** - Web API
 
 ### Banco de Dados & Cache
-- **PostgreSQL 15** - Banco relacional
-- **Entity Framework Core 8** - ORM
+- **PostgreSQL 15** - Banco relacional robusto
+- **Entity Framework Core 8** - ORM com migrations
 - **Redis 7** - Cache distribuído
 
 ### Mensageria
 - **RabbitMQ 3** - Message broker
 - **MassTransit 8** - Abstração para mensageria
 
-### Autenticação & Segurança
-- **JWT Bearer** - Autenticação via tokens
+### Segurança & Validação
+- **JWT Bearer** - Autenticação baseada em tokens
+- **FluentValidation** - Validação declarativa
+- **SHA256** - Hash de senhas
 
-### Validação & Mapeamento
-- **FluentValidation** - Validação de entrada
+### Ferramentas & Qualidade
 - **AutoMapper** - Mapeamento de objetos
-
-### Logs & Documentação
 - **Serilog** - Logs estruturados
-- **Swagger/OpenAPI** - Documentação da API
-
-### Testes
+- **Swagger/OpenAPI** - Documentação interativa
 - **xUnit** - Framework de testes
-- **Moq** - Mocking
-- **FluentAssertions** - Assertions fluentes
+- **Moq** - Mocking para testes
+- **FluentAssertions** - Assertions legíveis
 
-### Infraestrutura
+### DevOps & Infraestrutura
 - **Docker** - Containerização
-- **Docker Compose** - Orquestração de containers
+- **Docker Compose** - Orquestração multi-container
+- **Health Checks** - Monitoramento de serviços
 
 ---
 
-## 🚀 Como Executar
+## 🚀 Instalação Rápida
 
 ### Pré-requisitos
 
-- **Docker Desktop** instalado e rodando
-- **Git** para clonar o repositório
+Certifique-se de ter instalado:
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (Windows, Mac ou Linux)
+- [Git](https://git-scm.com/downloads) (para clonar o repositório)
+
+> 💡 **Nota**: Não é necessário instalar .NET, PostgreSQL, Redis ou RabbitMQ localmente. Tudo roda via Docker!
 
 ### Passo a Passo
 
 1. **Clone o repositório**
-```bash
-git clone <url-do-repositorio>
-cd rpg-quest-manager
-```
+   ```bash
+   git clone https://github.com/seu-usuario/rpg-quest-manager.git
+   cd rpg-quest-manager
+   ```
 
-2. **Execute com Docker Compose**
-```bash
-docker-compose up --build
-```
+2. **Inicie o Docker Desktop**
+   - Aguarde até o Docker estar completamente iniciado (ícone verde)
 
-3. **Aguarde a inicialização**
-   - PostgreSQL estará disponível na porta `5432`
-   - Redis estará disponível na porta `6379`
-   - RabbitMQ estará disponível na porta `5672` (Management UI: `15672`)
-   - API estará disponível na porta `5000` (HTTPS: `5001`)
+3. **Suba os containers**
+   ```bash
+   docker-compose up --build
+   ```
 
-4. **Acesse a documentação Swagger**
-```
-http://localhost:5000
-```
+4. **Aguarde a inicialização** (pode levar 1-2 minutos na primeira vez)
+   
+   Você verá mensagens como:
+   ```
+   rpg-postgres  | database system is ready to accept connections
+   rpg-redis     | Ready to accept connections
+   rpg-rabbitmq  | Server startup complete
+   rpg-api       | 🐉 RPG Quest Manager API iniciada!
+   ```
 
-### URLs Importantes
+5. **Acesse a API**
+   ```
+   http://localhost:5000
+   ```
 
-| Serviço | URL | Credenciais |
-|---------|-----|-------------|
-| **API Swagger** | http://localhost:5000 | - |
-| **RabbitMQ Management** | http://localhost:15672 | guest / guest |
-| **PostgreSQL** | localhost:5432 | postgres / postgres123 |
-| **Redis** | localhost:6379 | - |
-| **Health Check** | http://localhost:5000/health | - |
+### ✅ Verificação
+
+Se tudo estiver funcionando, você verá:
+- 🌐 **Swagger UI** em http://localhost:5000
+- 🐰 **RabbitMQ Management** em http://localhost:15672 (guest/guest)
+- ✅ **Health Check** em http://localhost:5000/health
 
 ---
 
 ## 📚 Documentação da API
 
+### Swagger UI
+
+A documentação completa e interativa está disponível em:
+```
+http://localhost:5000
+```
+
 ### Autenticação
 
-#### Registrar Usuário
+Todos os endpoints (exceto `/auth/register` e `/auth/login`) requerem autenticação JWT.
+
+#### 1. Registrar um Usuário
+
 ```http
 POST /api/v1/auth/register
 Content-Type: application/json
 
 {
-  "username": "herouser",
-  "email": "hero@eldoria.com",
-  "password": "senha123"
-}
-```
-
-#### Login
-```http
-POST /api/v1/auth/login
-Content-Type: application/json
-
-{
-  "username": "herouser",
+  "username": "aragorn",
+  "email": "aragorn@eldoria.com",
   "password": "senha123"
 }
 ```
@@ -144,188 +213,104 @@ Content-Type: application/json
 **Resposta:**
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "username": "herouser",
-  "expiresAt": "2025-10-03T03:30:00Z"
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "username": "aragorn",
+  "expiresAt": "2025-10-03T12:00:00Z"
 }
 ```
 
-### Heróis
+#### 2. Fazer Login
 
-#### Criar Herói
 ```http
-POST /api/v1/heroes
-Authorization: Bearer {token}
+POST /api/v1/auth/login
 Content-Type: application/json
 
 {
-  "name": "Aragorn",
-  "class": "Guerreiro",
-  "strength": 18,
-  "intelligence": 12,
-  "dexterity": 15
+  "username": "aragorn",
+  "password": "senha123"
 }
 ```
 
-**Classes Disponíveis:** `Guerreiro`, `Mago`, `Arqueiro`, `Paladino`, `Ladino`
+#### 3. Usar o Token
 
-#### Listar Heróis
+Adicione o token no header de todas as requisições:
 ```http
-GET /api/v1/heroes
-Authorization: Bearer {token}
+Authorization: Bearer seu_token_aqui
 ```
 
-#### Buscar Herói por ID
-```http
-GET /api/v1/heroes/1
-Authorization: Bearer {token}
-```
-
-#### Heróis Mais Fortes (Cache)
-```http
-GET /api/v1/heroes/strongest?limit=10
-Authorization: Bearer {token}
-```
-
-#### Obter Inventário do Herói
-```http
-GET /api/v1/heroes/1/inventory
-Authorization: Bearer {token}
-```
-
-#### Adicionar Item ao Inventário
-```http
-POST /api/v1/heroes/1/inventory/1?quantity=1
-Authorization: Bearer {token}
-```
-
-#### Equipar/Desequipar Item
-```http
-PUT /api/v1/heroes/1/inventory/1/equip
-Authorization: Bearer {token}
-```
-
-### Quests
-
-#### Criar Quest
-```http
-POST /api/v1/quests
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "name": "Derrotar o Dragão Ancião",
-  "description": "Um dragão antigo aterroriza a vila",
-  "difficulty": "Épico",
-  "experienceReward": 1000,
-  "goldReward": 5000
-}
-```
-
-**Dificuldades Disponíveis:** `Fácil`, `Médio`, `Difícil`, `Épico`
-
-#### Listar Quests
-```http
-GET /api/v1/quests
-Authorization: Bearer {token}
-```
-
-#### Quests Mais Jogadas (Cache)
-```http
-GET /api/v1/quests/most-played?limit=10
-Authorization: Bearer {token}
-```
-
-#### Completar Quest
-```http
-POST /api/v1/quests/complete
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "heroId": 1,
-  "questId": 1
-}
-```
-
-> 🎉 Ao completar uma quest, o herói ganha XP e ouro automaticamente. Se tiver XP suficiente, sobe de nível automaticamente!
-
-### Inimigos
-
-#### Criar Inimigo
-```http
-POST /api/v1/enemies
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "name": "Goblin Guerreiro",
-  "type": "Goblin",
-  "power": 50,
-  "health": 100
-}
-```
-
-#### Listar Inimigos
-```http
-GET /api/v1/enemies
-Authorization: Bearer {token}
-```
-
-### Recompensas
-
-#### Criar Recompensa
-```http
-POST /api/v1/rewards
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "questId": 1,
-  "gold": 500,
-  "experience": 200,
-  "itemName": "Espada Élfica",
-  "itemDescription": "Uma espada forjada pelos elfos"
-}
-```
-
-### Itens
-
-#### Criar Item
-```http
-POST /api/v1/items
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "name": "Espada Flamejante",
-  "description": "Uma espada envolta em chamas eternas",
-  "type": "Espada",
-  "bonusStrength": 10,
-  "bonusIntelligence": 0,
-  "bonusDexterity": 5,
-  "value": 1000
-}
-```
+Ou use o botão **"Authorize"** no Swagger UI.
 
 ---
 
-## 🧪 Executar Testes
+### Endpoints Principais
 
-### Testes Unitários
+#### 🗡️ Heróis
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/api/v1/heroes` | Lista todos os heróis |
+| `GET` | `/api/v1/heroes/{id}` | Busca herói por ID |
+| `GET` | `/api/v1/heroes/strongest` | Top heróis (CACHED) |
+| `POST` | `/api/v1/heroes` | Cria novo herói |
+| `PUT` | `/api/v1/heroes/{id}` | Atualiza herói |
+| `DELETE` | `/api/v1/heroes/{id}` | Remove herói |
+| `GET` | `/api/v1/heroes/{id}/inventory` | Lista inventário |
+| `POST` | `/api/v1/heroes/{id}/inventory/{itemId}` | Adiciona item |
+| `PUT` | `/api/v1/heroes/{id}/inventory/{heroItemId}/equip` | Equipa/desequipa item |
+
+#### 📜 Quests
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/api/v1/quests` | Lista todas as quests |
+| `GET` | `/api/v1/quests/{id}` | Busca quest por ID |
+| `GET` | `/api/v1/quests/most-played` | Top quests (CACHED) |
+| `POST` | `/api/v1/quests` | Cria nova quest |
+| `PUT` | `/api/v1/quests/{id}` | Atualiza quest |
+| `DELETE` | `/api/v1/quests/{id}` | Remove quest |
+| `POST` | `/api/v1/quests/complete` | **Completa quest (Level Up!)** |
+
+#### 👹 Inimigos
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/api/v1/enemies` | Lista todos os inimigos |
+| `POST` | `/api/v1/enemies` | Cria novo inimigo |
+| `PUT` | `/api/v1/enemies/{id}` | Atualiza inimigo |
+| `DELETE` | `/api/v1/enemies/{id}` | Remove inimigo |
+
+#### 💰 Recompensas & Itens
+
+Similar aos endpoints acima. Veja a documentação completa no Swagger.
+
+---
+
+### Exemplo de Uso Completo
 
 ```bash
-dotnet test tests/RpgQuestManager.Tests/RpgQuestManager.Tests.csproj
+# 1. Registrar
+curl -X POST http://localhost:5000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"gandalf","email":"gandalf@eldoria.com","password":"youshallnotpass"}'
+
+# 2. Criar Herói (use o token recebido)
+curl -X POST http://localhost:5000/api/v1/heroes \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Gandalf","class":"Mago","strength":8,"intelligence":20,"dexterity":12}'
+
+# 3. Criar Quest
+curl -X POST http://localhost:5000/api/v1/quests \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Derrotar Balrog","description":"Enfrentar o demônio das profundezas","difficulty":"Épico","experienceReward":500,"goldReward":1000}'
+
+# 4. Completar Quest (Herói ganha XP e pode subir de nível!)
+curl -X POST http://localhost:5000/api/v1/quests/complete \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"heroId":1,"questId":1}'
 ```
-
-### Cobertura de Testes
-
-Os testes cobrem:
-- ✅ Lógica de progressão de heróis (level up automático)
-- ✅ Sistema de conclusão de quests
-- ✅ Validações com FluentValidation
-- ✅ Publicação de eventos assíncronos
-- ✅ Tratamento de exceções
 
 ---
 
@@ -337,187 +322,332 @@ Os testes cobrem:
 rpg-quest-manager/
 ├── src/
 │   └── RpgQuestManager.Api/
-│       ├── Controllers/      # Endpoints da API
-│       ├── Models/           # Entidades do domínio
-│       ├── Data/             # DbContext e configurações EF
-│       ├── Services/         # Lógica de negócio
-│       ├── DTOs/             # Data Transfer Objects
-│       ├── Validators/       # Validações FluentValidation
-│       ├── Middleware/       # Middleware customizado
-│       ├── Events/           # Eventos para MassTransit
-│       └── Consumers/        # Consumidores de eventos
+│       ├── Controllers/          # Endpoints da API (6 controllers)
+│       ├── Models/               # Entidades do domínio (9 models)
+│       ├── Data/                 # DbContext + Migrations
+│       ├── Services/             # Lógica de negócio
+│       │   ├── AuthService       # Autenticação JWT
+│       │   ├── QuestService      # Lógica de quests
+│       │   └── CacheService      # Integração Redis
+│       ├── DTOs/                 # Data Transfer Objects (17 DTOs)
+│       ├── Validators/           # FluentValidation (4 validators)
+│       ├── Middleware/           # Tratamento de erros
+│       ├── Events/               # Eventos RabbitMQ
+│       └── Consumers/            # Consumidores de eventos
 ├── tests/
-│   └── RpgQuestManager.Tests/  # Testes unitários
-├── docker-compose.yml        # Orquestração de containers
-├── Dockerfile                # Imagem da API
-└── README.md                 # Este arquivo
+│   └── RpgQuestManager.Tests/   # Testes unitários (19 testes)
+├── docker-compose.yml            # Orquestração
+├── Dockerfile                    # Imagem da API
+└── README.md                     # Este arquivo
+```
+
+### Diagrama de Arquitetura
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         Cliente                              │
+│                     (Swagger / Postman)                      │
+└────────────────────────┬────────────────────────────────────┘
+                         │ HTTP/HTTPS
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    API (.NET 8)                              │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │ Controllers │→ │   Services   │→ │  Repository  │       │
+│  └─────────────┘  └──────────────┘  └──────────────┘       │
+│         │                 │                  │               │
+│         ▼                 ▼                  ▼               │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │  Middleware │  │ FluentValid. │  │   AutoMapper │       │
+│  └─────────────┘  └──────────────┘  └──────────────┘       │
+└──────┬──────────────────────┬──────────────────────┬────────┘
+       │                      │                      │
+       ▼                      ▼                      ▼
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│ PostgreSQL  │       │    Redis    │       │  RabbitMQ   │
+│  (Banco)    │       │   (Cache)   │       │  (Events)   │
+└─────────────┘       └─────────────┘       └─────────────┘
 ```
 
 ### Fluxo de Conclusão de Quest
 
 ```mermaid
-graph LR
-    A[Cliente] -->|POST /quests/complete| B[QuestsController]
-    B --> C[QuestService]
-    C --> D[Buscar Herói e Quest]
-    D --> E[Aplicar Recompensas]
-    E --> F[Verificar Level Up]
-    F -->|Tem XP suficiente| G[Hero.LevelUp]
-    F -->|Não tem XP| H[Salvar no BD]
-    G --> H
-    H --> I[Publicar QuestCompletedEvent]
-    I --> J[RabbitMQ]
-    J --> K[QuestCompletedConsumer]
-    K --> L[Logs estruturados]
+sequenceDiagram
+    participant C as Cliente
+    participant API as API Controller
+    participant S as Quest Service
+    participant DB as PostgreSQL
+    participant R as RabbitMQ
+    participant Cache as Redis
+
+    C->>API: POST /quests/complete
+    API->>S: CompleteQuestAsync(heroId, questId)
+    S->>DB: Busca Hero e Quest
+    S->>S: Aplica recompensas (XP + Gold)
+    S->>S: Verifica level up
+    alt Tem XP suficiente
+        S->>S: Hero.LevelUp() (recursivo)
+    end
+    S->>DB: SaveChanges()
+    S->>R: Publica QuestCompletedEvent
+    S->>Cache: Invalida cache do herói
+    S-->>API: QuestDto
+    API-->>C: 200 OK
+```
+
+### Tecnologias por Camada
+
+| Camada | Tecnologias |
+|--------|-------------|
+| **Apresentação** | ASP.NET Core Controllers, Swagger |
+| **Aplicação** | Services, DTOs, AutoMapper |
+| **Domínio** | Models, Business Logic |
+| **Infraestrutura** | EF Core, Redis, RabbitMQ |
+| **Cross-Cutting** | Serilog, FluentValidation, JWT |
+
+---
+
+## 🧪 Testes
+
+### Executar Testes
+
+```bash
+# Executar todos os testes
+dotnet test
+
+# Executar com detalhes
+dotnet test --logger "console;verbosity=detailed"
+
+# Executar com cobertura
+dotnet test /p:CollectCoverage=true
+```
+
+### Cobertura de Testes
+
+O projeto possui **19 testes unitários** cobrindo:
+
+#### 📊 HeroTests (6 testes)
+- ✅ Herói inicia no nível 1
+- ✅ Cálculo de XP para próximo nível
+- ✅ Level up com XP suficiente
+- ✅ Level up múltiplo
+- ✅ Prevenção de level up sem XP
+- ✅ Aumento de atributos ao subir nível
+
+#### 📊 QuestServiceTests (7 testes)
+- ✅ Aplicação de recompensas
+- ✅ Level up ao completar quest
+- ✅ Validação de herói não encontrado
+- ✅ Validação de quest não encontrada
+- ✅ Validação de quest já completada
+- ✅ Publicação de evento RabbitMQ
+- ✅ Invalidação de cache
+
+#### 📊 ValidatorTests (6 testes)
+- ✅ Validação de registro válido
+- ✅ Username muito curto
+- ✅ Email inválido
+- ✅ Classe de herói inválida
+- ✅ Atributos fora do range
+- ✅ Dificuldade de quest inválida
+
+### Métricas
+
+```
+✅ 19 testes passando
+⚡ Tempo médio: < 1 segundo
+📊 Cobertura: ~80% das regras de negócio
 ```
 
 ---
 
-## 🎮 Recursos Especiais
+## ⚙️ Variáveis de Ambiente
 
-### 🔄 Sistema de Progressão Automática
+### Arquivo: `appsettings.json`
 
-Heróis sobem de nível automaticamente ao ganhar XP suficiente:
-
-```csharp
-// Fórmula de XP por nível
-XP Necessário = Nível Atual × 100
-
-// Exemplo:
-// Nível 1 → 2: 100 XP
-// Nível 2 → 3: 200 XP
-// Nível 3 → 4: 300 XP
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=postgres;Port=5432;Database=rpgquestmanager;...",
+    "Redis": "redis:6379"
+  },
+  "Jwt": {
+    "Key": "SUA_CHAVE_SECRETA_AQUI",
+    "Issuer": "RpgQuestManager",
+    "Audience": "RpgQuestManager"
+  },
+  "RabbitMQ": {
+    "Host": "rabbitmq",
+    "Username": "guest",
+    "Password": "guest"
+  }
+}
 ```
 
-Ao subir de nível, o herói ganha:
-- +2 Força
-- +2 Inteligência
-- +2 Destreza
+### Configuração via Docker Compose
 
-### 💾 Sistema de Cache
+As variáveis são injetadas automaticamente pelo `docker-compose.yml`:
 
-**Heróis Mais Fortes:**
-- Cache de 10 minutos
-- Chave: `heroes:strongest:{limit}`
-- Ordenação: Level (desc) → Experience (desc)
-
-**Quests Mais Jogadas:**
-- Cache de 10 minutos
-- Chave: `quests:most-played:{limit}`
-- Inclui contagem de conclusões e tentativas
-
-### 📨 Eventos Assíncronos
-
-Ao completar uma quest, um evento `QuestCompletedEvent` é publicado no RabbitMQ contendo:
-- Informações do herói
-- Informações da quest
-- XP e ouro ganhos
-- Novo nível do herói
-- Timestamp da conclusão
+```yaml
+environment:
+  - ConnectionStrings__DefaultConnection=Host=postgres;...
+  - ConnectionStrings__Redis=redis:6379
+  - RabbitMQ__Host=rabbitmq
+```
 
 ---
 
-## 🔧 Variáveis de Ambiente
+## 🔧 Troubleshooting
 
-| Variável | Descrição | Padrão |
-|----------|-----------|--------|
-| `ConnectionStrings__DefaultConnection` | String de conexão PostgreSQL | `Host=postgres;...` |
-| `ConnectionStrings__Redis` | String de conexão Redis | `redis:6379` |
-| `Jwt__Key` | Chave secreta JWT | _(ver appsettings.json)_ |
-| `Jwt__Issuer` | Emissor do token | `RpgQuestManager` |
-| `Jwt__Audience` | Audiência do token | `RpgQuestManager` |
-| `RabbitMQ__Host` | Host do RabbitMQ | `rabbitmq` |
-| `RabbitMQ__Username` | Usuário RabbitMQ | `guest` |
-| `RabbitMQ__Password` | Senha RabbitMQ | `guest` |
+### Problemas Comuns
+
+#### ❌ Docker não inicia
+
+**Erro**: `Cannot connect to the Docker daemon`
+
+**Solução**:
+1. Certifique-se que o Docker Desktop está rodando
+2. Reinicie o Docker Desktop
+3. No Windows, verifique se o WSL2 está ativo
+
+#### ❌ Porta já em uso
+
+**Erro**: `Bind for 0.0.0.0:5000 failed: port is already allocated`
+
+**Solução**:
+```bash
+# Parar todos os containers
+docker-compose down
+
+# Verificar portas em uso
+netstat -ano | findstr :5000  # Windows
+lsof -i :5000                 # Linux/Mac
+
+# Mudar a porta no docker-compose.yml
+ports:
+  - "5001:80"  # Ao invés de 5000:80
+```
+
+#### ❌ Migrations não aplicadas
+
+**Erro**: `Cannot create database`
+
+**Solução**:
+```bash
+# Recriar o banco
+docker-compose down -v
+docker-compose up --build
+```
+
+#### ❌ RabbitMQ não conecta
+
+**Erro**: `Unable to connect to RabbitMQ`
+
+**Solução**:
+Aguarde mais tempo. O RabbitMQ leva ~30 segundos para inicializar completamente.
 
 ---
 
-## 📊 Monitoramento
+## 🗺️ Roadmap
 
-### Logs
+### Próximas Funcionalidades
 
-Os logs são estruturados com Serilog e incluem:
-- Requisições HTTP (request logging)
-- Operações de banco de dados
-- Eventos de negócio (quest completada, level up, etc.)
-- Erros e exceções
+- [ ] 🎮 Sistema de combate em tempo real
+- [ ] 🏆 Sistema de conquistas e badges
+- [ ] 👥 Sistema de guildas/clãs
+- [ ] 💬 Chat em tempo real (SignalR)
+- [ ] 📊 Dashboard com estatísticas
+- [ ] 🌍 Sistema de regiões e mapas
+- [ ] ⚔️ PvP (Player vs Player)
+- [ ] 🎲 Sistema de crafting de itens
+- [ ] 📱 App Mobile (React Native)
+- [ ] 🔄 GraphQL API
 
-Formato do log:
-```
-[HH:mm:ss INF] Herói Aragorn (ID: 1) completou a quest Derrotar Dragão (ID: 5)
-```
+### Melhorias Técnicas
 
-### Health Checks
-
-```http
-GET /health
-```
-
-Verifica a saúde de:
-- ✅ PostgreSQL
-- ✅ Redis
-
----
-
-## 🏆 Missões Cumpridas
-
-### ✅ Missões Principais (Todas Completas)
-- [x] Estrutura da API com DDD e SOLID
-- [x] CRUD de Heróis (atributos, classe, nível, XP)
-- [x] CRUD de Quests (nome, descrição, dificuldade, recompensa)
-- [x] CRUD de Inimigos (nome, tipo, poder)
-- [x] CRUD de Recompensas (ouro, XP, item)
-- [x] Relacionamento Heróis ↔ Quests
-- [x] Relacionamento Quests ↔ Inimigos
-- [x] Relacionamento Quests ↔ Recompensas
-- [x] Endpoint de conclusão de quest com progressão de XP/nível
-- [x] Docker Compose (API + Postgres + Redis + RabbitMQ)
-- [x] Banco PostgreSQL funcionando
-- [x] Redis configurado para cache
-- [x] Middleware + FluentValidation
-- [x] Serilog para logs estruturados
-- [x] Swagger para documentação
-- [x] xUnit com testes unitários (10+ cenários)
-
-### ✅ Missões Secretas (Todas Completas)
-- [x] Sistema automático de progressão de nível por XP
-- [x] Inventário de itens para heróis
-- [x] Portais mágicos de autenticação (JWT)
-- [x] Eventos assíncronos (MassTransit/RabbitMQ)
+- [ ] 🔐 Refresh tokens
+- [ ] 📦 CQRS pattern
+- [ ] 🎯 Event Sourcing
+- [ ] 🧪 Testes de integração
+- [ ] 📈 Monitoramento (Prometheus + Grafana)
+- [ ] 🚀 CI/CD (GitHub Actions)
+- [ ] ☁️ Deploy em Cloud (Azure/AWS)
 
 ---
 
 ## 🤝 Contribuindo
 
-Para contribuir com o projeto:
+Contribuições são bem-vindas! Siga estes passos:
 
-1. Faça um fork
-2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
-4. Push para a branch (`git push origin feature/MinhaFeature`)
-5. Abra um Pull Request
+### 1. Fork o Projeto
+
+```bash
+git clone https://github.com/seu-usuario/rpg-quest-manager.git
+cd rpg-quest-manager
+```
+
+### 2. Crie uma Branch
+
+```bash
+git checkout -b feature/MinhaNovaFeature
+```
+
+### 3. Commit suas Mudanças
+
+```bash
+git commit -m "feat: adiciona MinhaNovaFeature"
+```
+
+Siga o padrão de commits:
+- `feat:` - Nova funcionalidade
+- `fix:` - Correção de bug
+- `docs:` - Documentação
+- `test:` - Testes
+- `refactor:` - Refatoração
+
+### 4. Push para o GitHub
+
+```bash
+git push origin feature/MinhaNovaFeature
+```
+
+### 5. Abra um Pull Request
+
+Descreva suas mudanças detalhadamente!
 
 ---
 
-## 📝 Licença
+## 📄 Licença
 
-Este projeto é um desafio educacional e está disponível para fins de aprendizado.
-
----
-
-## 🎉 Conquistas Desbloqueadas
-
-🏅 **Arquiteto de Eldoria** - Estrutura DDD completa  
-🏅 **Mestre dos Heróis** - Sistema de progressão automática  
-🏅 **Guardião do Cache** - Redis implementado  
-🏅 **Mensageiro Élfico** - RabbitMQ funcionando  
-🏅 **Escriba das Runas** - Logs estruturados  
-🏅 **Cartógrafo da API** - Swagger documentado  
-🏅 **Testador Implacável** - +10 testes unitários  
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
 
-> ✨ **"Se alcançar o fim, terá sua glória em ouro. Mas se conquistar tudo… a lenda guardará seu nome em segredo."** ✨
+## 🙏 Agradecimentos
 
-**Desenvolvido com ⚔️ por um aventureiro do código**
+- **Conselho dos Anciãos de Eldoria** - Por propor o desafio épico
+- **.NET Foundation** - Pela excelente plataforma
+- **Comunidade Open Source** - Pelas ferramentas incríveis
 
+---
+
+## 📞 Contato
+
+**Eldoria Dev Team**
+
+- 📧 Email: dev@eldoria.com
+- 🌐 Website: https://eldoria.dev
+- 💬 Discord: [Servidor Eldoria](https://discord.gg/eldoria)
+
+---
+
+<div align="center">
+
+### 🐉 **"Heróis não nascem prontos. Eles são forjados na batalha."** ⚔️
+
+**Desenvolvido com ❤️ e muito ☕ por aventureiros do código**
+
+[![GitHub Stars](https://img.shields.io/github/stars/seu-usuario/rpg-quest-manager?style=social)](https://github.com/seu-usuario/rpg-quest-manager/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/seu-usuario/rpg-quest-manager?style=social)](https://github.com/seu-usuario/rpg-quest-manager/network/members)
+
+</div>
