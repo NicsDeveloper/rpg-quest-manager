@@ -59,9 +59,11 @@ public class EnemiesController : ControllerBase
     }
     
     /// <summary>
-    /// Cria um novo inimigo
+    /// Cria um novo inimigo (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<EnemyDto>> Create([FromBody] CreateEnemyRequest request)
     {
         var enemy = _mapper.Map<Enemy>(request);
@@ -76,9 +78,11 @@ public class EnemiesController : ControllerBase
     }
     
     /// <summary>
-    /// Atualiza um inimigo existente
+    /// Atualiza um inimigo existente (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<EnemyDto>> Update(int id, [FromBody] UpdateEnemyRequest request)
     {
         var enemy = await _context.Enemies.FindAsync(id);
@@ -97,9 +101,11 @@ public class EnemiesController : ControllerBase
     }
     
     /// <summary>
-    /// Deleta um inimigo
+    /// Deleta um inimigo (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id)
     {
         var enemy = await _context.Enemies.FindAsync(id);

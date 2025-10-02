@@ -99,9 +99,11 @@ public class QuestsController : ControllerBase
     }
     
     /// <summary>
-    /// Cria uma nova quest
+    /// Cria uma nova quest (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<QuestDto>> Create([FromBody] CreateQuestRequest request)
     {
         var quest = _mapper.Map<Quest>(request);
@@ -116,9 +118,11 @@ public class QuestsController : ControllerBase
     }
     
     /// <summary>
-    /// Atualiza uma quest existente
+    /// Atualiza uma quest existente (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<QuestDto>> Update(int id, [FromBody] UpdateQuestRequest request)
     {
         var quest = await _context.Quests.FindAsync(id);
@@ -137,9 +141,11 @@ public class QuestsController : ControllerBase
     }
     
     /// <summary>
-    /// Deleta uma quest
+    /// Deleta uma quest (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id)
     {
         var quest = await _context.Quests.FindAsync(id);

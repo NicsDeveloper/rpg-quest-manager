@@ -59,9 +59,11 @@ public class ItemsController : ControllerBase
     }
     
     /// <summary>
-    /// Cria um novo item
+    /// Cria um novo item (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ItemDto>> Create([FromBody] CreateItemRequest request)
     {
         var item = _mapper.Map<Item>(request);
@@ -76,9 +78,11 @@ public class ItemsController : ControllerBase
     }
     
     /// <summary>
-    /// Deleta um item
+    /// Deleta um item (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id)
     {
         var item = await _context.Items.FindAsync(id);

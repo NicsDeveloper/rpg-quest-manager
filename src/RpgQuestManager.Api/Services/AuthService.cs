@@ -40,6 +40,7 @@ public class AuthService : IAuthService
             Username = request.Username,
             Email = request.Email,
             PasswordHash = HashPassword(request.Password),
+            Role = "Player",
             CreatedAt = DateTime.UtcNow
         };
         
@@ -85,7 +86,8 @@ public class AuthService : IAuthService
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Email, user.Email)
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role)
         };
         
         var token = new JwtSecurityToken(

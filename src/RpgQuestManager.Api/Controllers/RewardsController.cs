@@ -72,9 +72,11 @@ public class RewardsController : ControllerBase
     }
     
     /// <summary>
-    /// Cria uma nova recompensa
+    /// Cria uma nova recompensa (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<RewardDto>> Create([FromBody] CreateRewardRequest request)
     {
         // Verificar se a quest existe
@@ -96,9 +98,11 @@ public class RewardsController : ControllerBase
     }
     
     /// <summary>
-    /// Deleta uma recompensa
+    /// Deleta uma recompensa (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id)
     {
         var reward = await _context.Rewards.FindAsync(id);

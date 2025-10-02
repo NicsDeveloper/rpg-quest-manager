@@ -212,9 +212,11 @@ public class HeroesController : ControllerBase
     }
     
     /// <summary>
-    /// Deleta um herói
+    /// Deleta um herói (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id)
     {
         var hero = await _context.Heroes.FindAsync(id);

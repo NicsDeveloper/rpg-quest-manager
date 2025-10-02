@@ -49,6 +49,7 @@ public class DatabaseSeeder
                 Username = "admin",
                 Email = "admin@eldoria.com",
                 PasswordHash = HashPassword("admin123"),
+                Role = "Admin",
                 CreatedAt = DateTime.UtcNow.AddDays(-30)
             },
             new User
@@ -56,6 +57,7 @@ public class DatabaseSeeder
                 Username = "player1",
                 Email = "player1@eldoria.com",
                 PasswordHash = HashPassword("senha123"),
+                Role = "Player",
                 CreatedAt = DateTime.UtcNow.AddDays(-20)
             },
             new User
@@ -63,6 +65,7 @@ public class DatabaseSeeder
                 Username = "gamer",
                 Email = "gamer@eldoria.com",
                 PasswordHash = HashPassword("senha123"),
+                Role = "Player",
                 CreatedAt = DateTime.UtcNow.AddDays(-15)
             }
         };
