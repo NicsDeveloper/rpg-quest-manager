@@ -5,8 +5,10 @@ import { PrivateRoute } from './components/PrivateRoute';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
+import { Profile } from './pages/Profile';
 import { Heroes } from './pages/Heroes';
 import { Quests } from './pages/Quests';
+import { QuestCatalog } from './pages/QuestCatalog';
 import { Items } from './pages/Items';
 import { Enemies } from './pages/Enemies';
 
@@ -28,6 +30,15 @@ const App: React.FC = () => {
           />
 
           <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Profile />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/heroes"
             element={
               <PrivateRoute>
@@ -41,6 +52,15 @@ const App: React.FC = () => {
             element={
               <PrivateRoute>
                 <Quests />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/quest-catalog"
+            element={
+              <PrivateRoute>
+                <QuestCatalog />
               </PrivateRoute>
             }
           />

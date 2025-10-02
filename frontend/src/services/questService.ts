@@ -59,6 +59,16 @@ export const questService = {
     return response.data;
   },
 
+  getCatalog: async (): Promise<Quest[]> => {
+    const response = await api.get<Quest[]>('/quests/catalog');
+    return response.data;
+  },
+
+  getMyQuests: async (): Promise<Quest[]> => {
+    const response = await api.get<Quest[]>('/quests/my-quests');
+    return response.data;
+  },
+
   getById: async (id: number): Promise<Quest> => {
     const response = await api.get<Quest>(`/quests/${id}`);
     return response.data;
@@ -78,9 +88,13 @@ export const questService = {
     await api.delete(`/quests/${id}`);
   },
 
+  accept: async (questId: number): Promise<void> => {
+    await api.post(`/quests/${questId}/accept`);
+  },
+
   complete: async (questId: number, heroId: number): Promise<void> => {
     const data: CompleteQuestRequest = { heroId };
-    await api.post(`/quests/${questId}/complete`, data);
+    await api.post(`/quests/complete`, data);
   },
 };
 

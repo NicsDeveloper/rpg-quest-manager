@@ -209,11 +209,11 @@ export const Quests: React.FC = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="primary" onClick={() => handleOpenCompleteModal(quest)} className="flex-1">
-                    {t('quests.complete')}
-                  </Button>
                   {isAdmin && (
                     <>
+                      <Button variant="primary" onClick={() => handleOpenCompleteModal(quest)} className="flex-1">
+                        {t('quests.complete')}
+                      </Button>
                       <Button variant="secondary" onClick={() => handleOpenModal(quest)}>
                         {t('common.edit')}
                       </Button>

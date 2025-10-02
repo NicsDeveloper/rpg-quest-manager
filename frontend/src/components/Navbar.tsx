@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './Button';
+import { NotificationBell } from './NotificationBell';
 
 export const Navbar: React.FC = () => {
   const { t } = useTranslation();
@@ -25,12 +26,20 @@ export const Navbar: React.FC = () => {
           <Link to="/" className="text-gray-300 hover:text-amber-500 transition-colors">
             {t('nav.dashboard')}
           </Link>
+          <Link to="/profile" className="text-gray-300 hover:text-amber-500 font-semibold transition-colors">
+            👤 Meu Perfil
+          </Link>
           <Link to="/heroes" className="text-gray-300 hover:text-amber-500 transition-colors">
             {t('nav.heroes')}
           </Link>
-          <Link to="/quests" className="text-gray-300 hover:text-amber-500 transition-colors">
-            {t('nav.quests')}
+          <Link to="/quest-catalog" className="text-gray-300 hover:text-amber-500 font-semibold transition-colors">
+            📚 Missões
           </Link>
+          {isAdmin && (
+            <Link to="/quests" className="text-gray-300 hover:text-amber-500 transition-colors text-sm">
+              (Admin Panel)
+            </Link>
+          )}
           <Link to="/items" className="text-gray-300 hover:text-amber-500 transition-colors">
             {t('nav.items')}
           </Link>
@@ -41,6 +50,7 @@ export const Navbar: React.FC = () => {
           )}
 
           <div className="flex items-center gap-3 ml-6 pl-6 border-l border-gray-700">
+            <NotificationBell />
             <span className="text-sm text-gray-400">
               {user?.username} {isAdmin && <span className="text-amber-500">({t('common.admin_only')})</span>}
             </span>
