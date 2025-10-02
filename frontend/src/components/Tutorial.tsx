@@ -16,7 +16,7 @@ const tutorialSteps = [
   },
   {
     title: '⚔️ Crie Seu Primeiro Herói',
-    content: 'Você começa sem heróis! Acesse "Heróis" no menu para criar seu primeiro aventureiro. Escolha a classe (Guerreiro, Mago, Arqueiro, Paladino, Assassino) e distribua estrategicamente 30 pontos entre Força, Inteligência e Destreza. Mínimo 3 pontos em cada atributo para balanceamento!',
+    content: 'Você começa sem heróis! Acesse "Heróis" no menu para criar seu primeiro aventureiro. Escolha a classe (Guerreiro, Mago, Arqueiro, Paladino, Ladino) e distribua estrategicamente 30 pontos entre Força, Inteligência e Destreza. Mínimo 3 pontos em cada atributo para balanceamento!',
     icon: '🧙',
     color: 'from-blue-600 to-blue-700'
   },

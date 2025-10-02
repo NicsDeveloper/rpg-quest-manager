@@ -328,7 +328,7 @@ export const Heroes: React.FC = () => {
                   <option value="Mago">🔮 Mago</option>
                   <option value="Arqueiro">🏹 Arqueiro</option>
                   <option value="Paladino">🛡️ Paladino</option>
-                  <option value="Assassino">🗡️ Assassino</option>
+                  <option value="Ladino">🗡️ Ladino</option>
                 </select>
               </div>
 

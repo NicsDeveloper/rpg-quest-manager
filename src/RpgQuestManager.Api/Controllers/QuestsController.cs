@@ -46,14 +46,27 @@ public class QuestsController : ControllerBase
 
         if (userRole != "Admin")
         {
-            var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+            var hero = await _context.Heroes
+                .FirstOrDefaultAsync(h => h.UserId == userId && h.PartySlot != null && !h.IsDeleted);
             
             if (hero != null)
             {
-                var acceptedQuestIds = await _context.HeroQuests
+                var heroQuests = await _context.HeroQuests
                     .Where(hq => hq.HeroId == hero.Id)
-                    .Select(hq => hq.QuestId)
                     .ToListAsync();
+
+                var acceptedQuestIds = heroQuests
+                    .Where(hq => !hq.IsCompleted)
+                    .Select(hq => hq.QuestId)
+                    .ToList();
+
+                var completedQuestIds = heroQuests
+                    .Where(hq => hq.IsCompleted)
+                    .Select(hq => hq.QuestId)
+                    .ToList();
+
+                // Remove quests completadas da lista
+                questDtos = questDtos.Where(q => !completedQuestIds.Contains(q.Id)).ToList();
 
                 foreach (var quest in questDtos)
                 {

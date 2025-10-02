@@ -40,23 +40,31 @@ public class CombatService : ICombatService
 
     public async Task<CombatSessionDto> StartCombatAsync(int userId, List<int> heroIds, int questId)
     {
+        _logger.LogInformation("🎯 Tentando iniciar combate: UserId={UserId}, HeroIds={HeroIds}, QuestId={QuestId}",
+            userId, string.Join(",", heroIds), questId);
+
         if (heroIds == null || !heroIds.Any())
         {
+            _logger.LogWarning("❌ Nenhum herói selecionado");
             throw new InvalidOperationException("Selecione pelo menos um herói para combate.");
         }
 
         if (heroIds.Count > 3)
         {
+            _logger.LogWarning("❌ Mais de 3 heróis selecionados: {Count}", heroIds.Count);
             throw new InvalidOperationException("Máximo de 3 heróis por combate.");
         }
 
         // Valida que todos os heróis pertencem ao usuário
         var heroes = await _context.Heroes
-            .Where(h => heroIds.Contains(h.Id) && h.UserId == userId)
+            .Where(h => heroIds.Contains(h.Id) && h.UserId == userId && !h.IsDeleted)
             .ToListAsync();
+
+        _logger.LogInformation("🔍 Heróis encontrados: {Count}/{Expected}", heroes.Count, heroIds.Count);
 
         if (heroes.Count != heroIds.Count)
         {
+            _logger.LogWarning("❌ Heróis não encontrados ou não pertencem ao usuário");
             throw new InvalidOperationException("Um ou mais heróis não pertencem a você.");
         }
 
@@ -67,11 +75,13 @@ public class CombatService : ICombatService
 
         if (quest == null)
         {
+            _logger.LogWarning("❌ Quest {QuestId} não encontrada", questId);
             throw new KeyNotFoundException("Quest não encontrada.");
         }
 
         if (!quest.QuestEnemies.Any())
         {
+            _logger.LogWarning("❌ Quest {QuestId} não tem inimigos", questId);
             throw new InvalidOperationException("Esta quest não possui inimigos configurados.");
         }
 
@@ -84,6 +94,7 @@ public class CombatService : ICombatService
             if (existingSession)
             {
                 var heroName = heroes.First(h => h.Id == heroId).Name;
+                _logger.LogWarning("❌ Herói {HeroName} (ID: {HeroId}) já está em combate ativo", heroName, heroId);
                 throw new InvalidOperationException($"O herói {heroName} já está em combate.");
             }
         }
@@ -617,12 +628,21 @@ public class CombatService : ICombatService
         var baseGold = combatSession.Quest.GoldReward;
         var baseExp = combatSession.Quest.ExperienceReward;
 
-        var goldPerHero = (int)(baseGold * rewardMultiplier / heroes.Count);
+        var totalGold = (int)(baseGold * rewardMultiplier);
         var expPerHero = (int)(baseExp * rewardMultiplier / heroes.Count);
 
+        // Ouro vai para o usuário, não para os heróis individuais
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user != null)
+        {
+            user.Gold += totalGold;
+            _logger.LogInformation("💰 Player {UserId} recebeu {Gold} ouro da quest {QuestName}", 
+                userId, totalGold, combatSession.Quest.Name);
+        }
+
+        // XP vai para cada herói
         foreach (var hero in heroes)
         {
-            hero.Gold += goldPerHero;
             hero.Experience += expPerHero;
 
             var oldLevel = hero.Level;
@@ -717,13 +737,13 @@ public class CombatService : ICombatService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("💰 Combate completado! Party recebeu {Gold} ouro e {Exp} XP. Drops: {ItemCount} itens",
-            goldPerHero * heroes.Count, expPerHero * heroes.Count, allDroppedItems.Count);
+            totalGold, expPerHero * heroes.Count, allDroppedItems.Count);
 
         return new CompleteCombatResultDto
         {
             Status = "Victory",
-            Message = $"🎉 Combate completo! Party recebeu {goldPerHero * heroes.Count} ouro e {expPerHero * heroes.Count} XP (divididos). Recompensa ajustada para {heroes.Count} heróis ({rewardMultiplier:P0}).",
-            GoldEarned = goldPerHero * heroes.Count,
+            Message = $"🎉 Combate completo! Você recebeu {totalGold} ouro e cada herói ganhou {expPerHero} XP. Recompensa ajustada para {heroes.Count} heróis ({rewardMultiplier:P0}).",
+            GoldEarned = totalGold,
             ExperienceEarned = expPerHero * heroes.Count,
             HeroNewLevel = heroes.Max(h => h.Level),
             DroppedItems = _mapper.Map<List<ItemDto>>(allDroppedItems)
