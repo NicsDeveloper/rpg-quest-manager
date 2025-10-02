@@ -6,6 +6,7 @@ using RpgQuestManager.Api.Data;
 using RpgQuestManager.Api.DTOs.Quests;
 using RpgQuestManager.Api.Models;
 using RpgQuestManager.Api.Services;
+using System.Security.Claims;
 
 namespace RpgQuestManager.Api.Controllers;
 
@@ -40,15 +41,36 @@ public class QuestsController : ControllerBase
     }
     
     /// <summary>
-    /// Obtém todas as quests
+    /// Obtém todas as quests (Admin vê todas, Player vê apenas as suas)
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IEnumerable<QuestDto>>> GetAll()
     {
-        var quests = await _context.Quests
+        var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+        var userRole = User.FindFirstValue(System.Security.Claims.ClaimTypes.Role);
+
+        IQueryable<Quest> questsQuery = _context.Quests
             .Include(q => q.Rewards)
-                .ThenInclude(r => r.Item)
-            .ToListAsync();
+                .ThenInclude(r => r.Item);
+
+        if (userRole != "Admin")
+        {
+            var hero = await _context.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+            
+            if (hero == null)
+            {
+                return Ok(new List<QuestDto>());
+            }
+
+            var heroQuestIds = await _context.HeroQuests
+                .Where(hq => hq.HeroId == hero.Id)
+                .Select(hq => hq.QuestId)
+                .ToListAsync();
+
+            questsQuery = questsQuery.Where(q => heroQuestIds.Contains(q.Id));
+        }
+
+        var quests = await questsQuery.ToListAsync();
         return Ok(_mapper.Map<IEnumerable<QuestDto>>(quests));
     }
     
@@ -210,8 +232,10 @@ public class QuestsController : ControllerBase
     /// <response code="200">Quest completada, herói recompensado e pode ter subido de nível</response>
     /// <response code="400">Herói ou quest não encontrados, ou quest já completada</response>
     [HttpPost("complete")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(QuestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<QuestDto>> CompleteQuest([FromBody] CompleteQuestRequest request)
     {
         var result = await _questService.CompleteQuestAsync(request.HeroId, request.QuestId);
