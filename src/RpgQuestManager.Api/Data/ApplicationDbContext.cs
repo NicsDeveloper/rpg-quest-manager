@@ -67,6 +67,10 @@ public class ApplicationDbContext : DbContext
                 .WithMany(q => q.Rewards)
                 .HasForeignKey(e => e.QuestId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Item)
+                .WithMany()
+                .HasForeignKey(e => e.ItemId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
         
         // Configuração HeroQuest (tabela de relacionamento)

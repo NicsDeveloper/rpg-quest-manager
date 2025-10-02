@@ -437,17 +437,37 @@ public class DatabaseSeeder
     private async Task SeedRewardsAsync()
     {
         var quests = await _context.Quests.ToListAsync();
+        var items = await _context.Items.ToListAsync();
         var rewards = new List<Reward>();
+
+        var questRewardMap = new Dictionary<string, int?>
+        {
+            { "Caça aos Goblins", items.FirstOrDefault(i => i.Name == "Espada de Ferro")?.Id },
+            { "Coleta de Ervas", items.FirstOrDefault(i => i.Name == "Poção de Cura Menor")?.Id },
+            { "Limpeza do Cemitério", items.FirstOrDefault(i => i.Name == "Armadura de Couro")?.Id },
+            { "A Invasão Orc", items.FirstOrDefault(i => i.Name == "Cota de Malha")?.Id },
+            { "O Feiticeiro das Sombras", items.FirstOrDefault(i => i.Name == "Cajado Ancestral")?.Id },
+            { "Caçada ao Lobisomem", items.FirstOrDefault(i => i.Name == "Poção de Força")?.Id },
+            { "O Covil do Troll", items.FirstOrDefault(i => i.Name == "Escudo de Madeira")?.Id },
+            { "O Vampiro Ancestral", items.FirstOrDefault(i => i.Name == "Manto Mágico")?.Id },
+            { "A Maldição do Templo", items.FirstOrDefault(i => i.Name == "Poção de Mana")?.Id },
+            { "O Dragão das Montanhas", items.FirstOrDefault(i => i.Name == "Espada Flamejante")?.Id },
+            { "O Despertar do Balrog", items.FirstOrDefault(i => i.Name == "Armadura de Placas")?.Id },
+            { "O Senhor dos Liches", items.FirstOrDefault(i => i.Name == "Escudo de Mithril")?.Id },
+            { "Kraken dos Mares", items.FirstOrDefault(i => i.Name == "Espada Élfica")?.Id }
+        };
 
         foreach (var quest in quests)
         {
+            questRewardMap.TryGetValue(quest.Name, out var itemId);
+            
             rewards.Add(new Reward
             {
                 QuestId = quest.Id,
                 Gold = quest.GoldReward,
                 Experience = quest.ExperienceReward,
-                ItemName = quest.Difficulty == "Épico" ? "Item Lendário" : quest.Difficulty == "Difícil" ? "Item Raro" : null,
-                ItemDescription = quest.Difficulty == "Épico" ? "Um item de poder inimaginável" : quest.Difficulty == "Difícil" ? "Um item poderoso" : null,
+                ItemId = itemId,
+                ItemQuantity = itemId.HasValue ? 1 : 0,
                 CreatedAt = quest.CreatedAt
             });
         }

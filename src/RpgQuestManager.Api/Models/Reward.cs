@@ -6,11 +6,11 @@ public class Reward
     public int QuestId { get; set; }
     public int Gold { get; set; }
     public int Experience { get; set; }
-    public string? ItemName { get; set; }
-    public string? ItemDescription { get; set; }
+    public int? ItemId { get; set; }
+    public int ItemQuantity { get; set; } = 1;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
-    // Relacionamentos
     public Quest Quest { get; set; } = null!;
+    public Item? Item { get; set; }
 }
 

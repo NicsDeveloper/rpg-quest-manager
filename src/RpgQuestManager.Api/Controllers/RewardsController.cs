@@ -38,7 +38,9 @@ public class RewardsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<RewardDto>>> GetAll()
     {
-        var rewards = await _context.Rewards.ToListAsync();
+        var rewards = await _context.Rewards
+            .Include(r => r.Item)
+            .ToListAsync();
         return Ok(_mapper.Map<IEnumerable<RewardDto>>(rewards));
     }
     
@@ -48,7 +50,9 @@ public class RewardsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<RewardDto>> GetById(int id)
     {
-        var reward = await _context.Rewards.FindAsync(id);
+        var reward = await _context.Rewards
+            .Include(r => r.Item)
+            .FirstOrDefaultAsync(r => r.Id == id);
         
         if (reward == null)
         {
@@ -65,6 +69,7 @@ public class RewardsController : ControllerBase
     public async Task<ActionResult<IEnumerable<RewardDto>>> GetByQuestId(int questId)
     {
         var rewards = await _context.Rewards
+            .Include(r => r.Item)
             .Where(r => r.QuestId == questId)
             .ToListAsync();
         

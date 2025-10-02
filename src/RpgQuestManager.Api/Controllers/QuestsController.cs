@@ -45,7 +45,10 @@ public class QuestsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<QuestDto>>> GetAll()
     {
-        var quests = await _context.Quests.ToListAsync();
+        var quests = await _context.Quests
+            .Include(q => q.Rewards)
+                .ThenInclude(r => r.Item)
+            .ToListAsync();
         return Ok(_mapper.Map<IEnumerable<QuestDto>>(quests));
     }
     
@@ -55,7 +58,10 @@ public class QuestsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<QuestDto>> GetById(int id)
     {
-        var quest = await _context.Quests.FindAsync(id);
+        var quest = await _context.Quests
+            .Include(q => q.Rewards)
+                .ThenInclude(r => r.Item)
+            .FirstOrDefaultAsync(q => q.Id == id);
         
         if (quest == null)
         {

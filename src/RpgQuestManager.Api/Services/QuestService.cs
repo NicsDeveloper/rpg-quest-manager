@@ -38,6 +38,7 @@ public class QuestService : IQuestService
         
         var quest = await _context.Quests
             .Include(q => q.Rewards)
+                .ThenInclude(r => r.Item)
             .FirstOrDefaultAsync(q => q.Id == questId);
             
         if (quest == null)
@@ -73,6 +74,38 @@ public class QuestService : IQuestService
         var oldLevel = hero.Level;
         hero.Experience += quest.ExperienceReward;
         hero.Gold += quest.GoldReward;
+        
+        // Adicionar itens das recompensas ao inventário do herói
+        foreach (var reward in quest.Rewards)
+        {
+            if (reward.ItemId.HasValue && reward.Item != null)
+            {
+                var existingHeroItem = await _context.HeroItems
+                    .FirstOrDefaultAsync(hi => hi.HeroId == heroId && hi.ItemId == reward.ItemId);
+                
+                if (existingHeroItem != null)
+                {
+                    existingHeroItem.Quantity += reward.ItemQuantity;
+                }
+                else
+                {
+                    var heroItem = new HeroItem
+                    {
+                        HeroId = heroId,
+                        ItemId = reward.ItemId.Value,
+                        Quantity = reward.ItemQuantity,
+                        IsEquipped = false,
+                        AcquiredAt = DateTime.UtcNow
+                    };
+                    _context.HeroItems.Add(heroItem);
+                }
+                
+                _logger.LogInformation(
+                    "Item {ItemName} (x{Quantity}) adicionado ao inventário do herói {HeroName}",
+                    reward.Item.Name, reward.ItemQuantity, hero.Name
+                );
+            }
+        }
         
         // Verificar level up automático
         if (hero.CanLevelUp())
