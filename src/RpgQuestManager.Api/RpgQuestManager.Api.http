@@ -1,0 +1,6 @@
+@RpgQuestManager.Api_HostAddress = http://localhost:5144
+
+GET {{RpgQuestManager.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
