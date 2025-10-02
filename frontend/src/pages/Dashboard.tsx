@@ -8,6 +8,7 @@ import { itemService, Item } from '../services/itemService';
 import { userService } from '../services/userService';
 import { Navbar } from '../components/Navbar';
 import { Tutorial } from '../components/Tutorial';
+import { HeroWidget } from '../components/HeroWidget';
 
 export const Dashboard: React.FC = () => {
   const { t } = useTranslation();
@@ -84,6 +85,7 @@ export const Dashboard: React.FC = () => {
       {showTutorial && (
         <Tutorial onComplete={handleTutorialComplete} onSkip={handleTutorialSkip} />
       )}
+      <HeroWidget />
       <Navbar />
       <div className="container mx-auto px-6 py-8">
         <div className="mb-12 text-center">

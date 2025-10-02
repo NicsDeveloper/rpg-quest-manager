@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Card } from '../components/Card';
 import { Loading } from '../components/Loading';
+import { HeroWidget } from '../components/HeroWidget';
 import { profileService, MyHero, MyQuest, MyStats } from '../services/profileService';
 
 const getExperienceForNextLevel = (level: number): number => {
@@ -68,6 +69,7 @@ export const Profile: React.FC = () => {
 
   return (
     <>
+      <HeroWidget />
       <Navbar />
       <div className="container mx-auto px-6 py-8">
         <div className="mb-8 text-center">

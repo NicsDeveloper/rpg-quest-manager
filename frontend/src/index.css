@@ -138,6 +138,52 @@
   animation: float 3s ease-in-out infinite;
 }
 
+/* Hero Widget Styles */
+.hero-widget {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 40;
+  transition: all 0.3s ease;
+}
+
+.hero-widget-compact {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(17, 24, 39, 0.95));
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(251, 191, 36, 0.3);
+  border-radius: 1rem;
+  padding: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.hero-widget-compact:hover {
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 15px 35px rgba(251, 191, 36, 0.3);
+}
+
+.hero-widget-expanded {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.98), rgba(17, 24, 39, 0.98));
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(251, 191, 36, 0.5);
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 40px rgba(251, 191, 36, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 320px;
+  cursor: pointer;
+}
+
+.hero-widget-expanded:hover {
+  border-color: rgba(251, 191, 36, 0.7);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 50px rgba(251, 191, 36, 0.3);
+  transform: translateY(-2px);
+}
+
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
 }

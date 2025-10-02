@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/Navbar';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { HeroWidget } from '../components/HeroWidget';
 import { questService, Quest } from '../services/questService';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -82,6 +83,19 @@ export const QuestCatalog: React.FC = () => {
     );
   };
 
+  const getRequirementsTooltip = (quest: any) => {
+    if (isAdmin || quest.canAccept || quest.isAccepted) return null;
+
+    return (
+      <div className="mt-2 text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded px-2 py-1">
+        {quest.requiredClass !== 'Any' && (
+          <div>📝 Classe necessária: <strong>{quest.requiredClass}</strong></div>
+        )}
+        <div>📊 Nível necessário: <strong>{quest.requiredLevel}</strong></div>
+      </div>
+    );
+  };
+
   const renderQuests = () => {
     const quests = activeTab === 'catalog' ? catalogQuests : myQuests;
 
@@ -115,6 +129,7 @@ export const QuestCatalog: React.FC = () => {
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-blue-400 mb-2">{quest.name}</h3>
                 {getQuestStatus(quest)}
+                {getRequirementsTooltip(quest)}
               </div>
               <span className={`ml-3 px-3 py-1 rounded-full text-white text-sm font-bold bg-gradient-to-r ${getDifficultyColor(quest.difficulty)} shadow-lg`}>
                 {quest.difficulty}
@@ -181,6 +196,7 @@ export const QuestCatalog: React.FC = () => {
 
   return (
     <>
+      <HeroWidget />
       <Navbar />
       <div className="container mx-auto px-6 py-8">
         <div className="mb-8 text-center">
