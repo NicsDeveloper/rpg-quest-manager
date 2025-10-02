@@ -1,44 +1,42 @@
 # 🚀 Quick Start - RPG Quest Manager
 
-Guia rápido para executar o projeto completo (Backend + Frontend).
+Guia rápido para executar o projeto completo (Backend + Frontend) com **Docker Compose**.
 
 ## 📋 Pré-requisitos
 
-- **Docker Desktop** (para backend, PostgreSQL, Redis, RabbitMQ)
-- **Node.js 22+** (para frontend)
-- **.NET 8 SDK** (opcional, apenas para desenvolvimento do backend)
+- **Docker Desktop** instalado e rodando
+
+Isso é TUDO que você precisa! 🎉
 
 ---
 
-## 🎮 Executar o Projeto Completo
+## 🎮 Executar o Projeto Completo (1 comando!)
 
-### 1️⃣ Iniciar o Backend (API + Banco + Redis + RabbitMQ)
+### 🚀 Iniciar TUDO (API + Frontend + Banco + Redis + RabbitMQ)
 
 ```bash
-docker-compose up -d
+# Clone o repositório
+git clone <url-do-repo>
+cd rpg-quest-manager
+
+# Inicie todos os containers
+docker-compose up -d --build
 ```
 
-Aguarde alguns segundos para os containers iniciarem. Você pode verificar com:
+Aguarde ~1-2 minutos para todos os serviços iniciarem. Você pode verificar o status com:
 
 ```bash
 docker-compose ps
 ```
 
-A API estará disponível em: **http://localhost:5000**
+### 🌐 Acessos
 
-Swagger UI: **http://localhost:5000/swagger**
-
----
-
-### 2️⃣ Iniciar o Frontend
-
-```bash
-cd frontend
-npm install    # Apenas na primeira vez
-npm run dev
-```
-
-O frontend estará disponível em: **http://localhost:3000**
+| Serviço | URL | Descrição |
+|---------|-----|-----------|
+| **Frontend** | http://localhost:3000 | ⭐ **COMECE AQUI!** Interface React |
+| **Swagger UI** | http://localhost:5000/swagger | Documentação interativa da API |
+| **API REST** | http://localhost:5000/api/v1 | Backend .NET 8 |
+| **RabbitMQ** | http://localhost:15672 | Management UI (guest/guest) |
 
 ---
 
@@ -46,169 +44,222 @@ O frontend estará disponível em: **http://localhost:3000**
 
 O banco já vem populado com dados de teste:
 
-### Admin (acesso total):
+### 🛡️ Admin (acesso total):
 - **Username:** `admin`
 - **Password:** `admin123`
+- **Permissões**: Criar/editar/deletar heróis, missões, itens, completar missões
 
-### Player (acesso limitado):
+### 🎮 Player (acesso limitado):
 - **Username:** `player1`
 - **Password:** `senha123`
+- **Permissões**: Ver seu perfil, aceitar missões, visualizar catálogo
+- **Herói vinculado**: Aragorn (Guerreiro, Nv. 15)
 
-**Ou** registre um novo usuário pela tela de cadastro (será criado como Player).
+### 🎮 Player 2:
+- **Username:** `gamer`
+- **Password:** `senha456`
+- **Permissões**: Ver seu perfil, aceitar missões, visualizar catálogo
+- **Herói vinculado**: Gandalf (Mago, Nv. 20)
 
----
-
-## 🧭 Navegação do Frontend
-
-Após fazer login, você terá acesso a:
-
-1. **Dashboard** - Estatísticas gerais, heróis mais fortes, missões populares
-2. **Heróis** - Visualizar, criar (admin), editar (admin), deletar (admin)
-3. **Missões** - Visualizar, completar, criar (admin), editar (admin), deletar (admin)
-4. **Itens** - Visualizar, criar (admin), deletar (admin)
-5. **Inimigos** - Visualizar, criar (admin), editar (admin), deletar (admin) - **Apenas Admin**
+**Ou** registre um novo usuário pela tela de cadastro (será criado como Player sem herói).
 
 ---
 
-## 🔐 Diferenças entre Roles
+## 🎯 Fluxo de Uso
 
-### Player (Usuário comum)
-✅ Visualizar heróis, missões, itens, inimigos
-✅ Completar missões com seus heróis
-❌ Não pode criar/editar/deletar nada
+### Para Players (Jogadores):
 
-### Admin (Administrador)
-✅ Tudo que o Player pode fazer
-✅ Criar, editar e deletar heróis
-✅ Criar, editar e deletar missões
-✅ Criar e deletar itens
-✅ Criar, editar e deletar inimigos
-✅ Acesso à página de Inimigos
+1. **Login** com `player1` ou `gamer`
+2. **Tutorial Interativo** aparecerá automaticamente (primeira vez)
+3. **Dashboard**: Veja estatísticas gerais do jogo
+4. **Meu Perfil**: Veja seu herói, atributos, inventário e missões completadas
+5. **Catálogo de Missões**: 
+   - Aba "Catálogo": Veja todas as missões disponíveis e seus requisitos
+   - Aba "Minhas Missões": Veja missões que você já aceitou
+   - Aceite missões compatíveis com seu nível e classe
+6. **Notificações** 🔔: Fique de olho no sino no topo para ver quando subir de nível e receber avisos de novas missões
+
+### Para Admin (Administrador):
+
+1. **Login** com `admin`
+2. **Dashboard**: Veja estatísticas gerais
+3. **Heróis**: Criar, editar, deletar heróis
+4. **Missões (Admin Panel)**: Criar, editar, deletar, **completar missões** para jogadores
+5. **Inimigos**: Gerenciar inimigos do jogo
+6. **Itens**: Criar e gerenciar itens e equipamentos
 
 ---
 
-## 🎯 Fluxo de Uso Típico
+## 📦 Containers Docker
 
-1. **Login** com `admin` / `admin123`
-2. Vá para **Dashboard** e veja as estatísticas
-3. Acesse **Heróis** e veja os heróis existentes (Thorin, Elara, Grimgar, etc.)
-4. Acesse **Missões** e clique em **Completar Missão**
-5. Selecione um herói (ex: Thorin)
-6. O herói ganha:
-   - 🪙 Ouro
-   - ⭐ Experiência (pode subir de nível!)
-   - 📦 Item da recompensa (adicionado ao inventário automaticamente)
-7. Acesse **Itens** e veja todos os itens disponíveis
-8. Crie novos itens, missões ou heróis como Admin
+Quando você executa `docker-compose up -d`, os seguintes containers são criados:
+
+| Container | Porta | Descrição |
+|-----------|-------|-----------|
+| `rpg-postgres` | 5432 | PostgreSQL 15 (banco de dados) |
+| `rpg-redis` | 6379 | Redis 7 (cache) |
+| `rpg-rabbitmq` | 5672, 15672 | RabbitMQ 3 (mensageria) |
+| `rpg-api` | 5000, 5001 | API .NET 8 (backend) |
+| `rpg-frontend` | 3000 | React 18 + Nginx (frontend) |
+
+Todos os containers estão na mesma rede Docker (`rpg-network`) e se comunicam entre si.  
+O frontend utiliza **Nginx** como proxy reverso para comunicar com a API.
+
+---
+
+## 🆕 Sistema de Tutorial
+
+Na **primeira vez que um novo jogador faz login**, um **tutorial interativo** aparece automaticamente!
+
+O tutorial possui **7 passos** explicando:
+- ✨ Como funciona o sistema de heróis
+- 📚 Como aceitar missões no catálogo
+- 🎯 Como completar missões
+- 🎊 Sistema de level up e recompensas
+- 🔔 Sistema de notificações
+- 🚀 Dicas para começar
+
+Você pode pular o tutorial a qualquer momento, mas é recomendado assistir na primeira vez!
+
+---
+
+## 🎮 Funcionalidades Principais
+
+### 🦸 Sistema de Heróis
+- Cada usuário pode ter um herói vinculado
+- Atributos: Força, Inteligência, Destreza
+- Sistema de nível e experiência (XP)
+- Inventário de itens e equipamentos
+
+### 🎯 Sistema de Missões
+- **Catálogo Público**: Todos os jogadores podem ver as missões disponíveis
+- **Requisitos**: Missões têm requisitos de nível e classe (Guerreiro, Mago, Arqueiro, ou "Any")
+- **Aceitar Missão**: Jogadores podem aceitar missões que atendem aos requisitos
+- **Completar Missão**: Apenas admins podem completar missões (simulando progresso do jogo)
+- **Recompensas**: Ouro, XP e itens são adicionados automaticamente ao inventário
+
+### 📈 Sistema de Level Up
+- Quando um herói completa missões e ganha XP suficiente, ele sobe de nível
+- **Recompensas automáticas**: +2 em todos os atributos, ouro extra
+- **Notificação**: Jogador recebe uma notificação mostrando o novo nível e novas missões disponíveis
+- **Acesso a novas missões**: Missões de nível mais alto ficam disponíveis
+
+### 🔔 Sistema de Notificações
+- Notificações aparecem em tempo real no sino 🔔 no topo da tela
+- Avisos de level up com detalhes das recompensas
+- Lista de novas missões disponíveis após subir de nível
+- Marcar como lida individual ou todas de uma vez
+
+### 🎁 Sistema de Inventário e Itens
+- Itens são adicionados automaticamente ao completar missões
+- Equipamentos têm bônus de atributos (Força, Inteligência, Destreza)
+- Quantidade de itens é gerenciada automaticamente (stacking)
+- Visualize todo o inventário no "Meu Perfil"
+
+### 🔐 Sistema de Autenticação e Permissões
+- **JWT Authentication**: Login seguro com tokens
+- **Roles**: Admin e Player com permissões diferentes
+- **Admin**: Acesso total ao sistema (CRUD de heróis, missões, itens, completar missões)
+- **Player**: Acesso ao seu perfil, catálogo de missões, aceitar missões
 
 ---
 
 ## 🛠️ Comandos Úteis
 
-### Backend (Docker)
+### Parar todos os containers:
 ```bash
-docker-compose up -d          # Inicia todos os serviços
-docker-compose down           # Para e remove os containers
-docker-compose logs api       # Ver logs da API
-docker-compose restart api    # Reinicia a API
+docker-compose down
 ```
 
-### Frontend
+### Ver logs em tempo real:
 ```bash
-npm run dev      # Servidor de desenvolvimento (http://localhost:3000)
-npm run build    # Build de produção
-npm run preview  # Preview do build de produção
+# Todos os serviços
+docker-compose logs -f
+
+# Apenas a API
+docker-compose logs -f api
+
+# Apenas o frontend
+docker-compose logs -f frontend
 ```
 
-### Banco de Dados
+### Rebuild completo (após mudanças no código):
 ```bash
-docker exec -it rpg-postgres psql -U postgres -d rpgquestdb
+docker-compose down
+docker-compose up -d --build
+```
+
+### Limpar volumes (ATENÇÃO: apaga dados do banco):
+```bash
+docker-compose down -v
+docker-compose up -d --build
 ```
 
 ---
 
-## 📊 Portas Utilizadas
+## 🧪 Testar a API (Swagger)
 
-| Serviço     | Porta  | URL                        |
-|-------------|--------|----------------------------|
-| Frontend    | 3000   | http://localhost:3000      |
-| API         | 5000   | http://localhost:5000      |
-| Swagger     | 5000   | http://localhost:5000/swagger |
-| PostgreSQL  | 5432   | localhost:5432             |
-| Redis       | 6379   | localhost:6379             |
-| RabbitMQ    | 5672   | localhost:5672             |
-| RabbitMQ UI | 15672  | http://localhost:15672     |
+1. Acesse http://localhost:5000/swagger
+2. Clique em **Authorize** (🔒)
+3. Faça login com `admin` / `admin123` via endpoint `/api/v1/auth/login`
+4. Copie o token retornado
+5. Cole no campo "Value" do Authorize: `Bearer {seu-token}`
+6. Teste os endpoints diretamente no Swagger!
 
 ---
 
-## 🐛 Troubleshooting
+## 🔥 Desenvolvimento Local (sem Docker)
 
-### Erro: "Cannot connect to Docker"
-- Certifique-se de que o Docker Desktop está rodando
+Se você quiser rodar o backend ou frontend **fora do Docker** para desenvolvimento:
 
-### Erro: "Port already in use"
-- Verifique se não há outros serviços usando as portas 3000, 5000, 5432, 6379
-- Ou altere as portas no `docker-compose.yml` e `vite.config.ts`
+### Backend (API):
+```bash
+cd src/RpgQuestManager.Api
+dotnet run
+```
 
-### Frontend não conecta com a API
-- Verifique se o backend está rodando: `docker-compose ps`
-- O proxy do Vite está configurado para `/api` → `http://localhost:5000`
+### Frontend:
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-### Erro 401 (Unauthorized) no frontend
-- Faça logout e login novamente
-- O token JWT expira após 7 dias
-
----
-
-## 📚 Documentação Completa
-
-- **Backend:** Ver `README.md` na raiz do projeto
-- **Frontend:** Ver `frontend/README.md`
-- **API Swagger:** http://localhost:5000/swagger
-- **Postman Collection:** Ver `postman/` na raiz
+Neste caso, configure as connection strings em `appsettings.Development.json` para apontar para `localhost` ao invés de nomes de containers.
 
 ---
 
-## 🎨 Tecnologias Utilizadas
+## 📚 Mais Documentação
 
-### Backend
-- **.NET 8** + **C#**
-- **PostgreSQL** (banco de dados)
-- **Entity Framework Core** (ORM)
-- **Redis** (cache)
-- **RabbitMQ + MassTransit** (mensageria)
-- **JWT** (autenticação)
-- **Serilog** (logs)
-- **Swagger** (documentação)
-- **FluentValidation** (validações)
-- **AutoMapper** (mapeamento)
-- **xUnit** (testes)
-
-### Frontend
-- **React 18** + **TypeScript**
-- **Vite** (build tool)
-- **Tailwind CSS** (estilização)
-- **React Router** (rotas)
-- **Axios** (HTTP client)
-- **i18next** (internacionalização pt-BR/EN)
+Para documentação completa, veja o [README.md](README.md) principal.
 
 ---
 
-## ⚡ Performance
+## 🆘 Troubleshooting
 
-- Frontend: Bundle otimizado de **~295KB** (92KB gzipped)
-- Backend: Cache Redis para heróis mais fortes e missões mais jogadas
-- Eventos assíncronos com RabbitMQ para conclusão de missões
+### Frontend não carrega:
+- Verifique se o container `rpg-frontend` está rodando: `docker-compose ps`
+- Veja os logs: `docker-compose logs -f frontend`
+- Acesse diretamente a API: http://localhost:5000/swagger
+
+### API não responde:
+- Verifique se o container `rpg-api` está healthy: `docker-compose ps`
+- Veja os logs: `docker-compose logs -f api`
+- Certifique-se que o PostgreSQL está rodando: `docker-compose ps postgres`
+
+### Erro ao fazer login:
+- Certifique-se que usou os usuários corretos do seeder
+- Verifique se o banco foi populado: `docker-compose logs api | grep "Seed"`
+
+### Docker não tem espaço:
+```bash
+docker system prune -a --volumes
+```
 
 ---
 
-## 🎉 Próximos Passos
+## 🎉 Pronto!
 
-1. Explore todas as funcionalidades do CRUD
-2. Complete missões e veja os heróis evoluindo
-3. Crie seus próprios heróis, itens e missões personalizados
-4. Teste diferentes combinações de atributos e recompensas
-5. Use o Swagger para testar a API diretamente
+Agora você tem um **RPG Quest Manager completo** rodando localmente! 🚀
 
-**Divirta-se! 🎮✨**
-
+Explore, teste, e divirta-se gerenciando sua aventura épica! ⚔️🛡️✨
