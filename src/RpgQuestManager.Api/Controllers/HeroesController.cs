@@ -171,7 +171,9 @@ public class HeroesController : ControllerBase
     /// </remarks>
     /// <response code="201">Herói criado com sucesso</response>
     /// <response code="400">Dados inválidos (classe inexistente ou atributos fora do range)</response>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(HeroDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<HeroDto>> Create([FromBody] CreateHeroRequest request)
@@ -188,9 +190,11 @@ public class HeroesController : ControllerBase
     }
     
     /// <summary>
-    /// Atualiza um herói existente
+    /// Atualiza um herói existente (APENAS ADMIN)
     /// </summary>
+    /// <response code="403">Usuário não tem permissão de administrador</response>
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<HeroDto>> Update(int id, [FromBody] UpdateHeroRequest request)
     {
         var hero = await _context.Heroes.FindAsync(id);
