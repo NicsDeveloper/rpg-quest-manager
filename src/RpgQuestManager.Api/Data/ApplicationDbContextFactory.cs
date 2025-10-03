@@ -8,12 +8,13 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
     public ApplicationDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        
-        // Connection string temporária para design time (migrations)
-        // Em produção, virá do appsettings.json
-        optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=rpgquestmanager;Username=postgres;Password=postgres123");
-        
+
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__Default")
+                   ?? "Host=localhost;Port=5432;Database=rpgquestmanager;Username=postgres;Password=postgres";
+
+        optionsBuilder.UseNpgsql(conn);
         return new ApplicationDbContext(optionsBuilder.Options);
     }
 }
+
 

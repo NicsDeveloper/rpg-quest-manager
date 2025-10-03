@@ -1,9 +1,11 @@
-using RpgQuestManager.Api.DTOs.Quests;
+using RpgQuestManager.Api.Models;
 
 namespace RpgQuestManager.Api.Services;
 
 public interface IQuestService
 {
-    Task<QuestDto> CompleteQuestAsync(int heroId, int questId);
+    Task<Quest> StartAsync(int questId);
+    Task<Quest> CompleteAsync(int questId);
 }
+
 
