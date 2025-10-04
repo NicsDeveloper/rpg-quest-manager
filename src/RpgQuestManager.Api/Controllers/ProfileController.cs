@@ -189,26 +189,39 @@ public class ProfileController : ControllerBase
             .Where(h => h.UserId == userId && !h.IsDeleted)
             .OrderByDescending(h => h.Level)
             .ThenBy(h => h.Name)
-            .Select(h => new HeroDto
-            {
-                Id = h.Id,
-                Name = h.Name,
-                Class = h.Class,
-                Level = h.Level,
-                Experience = h.Experience,
-                Strength = h.BaseStrength + h.BonusStrength,
-                Intelligence = h.BaseIntelligence + h.BonusIntelligence,
-                Dexterity = h.BaseDexterity + h.BonusDexterity,
-                Gold = h.Gold,
-                MaxHealth = h.MaxHealth,
-                CurrentHealth = h.CurrentHealth,
-                CreatedAt = h.CreatedAt,
-                IsInActiveParty = h.IsInActiveParty,
-                PartySlot = h.PartySlot
-            })
             .ToListAsync();
 
-        return Ok(heroes);
+        var inventoryService = HttpContext.RequestServices.GetRequiredService<InventoryService>();
+        var heroDtos = new List<HeroDto>();
+
+        foreach (var hero in heroes)
+        {
+            var equipmentBonuses = await inventoryService.GetEquipmentBonusesAsync(hero.Id);
+            
+            heroDtos.Add(new HeroDto
+            {
+                Id = hero.Id,
+                Name = hero.Name,
+                Class = hero.Class,
+                Level = hero.Level,
+                Experience = hero.Experience,
+                Strength = hero.GetTotalStrength(),
+                Intelligence = hero.GetTotalIntelligence(),
+                Dexterity = hero.GetTotalDexterity(),
+                Gold = hero.Gold,
+                MaxHealth = hero.MaxHealth,
+                CurrentHealth = hero.CurrentHealth,
+                CreatedAt = hero.CreatedAt,
+                IsInActiveParty = hero.IsInActiveParty,
+                PartySlot = hero.PartySlot,
+                FinalAttack = hero.CalculateAttack() + equipmentBonuses.attack,
+                FinalDefense = hero.CalculateDefense() + equipmentBonuses.defense,
+                FinalHealth = hero.MaxHealth + equipmentBonuses.health,
+                FinalMorale = hero.Morale + equipmentBonuses.morale
+            });
+        }
+
+        return Ok(heroDtos);
     }
 
     /// <summary>
@@ -223,26 +236,39 @@ public class ProfileController : ControllerBase
         var partyHeroes = await _context.Heroes
             .Where(h => h.UserId == userId && h.IsInActiveParty && !h.IsDeleted)
             .OrderBy(h => h.PartySlot)
-            .Select(h => new HeroDto
-            {
-                Id = h.Id,
-                Name = h.Name,
-                Class = h.Class,
-                Level = h.Level,
-                Experience = h.Experience,
-                Strength = h.BaseStrength + h.BonusStrength,
-                Intelligence = h.BaseIntelligence + h.BonusIntelligence,
-                Dexterity = h.BaseDexterity + h.BonusDexterity,
-                Gold = h.Gold,
-                MaxHealth = h.MaxHealth,
-                CurrentHealth = h.CurrentHealth,
-                CreatedAt = h.CreatedAt,
-                IsInActiveParty = h.IsInActiveParty,
-                PartySlot = h.PartySlot
-            })
             .ToListAsync();
 
-        return Ok(partyHeroes);
+        var inventoryService = HttpContext.RequestServices.GetRequiredService<InventoryService>();
+        var heroDtos = new List<HeroDto>();
+
+        foreach (var hero in partyHeroes)
+        {
+            var equipmentBonuses = await inventoryService.GetEquipmentBonusesAsync(hero.Id);
+            
+            heroDtos.Add(new HeroDto
+            {
+                Id = hero.Id,
+                Name = hero.Name,
+                Class = hero.Class,
+                Level = hero.Level,
+                Experience = hero.Experience,
+                Strength = hero.GetTotalStrength(),
+                Intelligence = hero.GetTotalIntelligence(),
+                Dexterity = hero.GetTotalDexterity(),
+                Gold = hero.Gold,
+                MaxHealth = hero.MaxHealth,
+                CurrentHealth = hero.CurrentHealth,
+                CreatedAt = hero.CreatedAt,
+                IsInActiveParty = hero.IsInActiveParty,
+                PartySlot = hero.PartySlot,
+                FinalAttack = hero.CalculateAttack() + equipmentBonuses.attack,
+                FinalDefense = hero.CalculateDefense() + equipmentBonuses.defense,
+                FinalHealth = hero.MaxHealth + equipmentBonuses.health,
+                FinalMorale = hero.Morale + equipmentBonuses.morale
+            });
+        }
+
+        return Ok(heroDtos);
     }
 
     /// <summary>

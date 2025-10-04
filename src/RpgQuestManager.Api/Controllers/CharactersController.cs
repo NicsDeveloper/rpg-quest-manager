@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using RpgQuestManager.Api.Data;
 using RpgQuestManager.Api.Models;
+using RpgQuestManager.Api.Services;
 
 namespace RpgQuestManager.Api.Controllers;
 
@@ -13,7 +14,13 @@ namespace RpgQuestManager.Api.Controllers;
 public class CharactersController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
-    public CharactersController(ApplicationDbContext db) { _db = db; }
+    private readonly InventoryService _inventoryService;
+    
+    public CharactersController(ApplicationDbContext db, InventoryService inventoryService) 
+    { 
+        _db = db;
+        _inventoryService = inventoryService;
+    }
 
     private int GetCurrentUserId()
     {
@@ -46,6 +53,14 @@ public class CharactersController : ControllerBase
                 return NotFound(new { message = "Herói não encontrado" });
             }
 
+            // Calcular stats finais com equipamentos
+            var equipmentBonuses = await _inventoryService.GetEquipmentBonusesAsync(id);
+            
+            var finalAttack = hero.CalculateAttack() + equipmentBonuses.attack;
+            var finalDefense = hero.CalculateDefense() + equipmentBonuses.defense;
+            var finalHealth = hero.MaxHealth + equipmentBonuses.health;
+            var finalMorale = 100 + equipmentBonuses.morale;
+
             return Ok(new
             {
                 id = hero.Id,
@@ -61,7 +76,11 @@ public class CharactersController : ControllerBase
                 maxHealth = hero.MaxHealth,
                 isInActiveParty = hero.IsInActiveParty,
                 partySlot = hero.PartySlot,
-                createdAt = hero.CreatedAt
+                createdAt = hero.CreatedAt,
+                finalAttack = finalAttack,
+                finalDefense = finalDefense,
+                finalHealth = finalHealth,
+                finalMorale = finalMorale
             });
         }
         catch (UnauthorizedAccessException ex)

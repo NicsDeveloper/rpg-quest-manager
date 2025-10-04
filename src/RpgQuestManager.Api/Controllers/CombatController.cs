@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using RpgQuestManager.Api.Data;
 using RpgQuestManager.Api.Services;
+using RpgQuestManager.Api.Models;
 
 namespace RpgQuestManager.Api.Controllers;
 
@@ -14,7 +15,15 @@ public class CombatController : ControllerBase
     private readonly ApplicationDbContext _db;
     private readonly ICombatService _combat;
     private readonly QuestService _questService;
-    public CombatController(ApplicationDbContext db, ICombatService combat, QuestService questService) { _db = db; _combat = combat; _questService = questService; }
+    private readonly InventoryService _inventoryService;
+    
+    public CombatController(ApplicationDbContext db, ICombatService combat, QuestService questService, InventoryService inventoryService) 
+    { 
+        _db = db; 
+        _combat = combat; 
+        _questService = questService;
+        _inventoryService = inventoryService;
+    }
 
     public record AttackRequest(int heroId, int monsterId);
     public record AbilityRequest(int heroId, int monsterId, int abilityId);
@@ -26,14 +35,14 @@ public class CombatController : ControllerBase
     public async Task<IActionResult> StartCombat([FromBody] StartCombatRequest request)
     {
         var result = await _combat.StartCombatAsync(request.heroId, request.monsterId);
-        return Ok(FormatCombatResult(result));
+        return Ok(await FormatCombatResultAsync(result));
     }
 
     [HttpPost("attack")]
     public async Task<IActionResult> Attack([FromBody] AttackRequest request)
     {
         var result = await _combat.AttackAsync(request.heroId, request.monsterId);
-        return Ok(FormatCombatResult(result));
+        return Ok(await FormatCombatResultAsync(result));
     }
 
     [HttpPost("ability")]
@@ -42,7 +51,7 @@ public class CombatController : ControllerBase
         try
         {
             var result = await _combat.UseAbilityAsync(request.heroId, request.monsterId, request.abilityId);
-            return Ok(FormatCombatResult(result));
+            return Ok(await FormatCombatResultAsync(result));
         }
         catch (Exception ex)
         {
@@ -56,7 +65,7 @@ public class CombatController : ControllerBase
         try
         {
             var result = await _combat.UseItemAsync(request.heroId, request.monsterId, request.itemName);
-            return Ok(FormatCombatResult(result));
+            return Ok(await FormatCombatResultAsync(result));
         }
         catch (NotImplementedException)
         {
@@ -107,8 +116,15 @@ public class CombatController : ControllerBase
         });
     }
 
-    private object FormatCombatResult(CombatResult result)
+    private async Task<object> FormatCombatResultAsync(CombatResult result)
     {
+        // Calcular stats finais com equipamentos
+        var equipmentBonuses = await _inventoryService.GetEquipmentBonusesAsync(result.Hero.Id);
+        var finalAttack = result.Hero.CalculateAttack() + equipmentBonuses.attack;
+        var finalDefense = result.Hero.CalculateDefense() + equipmentBonuses.defense;
+        var finalHealth = result.Hero.MaxHealth + equipmentBonuses.health;
+        var finalMorale = result.Hero.Morale + equipmentBonuses.morale;
+
         return new
         {
             hero = new 
@@ -120,10 +136,10 @@ public class CombatController : ControllerBase
                 result.Hero.Experience,
                 nextLevelExperience = result.Hero.GetExperienceForNextLevel(),
                 health = result.Hero.CurrentHealth,
-                maxHealth = result.Hero.MaxHealth,
-                attack = result.Hero.CalculateAttack(),
-                defense = result.Hero.CalculateDefense(),
-                morale = result.Hero.Morale,
+                maxHealth = finalHealth,
+                attack = finalAttack,
+                defense = finalDefense,
+                morale = finalMorale,
                 moraleLevel = result.HeroMoraleLevel.ToString(),
                 gold = result.Hero.Gold
             },

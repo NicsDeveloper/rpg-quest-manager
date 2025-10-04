@@ -57,6 +57,10 @@ export default function Inventory() {
       // Atualizar estado local em tempo real
       equipItem(item, slot);
       
+      // Recarregar dados do herói para atualizar stats
+      const updatedHero = await heroService.getHero(currentHero.id);
+      setCurrentHero(updatedHero);
+      
       // Fechar o modal
       setShowItemModal(false);
       
@@ -81,6 +85,11 @@ export default function Inventory() {
     try {
       await inventoryService.unequipItem(currentHero.id, slot);
       await refreshInventory();
+      
+      // Recarregar dados do herói para atualizar stats
+      const updatedHero = await heroService.getHero(currentHero.id);
+      setCurrentHero(updatedHero);
+      
       showToast({
         type: 'success',
         title: 'Item removido!',
@@ -102,6 +111,11 @@ export default function Inventory() {
     try {
       await inventoryService.useItem(currentHero.id, item.id);
       await refreshInventory();
+      
+      // Recarregar dados do herói para atualizar stats
+      const updatedHero = await heroService.getHero(currentHero.id);
+      setCurrentHero(updatedHero);
+      
       setShowItemModal(false);
       showToast({
         type: 'success',
