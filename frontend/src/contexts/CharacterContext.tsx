@@ -1,15 +1,14 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { characterService, type Character, type CharacterStats } from '../services/characters';
+import { heroService, type Hero } from '../services/heroService';
 import { useAuth } from './AuthContext';
 import { cacheService } from '../services/cache';
 
 interface CharacterContextType {
-  character: Character | null;
-  stats: CharacterStats | null;
+  character: Hero | null;
   isLoading: boolean;
   error: string | null;
   refreshCharacter: () => Promise<void>;
-  updateCharacter: (updates: Partial<Character>) => Promise<void>;
+  updateCharacter: (updates: Partial<Hero>) => Promise<void>;
   updateCharacterGold: (newGold: number) => void;
   updateCharacterExperience: (newExperience: number) => void;
   updateCharacterLevel: (newLevel: number) => void;
@@ -20,8 +19,7 @@ const CharacterContext = createContext<CharacterContextType | undefined>(undefin
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [character, setCharacter] = useState<Character | null>(null);
-  const [stats, setStats] = useState<CharacterStats | null>(null);
+  const [character, setCharacter] = useState<Hero | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const loadingRef = useRef(false);
@@ -34,29 +32,36 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       setError(null);
       
-      const [characterData, statsData] = await Promise.all([
-        characterService.getCharacter(user.id),
-        characterService.getCharacterStats(user.id)
-      ]);
-      
-      setCharacter(characterData);
-      setStats(statsData);
+      // Buscar o primeiro herói da party ativa do usuário
+      const heroes = await heroService.getActiveParty();
+      if (heroes.length > 0) {
+        setCharacter(heroes[0]); // Usar o primeiro herói da party ativa
+      } else {
+        // Se não há heróis na party ativa, buscar todos os heróis do usuário
+        const allHeroes = await heroService.getMyHeroes();
+        if (allHeroes.length > 0) {
+          setCharacter(allHeroes[0]);
+        } else {
+          setCharacter(null);
+        }
+      }
     } catch (err: any) {
-      setError(err.message || 'Erro ao carregar personagem');
+      console.error('Erro ao carregar herói:', err);
+      setError(err.message || 'Erro ao carregar herói');
     } finally {
       setIsLoading(false);
       loadingRef.current = false;
     }
   }, [user]);
 
-  const updateCharacter = async (updates: Partial<Character>) => {
+  const updateCharacter = async (updates: Partial<Hero>) => {
     if (!character) return;
     
     try {
-      const updatedCharacter = await characterService.updateCharacter(character.id, updates);
+      const updatedCharacter = await heroService.updateHero(character.id, updates);
       setCharacter(updatedCharacter);
     } catch (err: any) {
-      setError(err.message || 'Erro ao atualizar personagem');
+      setError(err.message || 'Erro ao atualizar herói');
     }
   };
 
@@ -77,19 +82,18 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
   const updateCharacterHealth = (newHealth: number) => {
     if (!character) return;
-    setCharacter(prev => prev ? { ...prev, health: newHealth } : null);
+    setCharacter(prev => prev ? { ...prev, currentHealth: newHealth } : null);
   };
 
   useEffect(() => {
-    // Carregar o personagem do usuário autenticado
+    // Carregar o herói do usuário autenticado
     const loadCharacter = async () => {
-      console.log('[CharacterContext] Loading character, user:', user);
+      console.log('[CharacterContext] Loading hero, user:', user);
       
       if (!user) {
-        console.log('[CharacterContext] No user, skipping character load');
+        console.log('[CharacterContext] No user, skipping hero load');
         setIsLoading(false);
         setCharacter(null);
-        setStats(null);
         return;
       }
       
@@ -99,30 +103,26 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(true);
         setError(null);
         
-        // Limpar cache de personagens antigos
+        // Limpar cache antigo
         cacheService.clear();
         
-        // Usar o ID do usuário autenticado como characterId
-        console.log('[CharacterContext] Fetching character with user.id:', user.id);
-        const characterData = await characterService.getCharacter(user.id);
-        const statsData = await characterService.getCharacterStats(user.id);
+        // Buscar heróis do usuário
+        console.log('[CharacterContext] Fetching heroes for user.id:', user.id);
+        await refreshCharacter();
         
-        setCharacter(characterData);
-        setStats(statsData);
       } catch (err: any) {
-        console.error('[CharacterContext] Error loading character:', err);
-        setError(err.message || 'Erro ao carregar personagem');
+        console.error('[CharacterContext] Error loading hero:', err);
+        setError(err.message || 'Erro ao carregar herói');
       } finally {
         setIsLoading(false);
       }
     };
 
     loadCharacter();
-  }, [user]);
+  }, [user, refreshCharacter]);
 
   const value: CharacterContextType = {
     character,
-    stats,
     isLoading,
     error,
     refreshCharacter,

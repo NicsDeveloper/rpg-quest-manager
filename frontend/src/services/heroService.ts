@@ -77,6 +77,11 @@ class HeroService {
     await api.post(`/profile/remove-from-party/${heroId}`);
   }
 
+  async updateHero(heroId: number, updates: Partial<Hero>): Promise<Hero> {
+    const { data } = await api.put(`/profile/hero/${heroId}`, updates);
+    return data;
+  }
+
   async markTutorialSeen(): Promise<void> {
     await api.post('/profile/mark-tutorial-seen');
   }

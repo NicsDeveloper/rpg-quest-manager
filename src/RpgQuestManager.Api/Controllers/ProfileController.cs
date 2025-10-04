@@ -348,6 +348,51 @@ public class ProfileController : ControllerBase
 
         return Ok(new { message = "Tutorial marcado como visualizado." });
     }
+
+    /// <summary>
+    /// Atualiza um herói
+    /// </summary>
+    [HttpPut("hero/{heroId}")]
+    [ProducesResponseType(typeof(HeroDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<HeroDto>> UpdateHero(int heroId, [FromBody] UpdateHeroRequest request)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var hero = await _context.Heroes.FindAsync(heroId);
+        if (hero == null || hero.UserId != userId || hero.IsDeleted)
+        {
+            return NotFound("Herói não encontrado");
+        }
+
+        // Atualizar campos permitidos
+        if (request.Name != null) hero.Name = request.Name;
+        if (request.Gold.HasValue) hero.Gold = request.Gold.Value;
+        if (request.Experience.HasValue) hero.Experience = request.Experience.Value;
+        if (request.Level.HasValue) hero.Level = request.Level.Value;
+        if (request.CurrentHealth.HasValue) hero.CurrentHealth = request.CurrentHealth.Value;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new HeroDto
+        {
+            Id = hero.Id,
+            Name = hero.Name,
+            Class = hero.Class,
+            Level = hero.Level,
+            Experience = hero.Experience,
+            Strength = hero.BaseStrength + hero.BonusStrength,
+            Intelligence = hero.BaseIntelligence + hero.BonusIntelligence,
+            Dexterity = hero.BaseDexterity + hero.BonusDexterity,
+            Gold = hero.Gold,
+            MaxHealth = hero.MaxHealth,
+            CurrentHealth = hero.CurrentHealth,
+            CreatedAt = hero.CreatedAt,
+            IsInActiveParty = hero.IsInActiveParty,
+            PartySlot = hero.PartySlot
+        });
+    }
 }
 
 // DTOs
@@ -385,4 +430,13 @@ public class CreateHeroRequest
 {
     public string Name { get; set; } = string.Empty;
     public string Class { get; set; } = string.Empty;
+}
+
+public class UpdateHeroRequest
+{
+    public string? Name { get; set; }
+    public int? Gold { get; set; }
+    public int? Experience { get; set; }
+    public int? Level { get; set; }
+    public int? CurrentHealth { get; set; }
 }
