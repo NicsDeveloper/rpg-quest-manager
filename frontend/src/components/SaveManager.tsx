@@ -3,6 +3,7 @@ import { saveSystem, type SaveData } from '../services/saveSystem';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
+import { useToast } from './Toast';
 import { 
   Save, 
   Download, 
@@ -31,6 +32,7 @@ export function SaveManager({
   characterData, 
   gameState 
 }: SaveManagerProps) {
+  const { showToast } = useToast();
   const [saves, setSaves] = useState<SaveData[]>([]);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importData, setImportData] = useState('');
@@ -50,7 +52,11 @@ export function SaveManager({
 
   const handleSaveGame = async () => {
     if (!characterId || !characterData) {
-      alert('Dados do personagem não disponíveis');
+      showToast({
+        type: 'error',
+        title: 'Dados não disponíveis',
+        message: 'Dados do personagem não estão disponíveis para salvar.'
+      });
       return;
     }
 
@@ -59,9 +65,18 @@ export function SaveManager({
       setSaveName('');
       setShowSaveModal(false);
       loadSaves();
+      showToast({
+        type: 'success',
+        title: 'Jogo salvo!',
+        message: 'Seu progresso foi salvo com sucesso.'
+      });
     } catch (error) {
       console.error('Erro ao salvar:', error);
-      alert('Erro ao salvar o jogo');
+      showToast({
+        type: 'error',
+        title: 'Erro ao salvar',
+        message: 'Não foi possível salvar o jogo. Tente novamente.'
+      });
     }
   };
 
@@ -100,13 +115,25 @@ export function SaveManager({
         setImportData('');
         setShowImportModal(false);
         loadSaves();
-        alert('Save importado com sucesso!');
+        showToast({
+          type: 'success',
+          title: 'Save importado!',
+          message: 'O save foi importado com sucesso.'
+        });
       } else {
-        alert('Erro ao importar save. Verifique os dados.');
+        showToast({
+          type: 'error',
+          title: 'Erro ao importar',
+          message: 'Verifique se os dados do save estão corretos.'
+        });
       }
     } catch (error) {
       console.error('Erro ao importar:', error);
-      alert('Erro ao importar save');
+      showToast({
+        type: 'error',
+        title: 'Erro ao importar',
+        message: 'Não foi possível importar o save.'
+      });
     }
   };
 

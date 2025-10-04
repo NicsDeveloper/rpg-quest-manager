@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCharacter } from '../contexts/CharacterContext';
 import { questsService, type Quest } from '../services/quests';
 import { FadeIn, SlideIn } from '../components/animations';
+import { useToast } from '../components/Toast';
 import { 
   Map, 
   Target, 
@@ -17,6 +18,7 @@ import {
 
 export default function Quests() {
   const { character, refreshCharacter } = useCharacter();
+  const { showToast } = useToast();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null);
@@ -65,12 +67,21 @@ export default function Quests() {
     
     try {
       setStartingQuest(true);
-      await questsService.startQuest(character.id, quest.id);
+      await questsService.startQuest(quest.id);
       await refreshCharacter();
       setShowQuestModal(false);
       await loadQuests();
+      showToast({
+        type: 'success',
+        title: 'Quest iniciada!',
+        message: `${quest.title} foi iniciada com sucesso.`
+      });
     } catch (error: any) {
-      alert(error.message || 'Erro ao iniciar quest');
+      showToast({
+        type: 'error',
+        title: 'Erro ao iniciar quest',
+        message: error.message || 'Tente novamente mais tarde.'
+      });
     } finally {
       setStartingQuest(false);
     }
@@ -80,12 +91,21 @@ export default function Quests() {
     if (!character) return;
     
     try {
-      await questsService.completeQuest(character.id, quest.id);
+      await questsService.completeQuest(quest.id);
       await refreshCharacter();
       setShowQuestModal(false);
       await loadQuests();
+      showToast({
+        type: 'success',
+        title: 'Quest completada!',
+        message: `${quest.title} foi completada com sucesso.`
+      });
     } catch (error: any) {
-      alert(error.message || 'Erro ao completar quest');
+      showToast({
+        type: 'error',
+        title: 'Erro ao completar quest',
+        message: error.message || 'Tente novamente mais tarde.'
+      });
     }
   };
 
@@ -94,31 +114,46 @@ export default function Quests() {
     return environments[environment] || 'Desconhecido';
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
-      case 'easy': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'hard': return 'bg-red-100 text-red-800';
-      case 'epic': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getDifficultyColor = (difficulty: number | string) => {
+    const diff = typeof difficulty === 'number' ? difficulty : difficulty?.toLowerCase();
+    switch (diff) {
+      case 0:
+      case 'easy': return 'bg-green-900/30 text-green-400 border-green-700/30';
+      case 1:
+      case 'medium': return 'bg-yellow-900/30 text-yellow-400 border-yellow-700/30';
+      case 2:
+      case 'hard': return 'bg-red-900/30 text-red-400 border-red-700/30';
+      case 3:
+      case 'epic': return 'bg-purple-900/30 text-purple-400 border-purple-700/30';
+      default: return 'bg-gray-900/30 text-gray-400 border-gray-700/30';
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'available': return 'bg-blue-100 text-blue-800';
-      case 'in_progress': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getStatusColor = (status: number | string) => {
+    const stat = typeof status === 'number' ? status : status?.toLowerCase();
+    switch (stat) {
+      case 0:
+      case 'available': return 'bg-blue-900/30 text-blue-400 border-blue-700/30';
+      case 1:
+      case 'in_progress': return 'bg-yellow-900/30 text-yellow-400 border-yellow-700/30';
+      case 2:
+      case 'completed': return 'bg-green-900/30 text-green-400 border-green-700/30';
+      case 3:
+      case 'failed': return 'bg-red-900/30 text-red-400 border-red-700/30';
+      default: return 'bg-gray-900/30 text-gray-400 border-gray-700/30';
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStatusIcon = (status: number | string) => {
+    const stat = typeof status === 'number' ? status : status?.toLowerCase();
+    switch (stat) {
+      case 0:
       case 'available': return Play;
+      case 1:
       case 'in_progress': return Clock;
+      case 2:
       case 'completed': return CheckCircle;
+      case 3:
       case 'failed': return XCircle;
       default: return Target;
     }
@@ -126,8 +161,8 @@ export default function Quests() {
 
   const filteredQuests = quests.filter(quest => 
     searchTerm === '' || 
-    quest.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quest.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (quest.title && quest.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (quest.description && quest.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (loading) {
@@ -220,8 +255,8 @@ export default function Quests() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredQuests.map((quest, index) => {
             const StatusIcon = getStatusIcon(quest.status || 'available');
-            const difficultyColor = getDifficultyColor(quest.difficulty || 'medium');
-            const statusColor = getStatusColor(quest.status || 'available');
+            const difficultyColor = getDifficultyColor(quest.difficulty || 1);
+            const statusColor = getStatusColor(quest.status || 0);
             
             return (
               <SlideIn key={quest.id} direction="up" delay={100 + (index * 50)}>
@@ -238,10 +273,28 @@ export default function Quests() {
                     </div>
                     <div className="flex space-x-2">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${difficultyColor}`}>
-                        {quest.difficulty || 'Medium'}
+{(() => {
+                          const diff = quest.difficulty || 1;
+                          switch (diff) {
+                            case 0: return 'Fácil';
+                            case 1: return 'Médio';
+                            case 2: return 'Difícil';
+                            case 3: return 'Épico';
+                            default: return 'Médio';
+                          }
+                        })()}
                       </span>
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>
-                        {quest.status || 'Available'}
+{(() => {
+                          const stat = quest.status || 0;
+                          switch (stat) {
+                            case 0: return 'Disponível';
+                            case 1: return 'Em Progresso';
+                            case 2: return 'Completada';
+                            case 3: return 'Falhada';
+                            default: return 'Disponível';
+                          }
+                        })()}
                       </span>
                     </div>
                   </div>
@@ -266,7 +319,7 @@ export default function Quests() {
                     </div>
                   </div>
                   
-                  {quest.status === 'in_progress' && quest.progress !== undefined && (
+                  {quest.status === 1 && quest.progress !== undefined && (
                     <div className="mt-4">
                       <div className="flex items-center justify-between text-sm text-gray-300 mb-2">
                         <span>Progresso</span>
@@ -310,11 +363,29 @@ export default function Quests() {
                       {selectedQuest.title}
                     </h2>
                     <div className="flex items-center space-x-2 mt-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getDifficultyColor(selectedQuest.difficulty || 'medium')}`}>
-                        {selectedQuest.difficulty || 'Medium'}
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getDifficultyColor(selectedQuest.difficulty || 1)}`}>
+                        {(() => {
+                          const diff = selectedQuest.difficulty || 1;
+                          switch (diff) {
+                            case 0: return 'Fácil';
+                            case 1: return 'Médio';
+                            case 2: return 'Difícil';
+                            case 3: return 'Épico';
+                            default: return 'Médio';
+                          }
+                        })()}
                       </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(selectedQuest.status || 'available')}`}>
-                        {selectedQuest.status || 'Available'}
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(selectedQuest.status || 0)}`}>
+                        {(() => {
+                          const stat = selectedQuest.status || 0;
+                          switch (stat) {
+                            case 0: return 'Disponível';
+                            case 1: return 'Em Progresso';
+                            case 2: return 'Completada';
+                            case 3: return 'Falhada';
+                            default: return 'Disponível';
+                          }
+                        })()}
                       </span>
                     </div>
                   </div>
@@ -356,7 +427,7 @@ export default function Quests() {
                 </div>
 
                 {/* Progress */}
-                {selectedQuest.status === 'in_progress' && selectedQuest.progress !== undefined && (
+                {selectedQuest.status === 1 && selectedQuest.progress !== undefined && (
                   <div className="card bg-blue-900/20 backdrop-blur-sm">
                     <h4 className="text-lg font-bold text-gradient mb-3">Progresso</h4>
                     <div className="flex items-center justify-between text-sm text-gray-300 mb-3">
@@ -389,7 +460,7 @@ export default function Quests() {
 
                 {/* Actions */}
                 <div className="flex space-x-3">
-                  {selectedQuest.status === 'available' && (
+                  {selectedQuest.status === 0 && (
                     <button
                       onClick={() => handleStartQuest(selectedQuest)}
                       disabled={startingQuest}
@@ -404,7 +475,7 @@ export default function Quests() {
                     </button>
                   )}
                   
-                  {selectedQuest.status === 'in_progress' && selectedQuest.progress === 100 && (
+                  {selectedQuest.status === 1 && selectedQuest.progress === 100 && (
                     <button
                       onClick={() => handleCompleteQuest(selectedQuest)}
                       className="btn btn-primary flex-1"

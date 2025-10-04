@@ -51,7 +51,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="glass border-b border-gray-700/50 shadow-2xl">
+      <header className="glass border-b border-gray-700/50 shadow-2xl" data-tutorial="dashboard">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-4">
@@ -146,6 +146,7 @@ export function Layout({ children }: LayoutProps) {
                           ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/50' 
                           : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800/50'
                       }`}
+                      data-tutorial={item.name.toLowerCase()}
                     >
                       <Icon className="h-6 w-6" />
                       <span className="font-bold">{item.name}</span>

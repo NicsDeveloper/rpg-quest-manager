@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useCharacter } from '../contexts/CharacterContext';
 import { shopService, type ShopItem, type ShopType, type Rarity } from '../services/shop';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
+import { FadeIn, SlideIn } from '../components/animations';
+import { useToast } from '../components/Toast';
 import { 
   ShoppingBag, 
   Search, 
@@ -12,11 +11,13 @@ import {
   Shield,
   Gem,
   Package,
-  ShoppingCart
+  ShoppingCart,
+  X
 } from 'lucide-react';
 
 export default function Shop() {
   const { character, refreshCharacter } = useCharacter();
+  const { showToast } = useToast();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [shopTypes, setShopTypes] = useState<ShopType[]>([]);
   const [rarities, setRarities] = useState<Rarity[]>([]);
@@ -91,7 +92,11 @@ export default function Shop() {
     if (!character) return;
     
     if (character.gold < item.shopPrice) {
-      alert('Ouro insuficiente!');
+      showToast({
+        type: 'error',
+        title: 'Ouro insuficiente!',
+        message: `Você precisa de ${item.shopPrice} de ouro para comprar este item.`
+      });
       return;
     }
 
@@ -100,9 +105,17 @@ export default function Shop() {
       await shopService.buyItem(character.id, item.id, 1);
       await refreshCharacter();
       setShowItemModal(false);
-      alert('Item comprado com sucesso!');
+      showToast({
+        type: 'success',
+        title: 'Item comprado!',
+        message: `${item.name} foi adicionado ao seu inventário.`
+      });
     } catch (error: any) {
-      alert(error.message || 'Erro ao comprar item');
+      showToast({
+        type: 'error',
+        title: 'Erro ao comprar item',
+        message: error.message || 'Tente novamente mais tarde.'
+      });
     } finally {
       setBuying(false);
     }
@@ -120,13 +133,13 @@ export default function Shop() {
 
   const getRarityColor = (rarity: string) => {
     switch (rarity.toLowerCase()) {
-      case 'common': return 'bg-gray-100 text-gray-800';
-      case 'uncommon': return 'bg-green-100 text-green-800';
-      case 'rare': return 'bg-blue-100 text-blue-800';
-      case 'epic': return 'bg-purple-100 text-purple-800';
-      case 'legendary': return 'bg-yellow-100 text-yellow-800';
-      case 'mythic': return 'bg-pink-100 text-pink-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'common': return 'bg-gray-900/30 text-gray-400 border-gray-700/30';
+      case 'uncommon': return 'bg-green-900/30 text-green-400 border-green-700/30';
+      case 'rare': return 'bg-blue-900/30 text-blue-400 border-blue-700/30';
+      case 'epic': return 'bg-purple-900/30 text-purple-400 border-purple-700/30';
+      case 'legendary': return 'bg-yellow-900/30 text-yellow-400 border-yellow-700/30';
+      case 'mythic': return 'bg-pink-900/30 text-pink-400 border-pink-700/30';
+      default: return 'bg-gray-900/30 text-gray-400 border-gray-700/30';
     }
   };
 
@@ -136,239 +149,303 @@ export default function Shop() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(15)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-amber-400 rounded-full opacity-30 animate-pulse"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                animationDuration: `${2 + Math.random() * 3}s`
+              }}
+            />
+          ))}
+        </div>
+        <div className="text-center relative z-10">
+          <div className="inline-block p-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full shadow-lg shadow-amber-500/50 animate-pulse mb-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent"></div>
+          </div>
+          <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-500 to-orange-600 mb-2">Carregando Loja...</h2>
+          <p className="text-gray-400 text-lg">Preparando tesouros épicos</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Loja</h1>
-        <p className="text-gray-600 mt-2">Compre equipamentos e itens</p>
-      </div>
-
-      {/* Character Gold */}
-      {character && (
-        <Card>
-          <div className="flex items-center space-x-3">
-            <Coins className="h-6 w-6 text-yellow-500" />
-            <div>
-              <p className="text-sm text-gray-600">Ouro Disponível</p>
-              <p className="text-2xl font-bold text-gray-900">{character.gold}</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <FadeIn delay={0}>
+          <div className="text-center">
+            <h1 className="hero-title text-6xl font-black mb-4">Loja</h1>
+            <p className="text-xl text-gray-300">Compre equipamentos e itens épicos</p>
           </div>
-        </Card>
-      )}
+        </FadeIn>
 
-      {/* Filters */}
-      <Card title="Filtros">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Shop Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Loja</label>
-            <select
-              value={selectedShopType}
-              onChange={(e) => setSelectedShopType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {shopTypes.map((type) => (
-                <option key={type.type} value={type.type}>
-                  {type.description}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Item Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Item</label>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todos</option>
-              <option value="weapon">Armas</option>
-              <option value="armor">Armaduras</option>
-              <option value="accessory">Acessórios</option>
-              <option value="potion">Poções</option>
-            </select>
-          </div>
-
-          {/* Rarity */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Raridade</label>
-            <select
-              value={selectedRarity}
-              onChange={(e) => setSelectedRarity(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todas</option>
-              {rarities.map((rarity) => (
-                <option key={rarity.rarity} value={rarity.rarity}>
-                  {rarity.description}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Search */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Nome do item..."
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Items Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {items.map((item) => {
-          const ItemIcon = getItemTypeIcon(item.type);
-          const rarityColor = getRarityColor(item.rarity);
-          const affordable = canAfford(item.shopPrice);
-          
-          return (
-            <Card key={item.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-              <div
-                onClick={() => {
-                  setSelectedItem(item);
-                  setShowItemModal(true);
-                }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <ItemIcon className="h-8 w-8 text-gray-600" />
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${rarityColor}`}>
-                    {item.rarity}
-                  </span>
+        {/* Character Gold */}
+        {character && (
+          <SlideIn direction="up" delay={100}>
+            <div className="card backdrop-blur-sm bg-black/20">
+              <div className="flex items-center justify-center space-x-4">
+                <div className="p-4 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl shadow-lg">
+                  <Coins className="h-8 w-8 text-white" />
                 </div>
-                
-                <h3 className="font-semibold text-gray-900 mb-2">{item.name}</h3>
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
-                
-                <div className="flex items-center justify-between text-sm mb-3">
-                  <span className="text-gray-500">Nível {item.level}</span>
-                  <div className="flex items-center space-x-1">
-                    <Coins className="h-4 w-4 text-yellow-500" />
-                    <span className={`font-medium ${affordable ? 'text-gray-900' : 'text-red-600'}`}>
-                      {item.shopPrice}
+                <div className="text-center">
+                  <p className="text-sm text-gray-400 mb-1">Ouro Disponível</p>
+                  <p className="text-4xl font-black text-gradient">{character.gold}</p>
+                </div>
+              </div>
+            </div>
+          </SlideIn>
+        )}
+
+        {/* Filters */}
+        <SlideIn direction="left" delay={200}>
+          <div className="card backdrop-blur-sm bg-black/20">
+            <h3 className="text-xl font-bold text-gradient mb-6">Filtros</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Shop Type */}
+              <div>
+                <label className="label text-amber-400 mb-2">Tipo de Loja</label>
+                <select
+                  value={selectedShopType}
+                  onChange={(e) => setSelectedShopType(e.target.value)}
+                  className="input w-full"
+                >
+                  {shopTypes.map((type) => (
+                    <option key={type.type} value={type.type}>
+                      {type.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Item Type */}
+              <div>
+                <label className="label text-amber-400 mb-2">Tipo de Item</label>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="">Todos</option>
+                  <option value="weapon">Armas</option>
+                  <option value="armor">Armaduras</option>
+                  <option value="accessory">Acessórios</option>
+                  <option value="potion">Poções</option>
+                </select>
+              </div>
+
+              {/* Rarity */}
+              <div>
+                <label className="label text-amber-400 mb-2">Raridade</label>
+                <select
+                  value={selectedRarity}
+                  onChange={(e) => setSelectedRarity(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="">Todas</option>
+                  {rarities.map((rarity) => (
+                    <option key={rarity.rarity} value={rarity.rarity}>
+                      {rarity.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search */}
+              <div>
+                <label className="label text-amber-400 mb-2">Buscar</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-amber-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Nome do item..."
+                    className="input w-full pl-12"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </SlideIn>
+
+        {/* Items Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {items.map((item, index) => {
+            const ItemIcon = getItemTypeIcon(item.type);
+            const rarityColor = getRarityColor(item.rarity);
+            const affordable = canAfford(item.shopPrice);
+            
+            return (
+              <SlideIn key={item.id} direction="up" delay={300 + (index * 50)}>
+                <div
+                  className="card backdrop-blur-sm bg-black/20 hover:bg-black/30 transition-all duration-300 cursor-pointer group hover:scale-105"
+                  onClick={() => {
+                    setSelectedItem(item);
+                    setShowItemModal(true);
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-amber-500/50 transition-shadow">
+                      <ItemIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${rarityColor}`}>
+                      {item.rarity}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-xl font-bold text-gradient mb-3">{item.name}</h3>
+                  <p className="text-gray-300 mb-4 line-clamp-2">{item.description}</p>
+                  
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400">Nível:</span>
+                      <span className="font-bold text-blue-400">{item.level}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400">Preço:</span>
+                      <div className="flex items-center space-x-1">
+                        <Coins className="h-4 w-4 text-yellow-400" />
+                        <span className={`font-bold ${affordable ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {item.shopPrice}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button
+                    className={`btn w-full mt-4 ${affordable ? 'btn-primary' : 'btn-secondary'}`}
+                    disabled={!affordable}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (affordable) {
+                        handleBuyItem(item);
+                      }
+                    }}
+                  >
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    {affordable ? 'Comprar' : 'Sem Ouro'}
+                  </button>
+                </div>
+              </SlideIn>
+            );
+          })}
+        </div>
+
+        {items.length === 0 && (
+          <div className="text-center py-16">
+            <div className="p-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full shadow-lg shadow-amber-500/50 mx-auto w-24 h-24 flex items-center justify-center mb-6">
+              <ShoppingBag className="h-12 w-12 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gradient mb-2">Nenhum item encontrado</h3>
+            <p className="text-gray-400">Tente ajustar os filtros ou buscar por outro termo</p>
+          </div>
+        )}
+
+        {/* Item Details Modal */}
+        {showItemModal && selectedItem && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="card backdrop-blur-sm bg-black/30 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-fadeIn">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg">
+                    {React.createElement(getItemTypeIcon(selectedItem.type), { className: "h-8 w-8 text-white" })}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gradient">
+                      {selectedItem.name}
+                    </h2>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getRarityColor(selectedItem.rarity)}`}>
+                        {selectedItem.rarity}
+                      </span>
+                      <span className="text-sm text-gray-400">Nível {selectedItem.level}</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowItemModal(false)}
+                  className="text-gray-400 hover:text-amber-400 transition-colors p-2 rounded-lg hover:bg-gray-800/50"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <p className="text-gray-300 leading-relaxed">{selectedItem.description}</p>
+                </div>
+
+                {/* Item Stats */}
+                {(selectedItem.attackBonus || selectedItem.defenseBonus || selectedItem.healthBonus || selectedItem.moraleBonus) && (
+                  <div className="card bg-black/20 backdrop-blur-sm">
+                    <h4 className="text-lg font-bold text-gradient mb-4">Atributos</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      {selectedItem.attackBonus && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Ataque:</span>
+                          <span className="font-bold text-green-400">+{selectedItem.attackBonus}</span>
+                        </div>
+                      )}
+                      {selectedItem.defenseBonus && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Defesa:</span>
+                          <span className="font-bold text-blue-400">+{selectedItem.defenseBonus}</span>
+                        </div>
+                      )}
+                      {selectedItem.healthBonus && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Vida:</span>
+                          <span className="font-bold text-red-400">+{selectedItem.healthBonus}</span>
+                        </div>
+                      )}
+                      {selectedItem.moraleBonus && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Moral:</span>
+                          <span className="font-bold text-purple-400">+{selectedItem.moraleBonus}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Price */}
+                <div className="card bg-yellow-900/20 backdrop-blur-sm">
+                  <h4 className="text-lg font-bold text-gradient mb-3">Preço</h4>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg">
+                      <Coins className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-gray-300 font-bold text-2xl">
+                      {selectedItem.shopPrice} de ouro
                     </span>
                   </div>
                 </div>
-                
-                <Button
-                  className="w-full"
-                  disabled={!affordable}
-                  variant={affordable ? 'primary' : 'secondary'}
+
+                {/* Buy Button */}
+                <button
+                  onClick={() => handleBuyItem(selectedItem)}
+                  disabled={!canAfford(selectedItem.shopPrice) || buying}
+                  className={`btn w-full ${canAfford(selectedItem.shopPrice) ? 'btn-primary' : 'btn-secondary'}`}
                 >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  {affordable ? 'Comprar' : 'Sem Ouro'}
-                </Button>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      {items.length === 0 && (
-        <div className="text-center py-12">
-          <ShoppingBag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">Nenhum item encontrado</p>
-        </div>
-      )}
-
-      {/* Item Details Modal */}
-      <Modal
-        isOpen={showItemModal}
-        onClose={() => setShowItemModal(false)}
-        title={selectedItem?.name}
-        size="md"
-      >
-        {selectedItem && (
-          <div className="space-y-4">
-            <div className="flex items-start space-x-4">
-              <div className="p-3 bg-gray-100 rounded-lg">
-                {React.createElement(getItemTypeIcon(selectedItem.type), { className: "h-8 w-8 text-gray-600" })}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRarityColor(selectedItem.rarity)}`}>
-                    {selectedItem.rarity}
-                  </span>
-                  <span className="text-sm text-gray-600">Nível {selectedItem.level}</span>
-                </div>
-                <p className="text-gray-700">{selectedItem.description}</p>
+                  {buying ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                  ) : (
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                  )}
+                  {canAfford(selectedItem.shopPrice) ? 'Comprar' : 'Ouro Insuficiente'}
+                </button>
               </div>
             </div>
-
-            {/* Item Stats */}
-            {(selectedItem.attackBonus || selectedItem.defenseBonus || selectedItem.healthBonus || selectedItem.moraleBonus) && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Atributos</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {selectedItem.attackBonus && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Ataque:</span>
-                      <span className="font-medium text-green-600">+{selectedItem.attackBonus}</span>
-                    </div>
-                  )}
-                  {selectedItem.defenseBonus && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Defesa:</span>
-                      <span className="font-medium text-blue-600">+{selectedItem.defenseBonus}</span>
-                    </div>
-                  )}
-                  {selectedItem.healthBonus && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Vida:</span>
-                      <span className="font-medium text-red-600">+{selectedItem.healthBonus}</span>
-                    </div>
-                  )}
-                  {selectedItem.moraleBonus && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Moral:</span>
-                      <span className="font-medium text-purple-600">+{selectedItem.moraleBonus}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Price */}
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Coins className="h-5 w-5 text-yellow-600" />
-                  <span className="font-medium text-gray-900">Preço</span>
-                </div>
-                <span className="text-2xl font-bold text-gray-900">{selectedItem.shopPrice}</span>
-              </div>
-            </div>
-
-            {/* Buy Button */}
-            <Button
-              onClick={() => handleBuyItem(selectedItem)}
-              loading={buying}
-              disabled={!canAfford(selectedItem.shopPrice)}
-              className="w-full"
-              size="lg"
-            >
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              {canAfford(selectedItem.shopPrice) ? 'Comprar' : 'Ouro Insuficiente'}
-            </Button>
           </div>
         )}
-      </Modal>
+      </div>
     </div>
   );
 }

@@ -7,40 +7,48 @@ export interface Quest {
   environment: number;
   experienceReward: number;
   requiredLevel?: number;
-  difficulty?: string;
-  category?: string;
-  status?: string;
+  difficulty?: number;
+  category?: number;
+  status?: number;
   progress?: number;
   goldReward?: number;
+  introductionText?: string;
+  completionText?: string;
+  targetMonsterName?: string;
+  targetMonsterType?: number;
+  prerequisites?: any[];
+  rewards?: string[];
+  isRepeatable?: boolean;
+  estimatedDuration?: number;
 }
 
 export const questsService = {
   async getAllQuests(): Promise<Quest[]> {
-    const { data } = await api.get('/api/quests');
+    const { data } = await api.get('/quests');
     return data;
   },
 
   async getRecommendedQuests(level: number): Promise<Quest[]> {
-    const { data } = await api.get(`/api/quests/recommended/${level}`);
+    const { data } = await api.get(`/quests/recommended/${level}`);
     return data;
   },
 
   async getAvailableQuests(characterId: number): Promise<Quest[]> {
-    const { data } = await api.get(`/api/quests/available/${characterId}`);
+    const { data } = await api.get(`/quests/available/${characterId}`);
     return data;
   },
 
   async getCompletedQuests(characterId: number): Promise<Quest[]> {
-    const { data } = await api.get(`/api/quests/completed/${characterId}`);
+    const { data } = await api.get(`/quests/completed/${characterId}`);
     return data;
   },
 
-  async startQuest(characterId: number, questId: number): Promise<void> {
-    await api.post('/api/quests/start', { characterId, questId });
+  async startQuest(questId: number): Promise<void> {
+    await api.post(`/quests/${questId}/start`);
   },
 
-  async completeQuest(characterId: number, questId: number): Promise<void> {
-    await api.post('/api/quests/complete', { characterId, questId });
+  async completeQuest(questId: number): Promise<void> {
+    await api.post(`/quests/${questId}/complete`);
   }
 };
 

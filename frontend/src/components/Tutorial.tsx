@@ -167,6 +167,22 @@ export function Tutorial({ isOpen, onClose, onComplete }: TutorialProps) {
   const currentStepData = tutorialSteps[currentStep];
   const StepIcon = getStepIcon(currentStepData.id);
 
+  // Highlight target element if specified
+  useEffect(() => {
+    if (currentStepData.target) {
+      const targetElement = document.querySelector(currentStepData.target);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add highlight effect
+        targetElement.classList.add('ring-2', 'ring-amber-400', 'ring-opacity-75');
+        
+        return () => {
+          targetElement.classList.remove('ring-2', 'ring-amber-400', 'ring-opacity-75');
+        };
+      }
+    }
+  }, [currentStepData.target]);
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="card w-full max-w-md mx-4 animate-fadeIn">

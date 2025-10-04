@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { CharacterProvider } from './contexts/CharacterContext'
 import { Layout } from './components/Layout'
 import { Tutorial } from './components/Tutorial'
+import { ToastProvider } from './components/Toast'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Inventory from './pages/Inventory'
@@ -24,7 +25,10 @@ function AppRoutes() {
     // Verificar se é a primeira vez que o usuário acessa
     const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
     if (isAuthenticated && !hasSeenTutorial) {
-      setShowTutorial(true);
+      // Delay para garantir que a interface esteja carregada
+      setTimeout(() => {
+        setShowTutorial(true);
+      }, 1000);
     }
   }, [isAuthenticated]);
 
@@ -102,7 +106,9 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   )

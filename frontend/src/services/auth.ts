@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { api } from './api';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -39,6 +40,8 @@ class AuthService {
 
   private setAuthHeader(token: string) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    // Também atualizar o interceptor da instância api
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
@@ -52,6 +55,7 @@ class AuthService {
       
       return response.data;
     } catch (error: any) {
+      console.error('Login error:', error);
       throw new Error(error.response?.data?.message || 'Erro ao fazer login');
     }
   }
@@ -67,6 +71,7 @@ class AuthService {
       
       return response.data;
     } catch (error: any) {
+      console.error('Register error:', error);
       throw new Error(error.response?.data?.message || 'Erro ao registrar usuário');
     }
   }
@@ -77,9 +82,14 @@ class AuthService {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/validate`, {
         token: this.token
+      }, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        }
       });
       return response.data.user;
     } catch (error) {
+      console.error('Token validation error:', error);
       this.logout();
       return null;
     }
@@ -89,6 +99,7 @@ class AuthService {
     this.token = null;
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
+    delete api.defaults.headers.common['Authorization'];
   }
 
   isAuthenticated(): boolean {

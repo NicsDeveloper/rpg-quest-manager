@@ -72,7 +72,7 @@ export default function Combat() {
     setLoading(true);
     soundService.playClick();
     try {
-      const { data } = await api.post('/api/combat/start', { 
+      const { data } = await api.post('/combat/start', { 
         characterId: character.id, 
         monsterId: monsterId 
       });
@@ -92,7 +92,7 @@ export default function Combat() {
     setLoading(true);
     soundService.playClick();
     try {
-      const { data } = await api.post('/api/combat/attack', { 
+      const { data } = await api.post('/combat/attack', { 
         characterId: character.id, 
         monsterId: combatState.monster.id 
       });
@@ -125,7 +125,7 @@ export default function Combat() {
     setLoading(true);
     soundService.playClick();
     try {
-      const { data } = await api.post('/api/combat/escape', { 
+      const { data } = await api.post('/combat/escape', { 
         characterId: character.id, 
         monsterId: combatState.monster.id 
       });
