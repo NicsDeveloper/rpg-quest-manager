@@ -21,17 +21,21 @@ public class DropService
         var monster = await _db.Monsters.FindAsync(monsterId);
         if (monster == null) return new List<Item>();
 
-        return await _db.Items
+        var allItems = await _db.Items.ToListAsync();
+        
+        return allItems
             .Where(i => i.DroppedBy.Contains(monster.Type) || 
                        i.FoundIn.Contains(monster.Habitat))
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<List<Item>> GetEnvironmentDropsAsync(EnvironmentType environment)
     {
-        return await _db.Items
+        var allItems = await _db.Items.ToListAsync();
+        
+        return allItems
             .Where(i => i.FoundIn.Contains(environment))
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<List<Item>> GetQuestRewardsAsync(int questId)
@@ -39,11 +43,12 @@ public class DropService
         var quest = await _db.Quests.FindAsync(questId);
         if (quest == null) return new List<Item>();
 
-        // Buscar itens que podem ser recompensas de missão
-        return await _db.Items
+        var allItems = await _db.Items.ToListAsync();
+        
+        return allItems
             .Where(i => i.Type == ItemType.Quest || 
                        (i.FoundIn.Contains(quest.Environment) && i.Rarity >= ItemRarity.Rare))
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<List<Item>> RollMonsterDropsAsync(int monsterId, int characterLevel)

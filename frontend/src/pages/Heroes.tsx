@@ -332,31 +332,59 @@ export const Heroes = () => {
                         <Heart className="w-4 h-4 text-red-400" />
                         <span className="text-gray-300 text-sm">Vida</span>
                       </div>
-                      <span className="text-white font-semibold">{hero.currentHealth}/{hero.maxHealth}</span>
+                      <span className="text-white font-semibold">
+                        {hero.currentHealth}/{hero.finalHealth || hero.maxHealth}
+                        {hero.finalHealth && hero.finalHealth > hero.maxHealth && (
+                          <span className="text-green-400 text-xs ml-1">
+                            (+{hero.finalHealth - hero.maxHealth})
+                          </span>
+                        )}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Sword className="w-4 h-4 text-blue-400" />
-                        <span className="text-gray-300 text-sm">Força</span>
+                        <Sword className="w-4 h-4 text-green-400" />
+                        <span className="text-gray-300 text-sm">Ataque</span>
                       </div>
-                      <span className="text-white font-semibold">{hero.strength}</span>
+                      <span className="text-white font-semibold">
+                        {hero.finalAttack || (hero.strength + Math.floor(hero.dexterity / 2))}
+                        {hero.finalAttack && hero.finalAttack > (hero.strength + Math.floor(hero.dexterity / 2)) && (
+                          <span className="text-green-400 text-xs ml-1">
+                            (+{hero.finalAttack - (hero.strength + Math.floor(hero.dexterity / 2))})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-blue-400" />
+                        <span className="text-gray-300 text-sm">Defesa</span>
+                      </div>
+                      <span className="text-white font-semibold">
+                        {hero.finalDefense || (Math.floor(hero.intelligence / 2) + Math.floor(hero.dexterity / 3))}
+                        {hero.finalDefense && hero.finalDefense > (Math.floor(hero.intelligence / 2) + Math.floor(hero.dexterity / 3)) && (
+                          <span className="text-blue-400 text-xs ml-1">
+                            (+{hero.finalDefense - (Math.floor(hero.intelligence / 2) + Math.floor(hero.dexterity / 3))})
+                          </span>
+                        )}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Zap className="w-4 h-4 text-purple-400" />
-                        <span className="text-gray-300 text-sm">Inteligência</span>
+                        <span className="text-gray-300 text-sm">Moral</span>
                       </div>
-                      <span className="text-white font-semibold">{hero.intelligence}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-green-400" />
-                        <span className="text-gray-300 text-sm">Destreza</span>
-                      </div>
-                      <span className="text-white font-semibold">{hero.dexterity}</span>
+                      <span className="text-white font-semibold">
+                        {hero.finalMorale || 100}
+                        {hero.finalMorale && hero.finalMorale > 100 && (
+                          <span className="text-purple-400 text-xs ml-1">
+                            (+{hero.finalMorale - 100})
+                          </span>
+                        )}
+                      </span>
                     </div>
                   </div>
 
