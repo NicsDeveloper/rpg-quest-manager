@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using RpgQuestManager.Api.Data;
 using RpgQuestManager.Api.Models;
 using RpgQuestManager.Api.Services;
 
@@ -12,7 +14,13 @@ namespace RpgQuestManager.Api.Controllers;
 public class QuestsController : ControllerBase
 {
     private readonly QuestService _questService;
-    public QuestsController(QuestService questService) { _questService = questService; }
+    private readonly ApplicationDbContext _db;
+    
+    public QuestsController(QuestService questService, ApplicationDbContext db) 
+    { 
+        _questService = questService;
+        _db = db;
+    }
 
     private int GetCurrentUserId()
     {
@@ -37,7 +45,13 @@ public class QuestsController : ControllerBase
         try
         {
             var userId = GetCurrentUserId();
-            // TODO: Verificar se o heroId pertence ao usuário autenticado
+            
+            // Verificar se o herói pertence ao usuário autenticado
+            var hero = await _db.Heroes.FirstOrDefaultAsync(h => h.Id == heroId && h.UserId == userId);
+            if (hero == null)
+            {
+                return Unauthorized(new { message = "Herói não encontrado ou não pertence ao usuário" });
+            }
             
             var data = await _questService.GetAvailableQuestsAsync(heroId);
             return Ok(data);
@@ -147,7 +161,13 @@ public class QuestsController : ControllerBase
         try
         {
             var userId = GetCurrentUserId();
-            // TODO: Verificar se o heroId pertence ao usuário autenticado
+            
+            // Verificar se o herói pertence ao usuário autenticado
+            var hero = await _db.Heroes.FirstOrDefaultAsync(h => h.Id == heroId && h.UserId == userId);
+            if (hero == null)
+            {
+                return Unauthorized(new { message = "Herói não encontrado ou não pertence ao usuário" });
+            }
             
             var data = await _questService.GetCompletedQuestsAsync(heroId);
             return Ok(data);

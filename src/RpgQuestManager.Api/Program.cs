@@ -59,6 +59,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<ShopService>();
 builder.Services.AddScoped<DropService>();
+builder.Services.AddScoped<DiceInventoryService>();
+builder.Services.AddScoped<RewardService>();
 
 // Serviços de conquistas e grupos
 builder.Services.AddScoped<IAchievementService, AchievementService>();

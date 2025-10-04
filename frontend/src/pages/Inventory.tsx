@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useCharacter } from '../contexts/CharacterContext';
+import { heroService, type Hero } from '../services/heroService';
 import { useInventory } from '../contexts/InventoryContext';
 import { inventoryService, type InventoryItem, type EquipmentSlot } from '../services/inventory';
 import { FadeIn, SlideIn } from '../components/animations';
@@ -19,24 +19,40 @@ import {
 } from 'lucide-react';
 
 export default function Inventory() {
-  const { character } = useCharacter();
+  const [currentHero, setCurrentHero] = useState<Hero | null>(null);
   const { inventory, refreshInventory, equipItem } = useInventory();
   const { showToast } = useToast();
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
   const [draggedItem, setDraggedItem] = useState<InventoryItem | null>(null);
 
+  // Carregar herói atual
   useEffect(() => {
-    if (character) {
+    const loadCurrentHero = async () => {
+      try {
+        const heroes = await heroService.getActiveParty();
+        if (heroes.length > 0) {
+          setCurrentHero(heroes[0]); // Usar o primeiro herói da party ativa
+        }
+      } catch (error) {
+        console.error('Erro ao carregar herói:', error);
+      }
+    };
+
+    loadCurrentHero();
+  }, []);
+
+  useEffect(() => {
+    if (currentHero) {
       refreshInventory();
     }
-  }, [character, refreshInventory]);
+  }, [currentHero, refreshInventory]);
 
   const handleEquipItem = async (item: InventoryItem, slot: EquipmentSlot) => {
-    if (!character) return;
+    if (!currentHero) return;
     
     try {
-      await inventoryService.equipItem(character.id, item.id, slot);
+      await inventoryService.equipItem(currentHero.id, item.id, slot);
       
       // Atualizar estado local em tempo real
       equipItem(item, slot);
@@ -56,10 +72,10 @@ export default function Inventory() {
   };
 
   const handleUnequipItem = async (slot: EquipmentSlot) => {
-    if (!character) return;
+    if (!currentHero) return;
     
     try {
-      await inventoryService.unequipItem(character.id, slot);
+      await inventoryService.unequipItem(currentHero.id, slot);
       await refreshInventory();
       showToast({
         type: 'success',
@@ -77,10 +93,10 @@ export default function Inventory() {
   };
 
   const handleUseItem = async (item: InventoryItem) => {
-    if (!character) return;
+    if (!currentHero) return;
     
     try {
-      await inventoryService.useItem(character.id, item.id);
+      await inventoryService.useItem(currentHero.id, item.id);
       await refreshInventory();
       setShowItemModal(false);
       showToast({
@@ -126,7 +142,7 @@ export default function Inventory() {
   const handleDrop = async (e: React.DragEvent, slot: EquipmentSlot) => {
     e.preventDefault();
     
-    if (!draggedItem || !character) return;
+    if (!draggedItem || !currentHero) return;
 
     // Verificar se o item pode ser equipado neste slot
     const canEquip = canItemBeEquippedInSlot(draggedItem, slot);

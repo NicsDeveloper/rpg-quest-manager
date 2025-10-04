@@ -15,6 +15,7 @@ public class CombatService : ICombatService
     private readonly IAchievementService _achievementService;
     private readonly QuestService _questService;
     private readonly DropService _dropService;
+    private readonly RewardService _rewardService;
 
     public CombatService(
         ApplicationDbContext db, 
@@ -25,7 +26,8 @@ public class CombatService : ICombatService
         ISpecialAbilityService specialAbilityService,
         IAchievementService achievementService,
         QuestService questService,
-        DropService dropService)
+        DropService dropService,
+        RewardService rewardService)
     {
         _db = db;
         _diceService = diceService;
@@ -36,6 +38,7 @@ public class CombatService : ICombatService
         _achievementService = achievementService;
         _questService = questService;
         _dropService = dropService;
+        _rewardService = rewardService;
     }
 
     public async Task<CombatResult> StartCombatAsync(int heroId, int monsterId)
@@ -62,6 +65,9 @@ public class CombatService : ICombatService
             if (activeQuest != null)
             {
                 await _questService.CompleteQuestAsync(activeQuest.Id, heroId);
+                
+                // Gerar recompensas de missão
+                await _rewardService.GenerateQuestRewardsAsync(heroId, activeQuest.Id);
             }
         }
         catch (Exception ex)
@@ -94,7 +100,7 @@ public class CombatService : ICombatService
         }
 
         // Calcular dano do herói
-        var (damageToMonster, isCritical, isFumble) = await CalculateHeroDamage(hero, monster, heroEffects, monsterEffects);
+        var (damageToMonster, isCritical, isFumble, damageDetails) = await CalculateHeroDamage(hero, monster, heroEffects, monsterEffects);
         
         // Aplicar dano ao monstro
         monster.Health = Math.Max(0, monster.Health - damageToMonster);
@@ -135,6 +141,13 @@ public class CombatService : ICombatService
             
             // Completar missão ativa se houver
             await CompleteActiveQuestAsync(hero.Id);
+            
+            // Gerar recompensas de combate
+            var activeQuest = await _questService.GetActiveQuestAsync(hero.Id);
+            if (activeQuest != null)
+            {
+                await _rewardService.GenerateCombatRewardsAsync(hero.Id, activeQuest.Id, monster.Id);
+            }
         }
         else
         {
@@ -166,7 +179,10 @@ public class CombatService : ICombatService
         await _db.SaveChangesAsync();
 
         var heroMoraleLevel = _moraleService.GetMoraleLevel(hero.Morale);
-        var actionDescription = isCritical ? "Ataque crítico!" : isFumble ? "Ataque falhou!" : "Ataque normal";
+        var actionDescription = $"{hero.Name} atacou {monster.Name} causando {damageToMonster} de dano!";
+        if (isCritical) actionDescription += " CRÍTICO!";
+        if (isFumble) actionDescription += " FALHA!";
+        actionDescription += $" [{damageDetails}]";
         
         return new CombatResult(hero, monster, damageToMonster, 0, isCritical, isFumble, 
             combatEnded, victory, experienceGained, actionDescription, new List<StatusEffectType>(), heroMoraleLevel, goldReward);
@@ -195,37 +211,68 @@ public class CombatService : ICombatService
         return Task.CompletedTask;
     }
 
-    private Task<(int damage, bool isCritical, bool isFumble)> CalculateHeroDamage(Hero hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
+    private Task<(int damage, bool isCritical, bool isFumble, string details)> CalculateHeroDamage(Hero hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
     {
         var heroMoraleLevel = _moraleService.GetMoraleLevel(hero.Morale);
         var (damageMultiplier, defenseMultiplier, criticalMultiplier) = _moraleService.GetMoraleModifiers(heroMoraleLevel);
         
         // Calcular dano base
         var baseDamage = Math.Max(1, hero.Strength - monster.Defense);
+        var details = $"Ataque base: {hero.Strength} - {monster.Defense} = {baseDamage}";
         
         // Aplicar modificadores de status effects
         var (statusAttackMultiplier, statusDefenseMultiplier) = _statusEffectService.GetStatusEffectModifiers(heroEffects);
-        baseDamage = (int)Math.Ceiling(baseDamage * statusAttackMultiplier);
+        var statusModifiedDamage = (int)Math.Ceiling(baseDamage * statusAttackMultiplier);
+        if (statusAttackMultiplier != 1.0)
+        {
+            details += $", Status Effects: {statusAttackMultiplier:F1}x = {statusModifiedDamage}";
+        }
+        baseDamage = statusModifiedDamage;
         
         // Aplicar modificadores de moral
-        baseDamage = (int)Math.Ceiling(baseDamage * damageMultiplier);
+        var moraleModifiedDamage = (int)Math.Ceiling(baseDamage * damageMultiplier);
+        if (damageMultiplier != 1.0)
+        {
+            details += $", Moral ({heroMoraleLevel}): {damageMultiplier:F1}x = {moraleModifiedDamage}";
+        }
+        baseDamage = moraleModifiedDamage;
         
         // Adicionar elemento aleatório (±10%)
         var randomFactor = _diceService.RollDice(20); // D20 para 5% de precisão
         var randomMultiplier = 0.9 + (randomFactor * 0.01); // 0.9 a 1.1
-        baseDamage = (int)Math.Ceiling(baseDamage * randomMultiplier);
+        var randomModifiedDamage = (int)Math.Ceiling(baseDamage * randomMultiplier);
+        details += $", D20: {randomFactor} ({randomMultiplier:F2}x) = {randomModifiedDamage}";
+        baseDamage = randomModifiedDamage;
         
         // Verificar crítico
         var criticalChance = _diceService.RollCriticalChance(heroMoraleLevel);
-        var isCritical = _diceService.RollPercentage(criticalChance);
-        if (isCritical) baseDamage *= 2;
+        var criticalRoll = _diceService.RollDice(100);
+        var isCritical = criticalRoll <= criticalChance;
+        if (isCritical) 
+        {
+            baseDamage *= 2;
+            details += $", CRÍTICO! ({criticalRoll}/{criticalChance}%) = {baseDamage}";
+        }
+        else
+        {
+            details += $", Crítico: {criticalRoll}/{criticalChance}% (falhou)";
+        }
         
         // Verificar falha
         var fumbleChance = _diceService.RollFumbleChance(heroMoraleLevel);
-        var isFumble = _diceService.RollPercentage(fumbleChance);
-        if (isFumble) baseDamage = Math.Max(1, baseDamage / 2);
+        var fumbleRoll = _diceService.RollDice(100);
+        var isFumble = fumbleRoll <= fumbleChance;
+        if (isFumble) 
+        {
+            baseDamage = Math.Max(1, baseDamage / 2);
+            details += $", FALHA! ({fumbleRoll}/{fumbleChance}%) = {baseDamage}";
+        }
+        else
+        {
+            details += $", Falha: {fumbleRoll}/{fumbleChance}% (falhou)";
+        }
         
-        return Task.FromResult((baseDamage, isCritical, isFumble));
+        return Task.FromResult((baseDamage, isCritical, isFumble, details));
     }
 
     private async Task<(int damage, string action)> CalculateMonsterDamage(Hero hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
@@ -233,15 +280,21 @@ public class CombatService : ICombatService
         // Verificar se monstro está atordoado
         if (monsterEffects.Any(e => e.Type == StatusEffectType.Stunned))
         {
-            return (0, "Monstro está atordoado!");
+            return (0, $"{monster.Name} está atordoado e não pode atacar!");
         }
 
         // Calcular dano base
         var baseDamage = Math.Max(1, monster.Attack - hero.Defense);
+        var details = $"Ataque base: {monster.Attack} - {hero.Defense} = {baseDamage}";
         
         // Aplicar modificadores de status effects
         var (statusAttackMultiplier, statusDefenseMultiplier) = _statusEffectService.GetStatusEffectModifiers(heroEffects);
-        baseDamage = (int)Math.Ceiling(baseDamage * statusDefenseMultiplier);
+        var statusModifiedDamage = (int)Math.Ceiling(baseDamage * statusDefenseMultiplier);
+        if (statusDefenseMultiplier != 1.0)
+        {
+            details += $", Status Effects: {statusDefenseMultiplier:F1}x = {statusModifiedDamage}";
+        }
+        baseDamage = statusModifiedDamage;
         
         // Adicionar dano ambiental
         var environmentalDamage = monster.Habitat switch
@@ -251,7 +304,11 @@ public class CombatService : ICombatService
             EnvironmentType.Sky => 1,
             _ => 0
         };
-        baseDamage += environmentalDamage;
+        if (environmentalDamage > 0)
+        {
+            baseDamage += environmentalDamage;
+            details += $", Dano ambiental ({monster.Habitat}): +{environmentalDamage} = {baseDamage}";
+        }
         
         // Aplicar efeitos especiais do monstro
         var appliedEffects = new List<StatusEffectType>();
@@ -264,7 +321,11 @@ public class CombatService : ICombatService
             _ => 10
         };
         
-        if (_diceService.RollPercentage(specialEffectChance))
+        var effectRoll = _diceService.RollDice(100);
+        var effectApplied = effectRoll <= specialEffectChance;
+        details += $", Efeito especial: {effectRoll}/{specialEffectChance}%";
+        
+        if (effectApplied)
         {
             var effectType = monster.Type switch
             {
@@ -286,9 +347,21 @@ public class CombatService : ICombatService
             
             await _statusEffectService.ApplyStatusEffectAsync(EffectTargetKind.Character, hero.Id, effectType, duration);
             appliedEffects.Add(effectType);
+            details += $" (APLICADO: {effectType} por {duration} turnos)";
+        }
+        else
+        {
+            details += " (falhou)";
         }
         
-        return (baseDamage, $"Monstro atacou!{(appliedEffects.Any() ? $" Aplicou: {string.Join(", ", appliedEffects)}" : "")}");
+        var actionDescription = $"{monster.Name} atacou {hero.Name} causando {baseDamage} de dano!";
+        if (appliedEffects.Any())
+        {
+            actionDescription += $" Aplicou efeito: {string.Join(", ", appliedEffects)}";
+        }
+        actionDescription += $" [{details}]";
+        
+        return (baseDamage, actionDescription);
     }
 
     public Task<CombatResult> UseAbilityAsync(int heroId, int monsterId, string abilityName)

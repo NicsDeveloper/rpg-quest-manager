@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { inventoryService, type InventoryItem, type CharacterEquipment } from '../services/inventory';
-import { useCharacter } from './CharacterContext';
+import { heroService, type Hero } from '../services/heroService';
 
 interface InventoryContextType {
   inventory: InventoryItem[];
@@ -22,11 +22,27 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [equipment, setEquipment] = useState<CharacterEquipment | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { character } = useCharacter();
+  const [currentHero, setCurrentHero] = useState<Hero | null>(null);
   const loadingRef = useRef(false);
 
+  // Carregar herói atual
+  useEffect(() => {
+    const loadCurrentHero = async () => {
+      try {
+        const heroes = await heroService.getActiveParty();
+        if (heroes.length > 0) {
+          setCurrentHero(heroes[0]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar herói:', error);
+      }
+    };
+
+    loadCurrentHero();
+  }, []);
+
   const refreshInventory = useCallback(async () => {
-    if (!character || loadingRef.current) return;
+    if (!currentHero || loadingRef.current) return;
     
     try {
       loadingRef.current = true;
@@ -34,8 +50,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       
       const [inventoryData, equipmentData] = await Promise.all([
-        inventoryService.getInventory(character.id),
-        inventoryService.getEquipment(character.id)
+        inventoryService.getInventory(currentHero.id),
+        inventoryService.getEquipment(currentHero.id)
       ]);
       
       setInventory(inventoryData);
@@ -46,7 +62,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       loadingRef.current = false;
     }
-  }, [character]);
+  }, [currentHero]);
 
   const addItemToInventory = (item: InventoryItem) => {
     setInventory(prev => {
@@ -125,10 +141,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (character) {
+    if (currentHero) {
       refreshInventory();
     }
-  }, [character, refreshInventory]);
+  }, [currentHero, refreshInventory]);
 
   const value: InventoryContextType = {
     inventory,

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { questsService, type Quest } from '../services/quests';
-import { useCharacter } from './CharacterContext';
+import { heroService, type Hero } from '../services/heroService';
 
 interface QuestContextType {
   availableQuests: Quest[];
@@ -22,11 +22,27 @@ export function QuestProvider({ children }: { children: React.ReactNode }) {
   const [completedQuests, setCompletedQuests] = useState<Quest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { character } = useCharacter();
+  const [currentHero, setCurrentHero] = useState<Hero | null>(null);
   const loadingRef = useRef(false);
 
+  // Carregar herói atual
+  useEffect(() => {
+    const loadCurrentHero = async () => {
+      try {
+        const heroes = await heroService.getActiveParty();
+        if (heroes.length > 0) {
+          setCurrentHero(heroes[0]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar herói:', error);
+      }
+    };
+
+    loadCurrentHero();
+  }, []);
+
   const refreshQuests = useCallback(async () => {
-    if (!character || loadingRef.current) return;
+    if (!currentHero || loadingRef.current) return;
     
     try {
       loadingRef.current = true;
@@ -34,8 +50,8 @@ export function QuestProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       
       const [available, completed] = await Promise.all([
-        questsService.getAvailableQuests(character.id),
-        questsService.getCompletedQuests(character.id)
+        questsService.getAvailableQuests(currentHero.id),
+        questsService.getCompletedQuests(currentHero.id)
       ]);
       
       setAvailableQuests(available);
@@ -50,7 +66,7 @@ export function QuestProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       loadingRef.current = false;
     }
-  }, [character]);
+  }, [currentHero]);
 
   const startQuest = async (questId: number, heroId: number) => {
     try {
@@ -71,7 +87,7 @@ export function QuestProvider({ children }: { children: React.ReactNode }) {
   };
 
   const completeQuest = async (questId: number) => {
-    if (!character) return;
+    if (!currentHero) return;
     
     try {
       await questsService.completeQuest(questId);
@@ -92,10 +108,10 @@ export function QuestProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (character) {
+    if (currentHero) {
       refreshQuests();
     }
-  }, [character, refreshQuests]);
+  }, [currentHero, refreshQuests]);
 
   const value: QuestContextType = {
     availableQuests,

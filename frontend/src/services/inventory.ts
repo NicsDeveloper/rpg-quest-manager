@@ -75,41 +75,41 @@ class InventoryService {
     return response.data;
   }
 
-  async equipItem(characterId: number, inventoryItemId: number, slot: EquipmentSlot): Promise<void> {
+  async equipItem(heroId: number, inventoryItemId: number, slot: EquipmentSlot): Promise<void> {
     const response = await api.post('/inventory/equip', {
-      characterId,
+      heroId,
       inventoryItemId,
       slot
     });
     return response.data;
   }
 
-  async unequipItem(characterId: number, slot: EquipmentSlot): Promise<void> {
+  async unequipItem(heroId: number, slot: EquipmentSlot): Promise<void> {
     await api.post('/inventory/unequip', {
-      characterId,
+      heroId,
       slot
     });
   }
 
-  async useItem(characterId: number, inventoryItemId: number): Promise<void> {
+  async useItem(heroId: number, inventoryItemId: number): Promise<void> {
     await api.post('/inventory/use', {
-      characterId,
+      heroId,
       inventoryItemId
     });
   }
 
-  async addItem(characterId: number, itemId: number, quantity: number = 1): Promise<InventoryItem> {
+  async addItem(heroId: number, itemId: number, quantity: number = 1): Promise<InventoryItem> {
     const response = await api.post('/inventory/add', {
-      characterId,
+      heroId,
       itemId,
       quantity
     });
     return response.data.inventoryItem;
   }
 
-  async removeItem(characterId: number, itemId: number, quantity: number = 1): Promise<void> {
+  async removeItem(heroId: number, itemId: number, quantity: number = 1): Promise<void> {
     await api.post('/inventory/remove', {
-      characterId,
+      heroId,
       itemId,
       quantity
     });

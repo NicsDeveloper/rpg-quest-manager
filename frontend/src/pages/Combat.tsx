@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useCharacter } from '../contexts/CharacterContext';
+import { heroService, type Hero } from '../services/heroService';
 import { FadeIn, SlideIn } from '../components/animations';
 import { useToast } from '../components/Toast';
 import { soundService } from '../services/sound';
@@ -74,7 +74,7 @@ type DiceType = 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20';
 
 
 export default function Combat() {
-  const { character } = useCharacter();
+  const [currentHero, setCurrentHero] = useState<Hero | null>(null);
   const { showToast } = useToast();
   const [combatState, setCombatState] = useState<CombatState | null>(null);
   const [log, setLog] = useState<string[]>([]);
@@ -98,6 +98,22 @@ export default function Combat() {
   });
   const [lastDiceRoll, setLastDiceRoll] = useState<{ type: DiceType; result: number } | null>(null);
   const [showDiceModal, setShowDiceModal] = useState(false);
+
+  // Carregar herói atual
+  useEffect(() => {
+    const loadCurrentHero = async () => {
+      try {
+        const heroes = await heroService.getActiveParty();
+        if (heroes.length > 0) {
+          setCurrentHero(heroes[0]); // Usar o primeiro herói da party ativa
+        }
+      } catch (error) {
+        console.error('Erro ao carregar herói:', error);
+      }
+    };
+
+    loadCurrentHero();
+  }, []);
 
   // Timer do turno
   useEffect(() => {
@@ -135,10 +151,10 @@ export default function Combat() {
 
   // Carregar missão ativa
   const loadActiveQuest = async () => {
-    if (!character) return;
+    if (!currentHero) return;
     
     try {
-      const { data } = await api.get(`/combat/active-quest/${character.id}`);
+      const { data } = await api.get(`/combat/active-quest/${currentHero.id}`);
       setHasActiveQuest(data.hasActiveQuest);
       setActiveQuest(data.quest);
       setQuestMonster(data.monster);
@@ -159,19 +175,19 @@ export default function Combat() {
   };
 
   useEffect(() => {
-    if (character) {
+    if (currentHero) {
       loadActiveQuest();
     }
-  }, [character]);
+  }, [currentHero]);
 
   const startCombat = async (monsterId: number) => {
-    if (!character) return;
+    if (!currentHero) return;
     
     setLoading(true);
     soundService.playClick();
     try {
       const { data } = await api.post('/combat/start', { 
-        heroId: character.id, 
+        heroId: currentHero.id, 
         monsterId: monsterId 
       });
       setCombatState(data);
@@ -220,13 +236,13 @@ export default function Combat() {
   };
 
   const handleAttackWithDice = async (diceType: DiceType, diceResult: number) => {
-    if (!combatState || !character) return;
+    if (!combatState || !currentHero) return;
     
     setLoading(true);
     soundService.playClick();
     try {
       const { data } = await api.post('/combat/attack', { 
-        heroId: character.id, 
+        heroId: currentHero.id, 
         monsterId: combatState.monster.id,
         diceType: diceType,
         diceResult: diceResult
@@ -279,7 +295,7 @@ export default function Combat() {
   };
 
   const handleEnemyTurn = async () => {
-    if (!combatState || !character) return;
+    if (!combatState || !currentHero) return;
     
     setLoading(true);
     try {
@@ -288,7 +304,7 @@ export default function Combat() {
       // fazer um ataque "automático" do herói (sem dados) que acionará
       // o sistema de contra-ataque
       const { data } = await api.post('/combat/attack', { 
-        heroId: character.id, 
+        heroId: currentHero.id, 
         monsterId: combatState.monster.id 
       });
       setCombatState(data);
@@ -338,13 +354,13 @@ export default function Combat() {
   };
 
   const tryEscape = async () => {
-    if (!combatState || !character) return;
+    if (!combatState || !currentHero) return;
     
     setLoading(true);
     soundService.playClick();
     try {
       const { data } = await api.post('/combat/escape', { 
-        heroId: character.id, 
+        heroId: currentHero.id, 
         monsterId: combatState.monster.id 
       });
       if (data.success) {
@@ -405,7 +421,7 @@ export default function Combat() {
     }
   }
 
-  if (!character) {
+  if (!currentHero) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">

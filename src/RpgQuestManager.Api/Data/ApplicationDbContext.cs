@@ -42,6 +42,16 @@ public class ApplicationDbContext : DbContext
     // Sistema de notificações
     public DbSet<Notification> Notifications => Set<Notification>();
     
+    // Sistema de dados
+    public DbSet<DiceInventory> DiceInventories => Set<DiceInventory>();
+    public DbSet<DiceShopItem> DiceShopItems => Set<DiceShopItem>();
+    
+    // Sistema de recompensas
+    public DbSet<CombatRewards> CombatRewards => Set<CombatRewards>();
+    public DbSet<QuestRewards> QuestRewards => Set<QuestRewards>();
+    public DbSet<CombatReward> CombatRewardItems => Set<CombatReward>();
+    public DbSet<QuestReward> QuestRewardItems => Set<QuestReward>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -332,6 +342,77 @@ public class ApplicationDbContext : DbContext
                 (c1, c2) => c1!.SequenceEqual(c2!),
                 c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                 c => c.ToList()));
+                
+        // Configurações do sistema de dados
+        modelBuilder.Entity<DiceInventory>()
+            .HasOne(di => di.Hero)
+            .WithMany()
+            .HasForeignKey(di => di.HeroId);
+            
+        modelBuilder.Entity<DiceInventory>()
+            .HasIndex(di => new { di.HeroId, di.DiceType })
+            .IsUnique();
+            
+        // Configurações do sistema de recompensas
+        modelBuilder.Entity<CombatRewards>()
+            .HasOne(cr => cr.Hero)
+            .WithMany()
+            .HasForeignKey(cr => cr.HeroId);
+            
+        modelBuilder.Entity<CombatRewards>()
+            .HasOne(cr => cr.Quest)
+            .WithMany()
+            .HasForeignKey(cr => cr.QuestId);
+            
+        modelBuilder.Entity<CombatRewards>()
+            .HasOne(cr => cr.Monster)
+            .WithMany()
+            .HasForeignKey(cr => cr.MonsterId);
+            
+        modelBuilder.Entity<CombatRewards>()
+            .HasMany(cr => cr.Rewards)
+            .WithOne()
+            .HasForeignKey(cr => cr.CombatRewardsId);
+            
+        modelBuilder.Entity<QuestRewards>()
+            .HasOne(qr => qr.Hero)
+            .WithMany()
+            .HasForeignKey(qr => qr.HeroId);
+            
+        modelBuilder.Entity<QuestRewards>()
+            .HasOne(qr => qr.Quest)
+            .WithMany()
+            .HasForeignKey(qr => qr.QuestId);
+            
+        modelBuilder.Entity<QuestRewards>()
+            .HasMany(qr => qr.Rewards)
+            .WithOne()
+            .HasForeignKey(qr => qr.QuestRewardsId);
+            
+        // Configurações para propriedades JSON
+        modelBuilder.Entity<CombatReward>()
+            .Property(cr => cr.Type)
+            .HasConversion<int>();
+            
+        modelBuilder.Entity<CombatReward>()
+            .Property(cr => cr.DiceType)
+            .HasConversion<int?>();
+            
+        modelBuilder.Entity<CombatReward>()
+            .Property(cr => cr.Rarity)
+            .HasConversion<int?>();
+            
+        modelBuilder.Entity<QuestReward>()
+            .Property(qr => qr.Type)
+            .HasConversion<int>();
+            
+        modelBuilder.Entity<QuestReward>()
+            .Property(qr => qr.DiceType)
+            .HasConversion<int?>();
+            
+        modelBuilder.Entity<QuestReward>()
+            .Property(qr => qr.Rarity)
+            .HasConversion<int?>();
     }
 }
 
