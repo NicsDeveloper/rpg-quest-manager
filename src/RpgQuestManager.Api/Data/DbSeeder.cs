@@ -6,43 +6,77 @@ public static class DbSeeder
 {
     public static void Seed(ApplicationDbContext db)
     {
+        // Seed Users
+        if (!db.Users.Any())
+        {
+            var user = new User
+            {
+                Username = "admin",
+                Email = "admin@rpg.com",
+                PasswordHash = "AQAAAAIAAYagAAAAEKxW8J5YqZ3+Nw3ZxUJ8mBKLZxH5xL3cQ8x5Hv9J5Kx3Jz5Z2Nz5=", // Hash de 'admin123'
+                CreatedAt = DateTime.UtcNow,
+                LastLoginAt = DateTime.UtcNow,
+                IsActive = true
+            };
+            db.Users.Add(user);
+            db.SaveChanges(); // Salvar usuário primeiro para ter o Id
+        }
+
+        // Seed Characters
         if (!db.Characters.Any())
         {
-            db.Characters.Add(new Character
+            var user = db.Users.FirstOrDefault();
+            if (user != null)
             {
-                Name = "Aragorn",
-                Level = 1,
-                Experience = 0,
-                NextLevelExperience = 1000,
-                Health = 100,
-                MaxHealth = 100,
-                Attack = 12,
-                Defense = 6,
-                Morale = 70
-            });
+                var character = new Character
+                {
+                    UserId = user.Id,
+                    Name = "Aragorn",
+                    Level = 1,
+                    Experience = 0,
+                    NextLevelExperience = 1000,
+                    Health = 100,
+                    MaxHealth = 100,
+                    Attack = 12,
+                    Defense = 6,
+                    Morale = 70,
+                    Gold = 100,
+                    CreatedAt = DateTime.UtcNow,
+                    LastPlayedAt = DateTime.UtcNow
+                };
+                db.Characters.Add(character);
+                db.SaveChanges(); // Salvar personagem
+            }
         }
 
-        if (!db.Monsters.Any())
+        // Seed Items
+        var items = ItemData.GetAllItems();
+        foreach (var item in items)
         {
-            db.Monsters.AddRange(
-                new Monster { Name = "Goblin", Type = MonsterType.Goblin, Rank = MonsterRank.Normal, Habitat = EnvironmentType.Forest, Health = 40, MaxHealth = 40, Attack = 6, Defense = 2, ExperienceReward = 20 },
-                new Monster { Name = "Orc", Type = MonsterType.Orc, Rank = MonsterRank.Normal, Habitat = EnvironmentType.Forest, Health = 60, MaxHealth = 60, Attack = 10, Defense = 4, ExperienceReward = 35 }
-            );
+            if (!db.Items.Any(x => x.Name == item.Name))
+            {
+                db.Items.Add(item);
+            }
         }
 
-        if (!db.Quests.Any())
+        // Seed Monsters
+        var monsters = MonsterData.GetAllMonsters();
+        foreach (var monster in monsters)
         {
-            db.Quests.Add(new Quest
+            if (!db.Monsters.Any(x => x.Name == monster.Name))
             {
-                Title = "Os Primeiros Passos",
-                Description = "Derrote um Goblin nas bordas da Floresta.",
-                Environment = EnvironmentType.Forest,
-                TargetMonsterName = "Goblin",
-                TargetMonsterType = MonsterType.Goblin,
-                Status = QuestStatus.NotStarted,
-                ExperienceReward = 50,
-                RequiredLevel = 1
-            });
+                db.Monsters.Add(monster);
+            }
+        }
+
+        // Seed Quests
+        var quests = QuestData.GetAllQuests();
+        foreach (var quest in quests)
+        {
+            if (!db.Quests.Any(x => x.Title == quest.Title))
+            {
+                db.Quests.Add(quest);
+            }
         }
 
         db.SaveChanges();

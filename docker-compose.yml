@@ -24,6 +24,15 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
 volumes:
   pgdata:
 
