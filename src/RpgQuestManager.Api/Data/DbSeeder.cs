@@ -23,30 +23,30 @@ public static class DbSeeder
             db.SaveChanges(); // Salvar usuário primeiro para ter o Id
         }
 
-        // Seed Characters
-        if (!db.Characters.Any())
+        // Seed Heroes
+        if (!db.Heroes.Any())
         {
             var user = db.Users.FirstOrDefault();
             if (user != null)
             {
-                var character = new Character
+                var hero = new Hero
                 {
                     UserId = user.Id,
                     Name = "Aragorn",
+                    Class = "Guerreiro",
                     Level = 1,
                     Experience = 0,
-                    NextLevelExperience = 1000,
-                    Health = 100,
-                    MaxHealth = 100,
-                    Attack = 12,
-                    Defense = 6,
-                    Morale = 70,
                     Gold = 100,
-                    CreatedAt = DateTime.UtcNow,
-                    LastPlayedAt = DateTime.UtcNow
+                    IsInActiveParty = true,
+                    PartySlot = 1,
+                    CreatedAt = DateTime.UtcNow
                 };
-                db.Characters.Add(character);
-                db.SaveChanges(); // Salvar personagem
+                
+                // Configurar atributos base baseados na classe
+                hero.ConfigureInitialAttributes();
+                
+                db.Heroes.Add(hero);
+                db.SaveChanges(); // Salvar herói
             }
         }
 

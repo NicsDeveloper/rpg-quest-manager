@@ -5,25 +5,26 @@ export interface Character {
   id: number;
   userId: number;
   name: string;
+  class: string;
   level: number;
   experience: number;
-  nextLevelExperience: number;
+  strength: number;
+  intelligence: number;
+  dexterity: number;
   health: number;
   maxHealth: number;
-  attack: number;
-  defense: number;
-  morale: number;
+  isInActiveParty: boolean;
+  partySlot: number | null;
   gold: number;
-  statusEffects: string[];
   createdAt: string;
-  lastPlayedAt: string;
 }
 
 export interface CharacterStats {
-  attack: number;
-  defense: number;
+  strength: number;
+  intelligence: number;
+  dexterity: number;
   health: number;
-  morale: number;
+  maxHealth: number;
 }
 
 class CharacterService {
@@ -41,8 +42,14 @@ class CharacterService {
   }
 
   async getCharacterStats(characterId: number): Promise<CharacterStats> {
-    const response = await api.get(`/inventory/bonuses/${characterId}`);
-    return response.data.bonuses;
+    const character = await this.getCharacter(characterId);
+    return {
+      strength: character.strength,
+      intelligence: character.intelligence,
+      dexterity: character.dexterity,
+      health: character.health,
+      maxHealth: character.maxHealth
+    };
   }
 
   async updateCharacter(characterId: number, updates: Partial<Character>): Promise<Character> {
