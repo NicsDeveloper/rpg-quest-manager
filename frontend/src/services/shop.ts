@@ -59,18 +59,18 @@ class ShopService {
     return response.data;
   }
 
-  async buyItem(characterId: number, itemId: number, quantity: number = 1): Promise<{ inventoryItem: any }> {
+  async buyItem(heroId: number, itemId: number, quantity: number = 1): Promise<{ inventoryItem: any }> {
     const response = await axios.post(`${API_BASE_URL}/shop/buy`, {
-      characterId,
+      heroId,
       itemId,
       quantity
     });
     return response.data;
   }
 
-  async sellItem(characterId: number, inventoryItemId: number, quantity: number = 1): Promise<void> {
+  async sellItem(heroId: number, inventoryItemId: number, quantity: number = 1): Promise<void> {
     await axios.post(`${API_BASE_URL}/shop/sell`, {
-      characterId,
+      heroId,
       inventoryItemId,
       quantity
     });

@@ -350,12 +350,68 @@ export default function Shop() {
             return (
               <SlideIn key={item.id} direction="up" delay={300 + (index * 50)}>
                 <div
-                  className="card backdrop-blur-sm bg-black/20 hover:bg-black/30 transition-all duration-300 cursor-pointer group hover:scale-105"
+                  className="card backdrop-blur-sm bg-black/20 hover:bg-black/30 transition-all duration-300 cursor-pointer group hover:scale-105 relative"
                   onClick={() => {
                     setSelectedItem(item);
                     setShowItemModal(true);
                   }}
                 >
+                  {/* Tooltip */}
+                  <div className="absolute -top-2 -right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    <div className="bg-black/90 backdrop-blur-sm border border-gray-700 rounded-lg p-4 shadow-xl max-w-xs">
+                      <div className="text-white">
+                        <h4 className="font-bold text-lg mb-2 text-amber-400">{item.name}</h4>
+                        <p className="text-sm text-gray-300 mb-3">{item.description}</p>
+                        
+                        {/* Stats do item */}
+                        <div className="space-y-1 text-xs">
+                          {item.attackBonus && item.attackBonus > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-red-400">⚔️ Ataque:</span>
+                              <span className="text-white">+{item.attackBonus}</span>
+                            </div>
+                          )}
+                          {item.defenseBonus && item.defenseBonus > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-blue-400">🛡️ Defesa:</span>
+                              <span className="text-white">+{item.defenseBonus}</span>
+                            </div>
+                          )}
+                          {item.healthBonus && item.healthBonus > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-green-400">❤️ Vida:</span>
+                              <span className="text-white">+{item.healthBonus}</span>
+                            </div>
+                          )}
+                          {item.moraleBonus && item.moraleBonus > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-purple-400">💪 Moral:</span>
+                              <span className="text-white">+{item.moraleBonus}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Nível requerido */}
+                        {item.requiredLevel && (
+                          <div className="mt-2 pt-2 border-t border-gray-600">
+                            <span className="text-yellow-400 text-xs">
+                              Nível mínimo: {item.requiredLevel}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Status effects */}
+                        {item.statusEffects && item.statusEffects.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-gray-600">
+                            <span className="text-purple-400 text-xs">
+                              Efeitos: {item.statusEffects.join(', ')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-start justify-between mb-4">
                     <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-amber-500/50 transition-shadow">
                       <ItemIcon className="h-6 w-6 text-white" />

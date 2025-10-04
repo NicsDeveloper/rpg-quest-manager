@@ -15,8 +15,8 @@ public class ShopController : ControllerBase
         _shopService = shopService;
     }
 
-    public record BuyItemRequest(int CharacterId, int ItemId, int Quantity = 1);
-    public record SellItemRequest(int CharacterId, int InventoryItemId, int Quantity = 1);
+    public record BuyItemRequest(int HeroId, int ItemId, int Quantity = 1);
+    public record SellItemRequest(int HeroId, int InventoryItemId, int Quantity = 1);
 
     [HttpGet]
     public async Task<IActionResult> GetShopItems([FromQuery] string shopType = "general")
@@ -134,7 +134,7 @@ public class ShopController : ControllerBase
     {
         try
         {
-            var success = await _shopService.BuyItemAsync(request.CharacterId, request.ItemId, request.Quantity);
+            var success = await _shopService.BuyItemAsync(request.HeroId, request.ItemId, request.Quantity);
             if (!success)
             {
                 return BadRequest(new { message = "Não foi possível comprar o item" });
@@ -153,7 +153,7 @@ public class ShopController : ControllerBase
     {
         try
         {
-            var success = await _shopService.SellItemAsync(request.CharacterId, request.InventoryItemId, request.Quantity);
+            var success = await _shopService.SellItemAsync(request.HeroId, request.InventoryItemId, request.Quantity);
             if (!success)
             {
                 return BadRequest(new { message = "Não foi possível vender o item" });
