@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using RpgQuestManager.Api.Models;
 
 namespace RpgQuestManager.Api.Data;
@@ -188,6 +189,128 @@ public class ApplicationDbContext : DbContext
             
         modelBuilder.Entity<Notification>()
             .HasIndex(n => new { n.UserId, n.CreatedAt });
+            
+        // Configurações para propriedades List<T> - conversão para JSON
+        modelBuilder.Entity<Item>()
+            .Property(i => i.StatusEffects)
+            .HasConversion(
+                v => v.Select(x => (int)x).ToArray(),
+                v => v.Select(x => (StatusEffectType)x).ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<StatusEffectType>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<Item>()
+            .Property(i => i.RequiredClasses)
+            .HasConversion(
+                v => v.ToArray(),
+                v => v.ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<Item>()
+            .Property(i => i.DroppedBy)
+            .HasConversion(
+                v => v.Select(x => (int)x).ToArray(),
+                v => v.Select(x => (MonsterType)x).ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<MonsterType>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<Item>()
+            .Property(i => i.FoundIn)
+            .HasConversion(
+                v => v.Select(x => (int)x).ToArray(),
+                v => v.Select(x => (EnvironmentType)x).ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<EnvironmentType>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<Item>()
+            .Property(i => i.ShopTypes)
+            .HasConversion(
+                v => v.ToArray(),
+                v => v.ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<Monster>()
+            .Property(m => m.StatusEffects)
+            .HasConversion(
+                v => v.Select(x => (int)x).ToArray(),
+                v => v.Select(x => (StatusEffectType)x).ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<StatusEffectType>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<Monster>()
+            .Property(m => m.SpecialAbilities)
+            .HasConversion(
+                v => v.Select(x => (int)x).ToArray(),
+                v => v.Select(x => (StatusEffectType)x).ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<StatusEffectType>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<Quest>()
+            .Property(q => q.Prerequisites)
+            .HasConversion(
+                v => v.ToArray(),
+                v => v.ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<Quest>()
+            .Property(q => q.Rewards)
+            .HasConversion(
+                v => v.ToArray(),
+                v => v.ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<SpecialAbility>()
+            .Property(sa => sa.StatusEffects)
+            .HasConversion(
+                v => v.Select(x => (int)x).ToArray(),
+                v => v.Select(x => (StatusEffectType)x).ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<StatusEffectType>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
+            
+        modelBuilder.Entity<SpecialAbility>()
+            .Property(sa => sa.StatusEffectsToRemove)
+            .HasConversion(
+                v => v.Select(x => (int)x).ToArray(),
+                v => v.Select(x => (StatusEffectType)x).ToList()
+            )
+            .Metadata.SetValueComparer(new ValueComparer<List<StatusEffectType>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
     }
 }
 
