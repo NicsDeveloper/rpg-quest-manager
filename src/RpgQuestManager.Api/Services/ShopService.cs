@@ -57,39 +57,42 @@ public class ShopService
             .ToList();
     }
 
-    public async Task<bool> BuyItemAsync(int heroId, int itemId, int quantity = 1)
+    public async Task<(bool success, InventoryItem? inventoryItem)> BuyItemAsync(int heroId, int itemId, int quantity = 1)
     {
         var hero = await _db.Heroes.FindAsync(heroId);
         var item = await _db.Items.FindAsync(itemId);
 
         if (hero == null || item == null || !item.AvailableInShop)
-            return false;
+            return (false, null);
 
         var totalCost = item.ShopPrice * quantity;
 
         // Buscar o usuário dono do herói
         var user = await _db.Users.FindAsync(hero.UserId);
         if (user == null)
-            return false;
+            return (false, null);
 
         // Verificar se o usuário tem ouro suficiente
         if (user.Gold < totalCost)
-            return false;
+            return (false, null);
 
         // Verificar se o herói atende aos requisitos
         if (item.RequiredLevel.HasValue && hero.Level < item.RequiredLevel.Value)
-            return false;
+            return (false, null);
 
         // Adicionar item ao inventário do herói
         var inventoryItem = await _inventoryService.AddItemAsync(heroId, itemId, quantity);
         if (inventoryItem == null)
-            return false;
+            return (false, null);
 
         // Deduzir ouro do usuário
         user.Gold -= totalCost;
         await _db.SaveChangesAsync();
 
-        return true;
+        // Recarregar com item incluído
+        await _db.Entry(inventoryItem).Reference(ii => ii.Item).LoadAsync();
+
+        return (true, inventoryItem);
     }
 
     public async Task<bool> SellItemAsync(int heroId, int inventoryItemId, int quantity = 1)

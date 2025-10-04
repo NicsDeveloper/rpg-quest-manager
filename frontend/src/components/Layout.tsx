@@ -38,7 +38,7 @@ export function Layout({ children }: LayoutProps) {
 
     const checkAchievementNotifications = async () => {
       try {
-        const { data } = await api.get('/notifications/unread');
+        const { data } = await api.get(`/notifications/user/${user.id}?unreadOnly=true`);
         
         const achievementNotifications = data.filter((notif: any) => 
           notif.type === 'Achievement' && !processedNotifications.has(notif.id)
@@ -54,7 +54,7 @@ export function Layout({ children }: LayoutProps) {
           
           setProcessedNotifications(prev => new Set([...prev, notif.id]));
           
-          await api.post(`/notifications/${notif.id}/mark-as-read`);
+          await api.post(`/notifications/${notif.id}/read`, { userId: user.id });
         }
       } catch (error) {
         console.error('Erro ao verificar notificações:', error);

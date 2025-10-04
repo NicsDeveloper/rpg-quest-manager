@@ -32,6 +32,7 @@ export default function Shop() {
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
   const [buying, setBuying] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   useEffect(() => {
     loadShopData();
@@ -39,10 +40,10 @@ export default function Shop() {
   }, []);
 
   useEffect(() => {
-    if (userProfile && selectedHero) {
+    if (selectedHero) {
       loadItems();
     }
-  }, [userProfile, selectedHero, selectedShopType, selectedRarity, selectedType]);
+  }, [selectedHero, selectedShopType, selectedRarity, selectedType]);
 
   const loadUserProfile = async () => {
     try {
@@ -102,6 +103,7 @@ export default function Shop() {
       }
 
       setItems(filteredItems);
+      setHasLoadedOnce(true);
     } catch (error) {
       console.error('Erro ao carregar itens:', error);
     } finally {
@@ -348,7 +350,7 @@ export default function Shop() {
             const affordable = canAfford(item.shopPrice);
             
             return (
-              <SlideIn key={item.id} direction="up" delay={300 + (index * 50)}>
+              <SlideIn key={item.id} direction="up" delay={hasLoadedOnce ? 0 : 300 + (index * 50)}>
                 <div
                   className="card backdrop-blur-sm bg-black/20 hover:bg-black/30 transition-all duration-300 cursor-pointer group hover:scale-105 relative"
                   onClick={() => {

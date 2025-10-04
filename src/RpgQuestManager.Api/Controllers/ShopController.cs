@@ -134,13 +134,25 @@ public class ShopController : ControllerBase
     {
         try
         {
-            var success = await _shopService.BuyItemAsync(request.HeroId, request.ItemId, request.Quantity);
+            var (success, inventoryItem) = await _shopService.BuyItemAsync(request.HeroId, request.ItemId, request.Quantity);
             if (!success)
             {
                 return BadRequest(new { message = "Não foi possível comprar o item" });
             }
 
-            return Ok(new { message = "Item comprado com sucesso" });
+            return Ok(new { 
+                message = "Item comprado com sucesso",
+                inventoryItem = inventoryItem != null ? new {
+                    id = inventoryItem.Id,
+                    itemId = inventoryItem.ItemId,
+                    heroId = inventoryItem.HeroId,
+                    quantity = inventoryItem.Quantity,
+                    name = inventoryItem.Item?.Name,
+                    description = inventoryItem.Item?.Description,
+                    type = inventoryItem.Item?.Type.ToString(),
+                    rarity = inventoryItem.Item?.Rarity.ToString()
+                } : null
+            });
         }
         catch (Exception ex)
         {
