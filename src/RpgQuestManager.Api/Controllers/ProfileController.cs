@@ -119,6 +119,8 @@ public class ProfileController : ControllerBase
             Intelligence = hero.GetTotalIntelligence(),
             Dexterity = hero.GetTotalDexterity(),
             Gold = hero.Gold,
+            MaxHealth = hero.MaxHealth,
+            CurrentHealth = hero.CurrentHealth,
             CreatedAt = hero.CreatedAt,
             IsInActiveParty = hero.IsInActiveParty,
             PartySlot = hero.PartySlot
@@ -156,6 +158,8 @@ public class ProfileController : ControllerBase
             Intelligence = hero.GetTotalIntelligence(),
             Dexterity = hero.GetTotalDexterity(),
             Gold = hero.Gold,
+            MaxHealth = hero.MaxHealth,
+            CurrentHealth = hero.CurrentHealth,
             CreatedAt = hero.CreatedAt,
             IsInActiveParty = hero.IsInActiveParty,
             PartySlot = hero.PartySlot
@@ -186,6 +190,8 @@ public class ProfileController : ControllerBase
                 Intelligence = h.BaseIntelligence + h.BonusIntelligence,
                 Dexterity = h.BaseDexterity + h.BonusDexterity,
                 Gold = h.Gold,
+                MaxHealth = h.MaxHealth,
+                CurrentHealth = h.CurrentHealth,
                 CreatedAt = h.CreatedAt,
                 IsInActiveParty = h.IsInActiveParty,
                 PartySlot = h.PartySlot
@@ -218,6 +224,8 @@ public class ProfileController : ControllerBase
                 Intelligence = h.BaseIntelligence + h.BonusIntelligence,
                 Dexterity = h.BaseDexterity + h.BonusDexterity,
                 Gold = h.Gold,
+                MaxHealth = h.MaxHealth,
+                CurrentHealth = h.CurrentHealth,
                 CreatedAt = h.CreatedAt,
                 IsInActiveParty = h.IsInActiveParty,
                 PartySlot = h.PartySlot
@@ -366,6 +374,8 @@ public class HeroDto
     public int Intelligence { get; set; }
     public int Dexterity { get; set; }
     public int Gold { get; set; }
+    public int MaxHealth { get; set; }
+    public int CurrentHealth { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsInActiveParty { get; set; }
     public int? PartySlot { get; set; }

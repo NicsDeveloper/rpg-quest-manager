@@ -118,12 +118,14 @@ public class CombatController : ControllerBase
                 result.Hero.Class,
                 result.Hero.Level,
                 result.Hero.Experience,
-                result.Hero.Strength,
-                result.Hero.Intelligence,
-                result.Hero.Dexterity,
-                result.Hero.CurrentHealth, 
-                result.Hero.MaxHealth,
-                moraleLevel = result.HeroMoraleLevel.ToString()
+                nextLevelExperience = result.Hero.GetExperienceForNextLevel(),
+                health = result.Hero.CurrentHealth,
+                maxHealth = result.Hero.MaxHealth,
+                attack = result.Hero.CalculateAttack(),
+                defense = result.Hero.CalculateDefense(),
+                morale = result.Hero.Morale,
+                moraleLevel = result.HeroMoraleLevel.ToString(),
+                gold = result.Hero.Gold
             },
             monster = new 
             { 
