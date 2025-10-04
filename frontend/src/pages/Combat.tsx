@@ -145,6 +145,10 @@ export default function Combat() {
       
       if (data.monster) {
         setSelectedMonster(data.monster.id);
+        // Auto-iniciar combate se há missão ativa
+        setTimeout(() => {
+          startCombat(data.monster.id);
+        }, 500);
       }
     } catch (error) {
       console.error('Erro ao carregar missão ativa:', error);
@@ -155,7 +159,9 @@ export default function Combat() {
   };
 
   useEffect(() => {
-    loadActiveQuest();
+    if (character) {
+      loadActiveQuest();
+    }
   }, [character]);
 
   const startCombat = async (monsterId: number) => {
@@ -165,7 +171,7 @@ export default function Combat() {
     soundService.playClick();
     try {
       const { data } = await api.post('/combat/start', { 
-        characterId: character.id, 
+        heroId: character.id, 
         monsterId: monsterId 
       });
       setCombatState(data);
@@ -220,7 +226,7 @@ export default function Combat() {
     soundService.playClick();
     try {
       const { data } = await api.post('/combat/attack', { 
-        characterId: character.id, 
+        heroId: character.id, 
         monsterId: combatState.monster.id,
         diceType: diceType,
         diceResult: diceResult
@@ -282,7 +288,7 @@ export default function Combat() {
       // fazer um ataque "automático" do herói (sem dados) que acionará
       // o sistema de contra-ataque
       const { data } = await api.post('/combat/attack', { 
-        characterId: character.id, 
+        heroId: character.id, 
         monsterId: combatState.monster.id 
       });
       setCombatState(data);
@@ -338,7 +344,7 @@ export default function Combat() {
     soundService.playClick();
     try {
       const { data } = await api.post('/combat/escape', { 
-        characterId: character.id, 
+        heroId: character.id, 
         monsterId: combatState.monster.id 
       });
       if (data.success) {

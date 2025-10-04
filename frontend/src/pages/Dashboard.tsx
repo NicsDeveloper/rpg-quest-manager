@@ -217,8 +217,8 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Active Party */}
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative bg-black/40 backdrop-blur-sm border border-purple-500/20 rounded-3xl p-8 group-hover:border-purple-400/40 transition-all duration-300">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
+            <div className="relative bg-black/40 backdrop-blur-sm border border-purple-500/20 rounded-3xl p-8 group-hover:border-purple-400/40 transition-all duration-200">
               <div className="flex items-center gap-4 mb-8">
                 <div className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-2xl">
                   <Crown className="w-8 h-8 text-white" />
@@ -289,60 +289,97 @@ export default function Dashboard() {
           </div>
 
           {/* Strongest Heroes */}
-          <Card variant="epic" className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg">
-                <Star className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gradient">Heróis Mais Fortes</h2>
-                <p className="text-gray-400">Top 3 por nível</p>
-              </div>
-            </div>
-
-            {strongestHeroes.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl mx-auto w-20 h-20 flex items-center justify-center mb-4">
-                  <Users className="w-10 h-10 text-gray-400" />
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-black/40 backdrop-blur-sm border border-yellow-500/20 rounded-3xl p-8 group-hover:border-yellow-400/40 transition-all duration-300">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-4 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl shadow-2xl">
+                  <Star className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-300 mb-2">Nenhum herói criado</h3>
-                <p className="text-gray-400 mb-4">Crie seu primeiro herói para começar a aventura!</p>
-                <button
-                  onClick={() => handleNavigation('/heroes')}
-                  className="btn btn-primary"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Criar Herói
-                </button>
+                <div>
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                    Heróis Mais Fortes
+                  </h2>
+                  <p className="text-gray-300 font-medium">Top 3 por nível</p>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {strongestHeroes.map((hero, index) => (
-                  <div key={hero.id} className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700/30">
-                    <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full text-white font-bold text-sm">
-                      {index + 1}
-                    </div>
-                    <div className={`p-2 bg-gradient-to-br ${getClassGradient(hero.class)} rounded-lg`}>
-                      <span className="text-lg">{getClassIcon(hero.class)}</span>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-blue-400">{hero.name}</h3>
-                      <p className="text-sm text-gray-400">{hero.class} • Nível {hero.level}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-400">{hero.experience} XP</div>
+
+              {strongestHeroes.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="relative mx-auto w-24 h-24 mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-full blur-xl"></div>
+                    <div className="relative p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-full border border-gray-700/30">
+                      <Users className="w-12 h-12 text-gray-400" />
                     </div>
                   </div>
-                ))}
-                <button
-                  onClick={() => handleNavigation('/heroes')}
-                  className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold transition"
-                >
-                  Ver Todos os Heróis
-                </button>
-              </div>
-            )}
-          </Card>
+                  <h3 className="text-xl font-bold text-gray-200 mb-3">Nenhum herói criado</h3>
+                  <p className="text-gray-400 mb-6 max-w-sm mx-auto">Crie seu primeiro herói para começar a aventura épica!</p>
+                  <button
+                    onClick={() => handleNavigation('/heroes')}
+                    className="relative group inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-105"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                    <Plus className="w-5 h-5 mr-2 relative z-10" />
+                    <span className="relative z-10">Criar Herói</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {strongestHeroes.map((hero, index) => (
+                    <div key={hero.id} className="group relative">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-300"></div>
+                      <div className="relative flex items-center gap-4 p-5 bg-gray-800/50 rounded-2xl border border-gray-700/30 group-hover:border-gray-600/50 transition-all duration-300">
+                        <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full text-white font-bold text-lg shadow-lg">
+                          {index + 1}
+                        </div>
+                        <div className={`p-3 bg-gradient-to-br ${getClassGradient(hero.class)} rounded-xl shadow-lg`}>
+                          <span className="text-2xl">{getClassIcon(hero.class)}</span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-xl text-white mb-1">{hero.name}</h3>
+                          <p className="text-gray-300 font-medium">{hero.class} • Nível {hero.level}</p>
+                          <div className="flex gap-4 mt-2 text-sm">
+                            <span className="text-yellow-400">⭐ {hero.experience} XP</span>
+                            <span className="text-red-400">❤️ {hero.currentHealth}/{hero.maxHealth}</span>
+                            <span className="text-blue-400">⚔️ {hero.strength}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Preencher espaço se houver menos de 3 heróis */}
+                  {Array.from({ length: Math.max(0, 3 - strongestHeroes.length) }).map((_, index) => (
+                    <div key={`empty-${index}`} className="flex items-center gap-4 p-5 bg-gray-800/20 rounded-2xl border border-gray-700/20 border-dashed">
+                      <div className="flex items-center justify-center w-10 h-10 bg-gray-700/50 rounded-full text-gray-500 font-bold text-lg">
+                        {strongestHeroes.length + index + 1}
+                      </div>
+                      <div className="p-3 bg-gray-700/50 rounded-xl">
+                        <span className="text-2xl text-gray-500">❓</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-xl text-gray-500 mb-1">Vago</h3>
+                        <p className="text-gray-500 font-medium">Crie mais heróis</p>
+                        <div className="flex gap-4 mt-2 text-sm">
+                          <span className="text-gray-500">⭐ 0 XP</span>
+                          <span className="text-gray-500">❤️ 0/0</span>
+                          <span className="text-gray-500">⚔️ 0</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <button
+                    onClick={() => handleNavigation('/heroes')}
+                    className="w-full mt-6 relative group inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-gray-700 to-gray-600 text-white font-semibold rounded-xl hover:from-gray-600 hover:to-gray-500 transition-all duration-300 transform hover:scale-105"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-gray-700 to-gray-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                    <span className="relative z-10">Ver Todos os Heróis</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Action Buttons */}

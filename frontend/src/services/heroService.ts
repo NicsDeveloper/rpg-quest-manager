@@ -40,7 +40,7 @@ class HeroService {
   }
 
   async getUserProfile(): Promise<UserProfile> {
-    const { data } = await api.get('/profile/user-profile');
+    const { data } = await api.get('/profile/me');
     return data;
   }
 

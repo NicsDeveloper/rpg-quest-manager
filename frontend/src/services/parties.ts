@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import { api } from './api';
 
 export interface Party {
   id: number;
@@ -58,31 +56,43 @@ export interface PartyInvite {
 
 class PartyService {
   async getPublicParties(): Promise<Party[]> {
-    const response = await axios.get(`${API_BASE_URL}/parties/public`);
+    const response = await api.get('/parties/public');
     return response.data;
   }
 
   async getPartyById(partyId: number): Promise<Party> {
-    const response = await axios.get(`${API_BASE_URL}/parties/${partyId}`);
+    const response = await api.get(`/parties/${partyId}`);
     return response.data;
   }
 
   async getUserParty(userId: number): Promise<Party | null> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/parties/user/${userId}`);
+      const response = await api.get(`/parties/user/${userId}`);
       return response.data;
-    } catch (error) {
-      return null;
+    } catch (error: any) {
+      // Se for 404, significa que o usuário não está em nenhum grupo
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
     }
   }
 
   async getUserInvites(userId: number): Promise<PartyInvite[]> {
-    const response = await axios.get(`${API_BASE_URL}/parties/user/${userId}/invites`);
-    return response.data;
+    try {
+      const response = await api.get(`/parties/user/${userId}/invites`);
+      return response.data;
+    } catch (error: any) {
+      // Se for 404, significa que não há convites
+      if (error.response?.status === 404) {
+        return [];
+      }
+      throw error;
+    }
   }
 
   async createParty(userId: number, name: string, description: string, isPublic: boolean): Promise<Party> {
-    const response = await axios.post(`${API_BASE_URL}/parties/create`, {
+    const response = await api.post('/parties/create', {
       userId,
       name,
       description,
@@ -92,21 +102,21 @@ class PartyService {
   }
 
   async joinParty(userId: number, partyId: number): Promise<void> {
-    await axios.post(`${API_BASE_URL}/parties/join`, {
+    await api.post('/parties/join', {
       userId,
       partyId
     });
   }
 
   async leaveParty(userId: number, partyId: number): Promise<void> {
-    await axios.post(`${API_BASE_URL}/parties/leave`, {
+    await api.post('/parties/leave', {
       userId,
       partyId
     });
   }
 
   async inviteToParty(inviterId: number, inviteeId: number, partyId: number, message: string): Promise<void> {
-    await axios.post(`${API_BASE_URL}/parties/invite`, {
+    await api.post('/parties/invite', {
       inviterId,
       inviteeId,
       partyId,
@@ -115,7 +125,7 @@ class PartyService {
   }
 
   async respondToInvite(userId: number, inviteId: number, accept: boolean): Promise<void> {
-    await axios.post(`${API_BASE_URL}/parties/respond-invite`, {
+    await api.post('/parties/respond-invite', {
       userId,
       inviteId,
       accept
@@ -123,7 +133,7 @@ class PartyService {
   }
 
   async kickMember(leaderId: number, memberId: number, partyId: number): Promise<void> {
-    await axios.post(`${API_BASE_URL}/parties/kick-member`, {
+    await api.post('/parties/kick-member', {
       leaderId,
       memberId,
       partyId
@@ -131,7 +141,7 @@ class PartyService {
   }
 
   async transferLeadership(currentLeaderId: number, newLeaderId: number, partyId: number): Promise<void> {
-    await axios.post(`${API_BASE_URL}/parties/transfer-leadership`, {
+    await api.post('/parties/transfer-leadership', {
       currentLeaderId,
       newLeaderId,
       partyId
@@ -139,7 +149,7 @@ class PartyService {
   }
 
   async disbandParty(leaderId: number, partyId: number): Promise<void> {
-    await axios.post(`${API_BASE_URL}/parties/disband`, {
+    await api.post('/parties/disband', {
       leaderId,
       partyId
     });

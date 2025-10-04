@@ -86,17 +86,15 @@ export default function Quests() {
       setStartingQuest(true);
       await questsService.startQuest(quest.id, selectedHero.id);
       setShowQuestModal(false);
-      await loadQuests();
+      
       showToast({
         type: 'success',
         title: 'Quest iniciada!',
-        message: `${quest.title} foi iniciada com sucesso. Redirecionando para o combate...`
+        message: `${quest.title} foi iniciada com sucesso.`
       });
       
-      // Navegar para o combate após iniciar a missão
-      setTimeout(() => {
-        navigate('/combat');
-      }, 1500);
+      // Navegar imediatamente para o combate
+      navigate('/combat');
     } catch (error: any) {
       showToast({
         type: 'error',

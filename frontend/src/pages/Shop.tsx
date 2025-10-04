@@ -20,6 +20,7 @@ export default function Shop() {
   const { addItemToInventory } = useInventory();
   const { showToast } = useToast();
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [userGold, setUserGold] = useState<number>(0);
   const [selectedHero, setSelectedHero] = useState<Hero | null>(null);
   const [items, setItems] = useState<ShopItem[]>([]);
   const [shopTypes, setShopTypes] = useState<ShopType[]>([]);
@@ -125,8 +126,8 @@ export default function Shop() {
       setBuying(true);
       const result = await shopService.buyItem(selectedHero.id, item.id, 1);
       
-      // Atualizar ouro em tempo real
-      setUserProfile({ ...userProfile, gold: userProfile.gold - item.shopPrice });
+      // Atualizar apenas o ouro sem re-renderizar outros componentes
+      setUserProfile(prev => prev ? { ...prev, gold: prev.gold - item.shopPrice } : null);
       
       // Adicionar item ao inventário em tempo real
       if (result.inventoryItem) {
