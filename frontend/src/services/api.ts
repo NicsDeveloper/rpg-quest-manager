@@ -25,9 +25,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token inválido, limpar localStorage e redirecionar para login
+      // Token inválido, limpar localStorage
       localStorage.removeItem('token');
-      window.location.href = '/';
+      
+      // Só redirecionar se não for a página de login
+      if (window.location.pathname !== '/' && !window.location.pathname.includes('login')) {
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }

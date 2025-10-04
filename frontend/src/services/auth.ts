@@ -80,17 +80,11 @@ class AuthService {
     if (!this.token) return null;
     
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/validate`, {
-        token: this.token
-      }, {
-        headers: {
-          'Authorization': `Bearer ${this.token}`
-        }
-      });
+      const response = await api.get('/auth/validate');
       return response.data.user;
     } catch (error) {
       console.error('Token validation error:', error);
-      this.logout();
+      // Não fazer logout automático, apenas retornar null
       return null;
     }
   }

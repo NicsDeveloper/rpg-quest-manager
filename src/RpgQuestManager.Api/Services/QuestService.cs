@@ -25,6 +25,14 @@ public class QuestService
             .ToListAsync();
     }
 
+    public async Task<List<Quest>> GetCompletedQuestsAsync(int characterId)
+    {
+        return await _db.Quests
+            .Where(q => q.Status == QuestStatus.Completed)
+            .OrderBy(q => q.Id)
+            .ToListAsync();
+    }
+
     public async Task<List<Quest>> GetQuestsByCategoryAsync(QuestCategory category)
     {
         return await _db.Quests
@@ -92,6 +100,25 @@ public class QuestService
         await _db.SaveChangesAsync();
         
         return quest;
+    }
+
+    public async Task<Quest?> GetActiveQuestAsync(int characterId)
+    {
+        return await _db.Quests
+            .FirstOrDefaultAsync(q => q.Status == QuestStatus.InProgress);
+    }
+
+    public async Task<Monster?> GetQuestMonsterAsync(int questId)
+    {
+        var quest = await _db.Quests.FirstOrDefaultAsync(q => q.Id == questId);
+        if (quest == null) return null;
+
+        // Buscar monstro que corresponde ao tipo e nome da missão
+        var monster = await _db.Monsters
+            .FirstOrDefaultAsync(m => m.Type == quest.TargetMonsterType && 
+                                m.Name.Contains(quest.TargetMonsterName));
+
+        return monster;
     }
 
     public string GetCategoryDescription(QuestCategory category)

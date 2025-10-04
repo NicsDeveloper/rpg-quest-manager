@@ -21,10 +21,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (authService.isAuthenticated()) {
         try {
           const userData = await authService.validateToken();
-          setUser(userData);
+          if (userData) {
+            setUser(userData);
+          } else {
+            // Token inválido, mas não fazer logout automático
+            console.warn('Token inválido, mas mantendo sessão local');
+          }
         } catch (error) {
           console.error('Token validation failed:', error);
-          authService.logout();
+          // Não fazer logout automático na validação inicial
+          console.warn('Falha na validação do token, mas mantendo sessão local');
         }
       }
       setIsLoading(false);

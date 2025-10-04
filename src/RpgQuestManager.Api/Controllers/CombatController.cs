@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using RpgQuestManager.Api.Data;
 using RpgQuestManager.Api.Services;
@@ -7,11 +8,13 @@ namespace RpgQuestManager.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CombatController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
     private readonly ICombatService _combat;
-    public CombatController(ApplicationDbContext db, ICombatService combat) { _db = db; _combat = combat; }
+    private readonly QuestService _questService;
+    public CombatController(ApplicationDbContext db, ICombatService combat, QuestService questService) { _db = db; _combat = combat; _questService = questService; }
 
     public record AttackRequest(int characterId, int monsterId);
     public record AbilityRequest(int characterId, int monsterId, int abilityId);
@@ -66,6 +69,42 @@ public class CombatController : ControllerBase
     {
         var success = await _combat.TryEscapeAsync(request.characterId, request.monsterId);
         return Ok(new { success, message = success ? "Fuga bem-sucedida!" : "Fuga falhou!" });
+    }
+
+    [HttpGet("active-quest/{characterId}")]
+    public async Task<IActionResult> GetActiveQuest(int characterId)
+    {
+        var quest = await _questService.GetActiveQuestAsync(characterId);
+        if (quest == null)
+        {
+            return Ok(new { hasActiveQuest = false, quest = (object?)null });
+        }
+
+        var monster = await _questService.GetQuestMonsterAsync(quest.Id);
+        return Ok(new { 
+            hasActiveQuest = true, 
+            quest = new {
+                quest.Id,
+                quest.Title,
+                quest.Description,
+                quest.TargetMonsterName,
+                quest.TargetMonsterType,
+                quest.Environment,
+                quest.Difficulty
+            },
+            monster = monster != null ? new {
+                monster.Id,
+                monster.Name,
+                monster.Type,
+                monster.Rank,
+                monster.Habitat,
+                monster.Health,
+                monster.MaxHealth,
+                monster.Attack,
+                monster.Defense,
+                monster.ExperienceReward
+            } : null
+        });
     }
 
     private object FormatCombatResult(CombatResult result)

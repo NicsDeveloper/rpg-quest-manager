@@ -62,6 +62,8 @@ public class AuthService
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? "default-key-that-should-be-changed-in-production");
+        var issuer = _configuration["Jwt:Issuer"] ?? "RpgQuestManager";
+        var audience = _configuration["Jwt:Audience"] ?? "RpgQuestManager";
         
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -71,6 +73,8 @@ public class AuthService
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Email, user.Email)
             }),
+            Issuer = issuer,
+            Audience = audience,
             Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };

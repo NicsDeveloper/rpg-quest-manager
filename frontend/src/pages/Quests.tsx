@@ -3,6 +3,7 @@ import { useCharacter } from '../contexts/CharacterContext';
 import { questsService, type Quest } from '../services/quests';
 import { FadeIn, SlideIn } from '../components/animations';
 import { useToast } from '../components/Toast';
+import { useNavigate } from 'react-router-dom';
 import { 
   Map, 
   Target, 
@@ -19,6 +20,7 @@ import {
 export default function Quests() {
   const { character, refreshCharacter } = useCharacter();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null);
@@ -74,8 +76,13 @@ export default function Quests() {
       showToast({
         type: 'success',
         title: 'Quest iniciada!',
-        message: `${quest.title} foi iniciada com sucesso.`
+        message: `${quest.title} foi iniciada com sucesso. Redirecionando para o combate...`
       });
+      
+      // Navegar para o combate após iniciar a missão
+      setTimeout(() => {
+        navigate('/combat');
+      }, 1500);
     } catch (error: any) {
       showToast({
         type: 'error',

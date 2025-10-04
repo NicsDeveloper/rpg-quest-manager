@@ -17,9 +17,30 @@ public class InventoryController : ControllerBase
 
     public record AddItemRequest(int CharacterId, int ItemId, int Quantity = 1);
     public record RemoveItemRequest(int CharacterId, int ItemId, int Quantity = 1);
-    public record EquipItemRequest(int CharacterId, int InventoryItemId, EquipmentSlot Slot);
-    public record UnequipItemRequest(int CharacterId, EquipmentSlot Slot);
     public record UseItemRequest(int CharacterId, int InventoryItemId);
+    
+    public class EquipItemRequest
+    {
+        public int CharacterId { get; set; }
+        public int InventoryItemId { get; set; }
+        public string Slot { get; set; } = string.Empty;
+        
+        public EquipmentSlot GetEquipmentSlot()
+        {
+            return Enum.TryParse<EquipmentSlot>(Slot, true, out var slot) ? slot : throw new ArgumentException($"Slot inválido: {Slot}");
+        }
+    }
+    
+    public class UnequipItemRequest
+    {
+        public int CharacterId { get; set; }
+        public string Slot { get; set; } = string.Empty;
+        
+        public EquipmentSlot GetEquipmentSlot()
+        {
+            return Enum.TryParse<EquipmentSlot>(Slot, true, out var slot) ? slot : throw new ArgumentException($"Slot inválido: {Slot}");
+        }
+    }
 
     [HttpGet("{characterId}")]
     public async Task<IActionResult> GetInventory(int characterId)
@@ -108,20 +129,53 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost("equip")]
-    public async Task<IActionResult> EquipItem([FromBody] EquipItemRequest request)
+    public async Task<IActionResult> EquipItem([FromBody] dynamic request)
     {
         try
         {
-            var success = await _inventoryService.EquipItemAsync(request.CharacterId, request.InventoryItemId, request.Slot);
+            // Debug: Log dos dados recebidos
+            Console.WriteLine($"EquipItem - Request: {request}");
+
+            // Extrair dados do request dinâmico
+            var characterId = (int)request.characterId;
+            var inventoryItemId = (int)request.inventoryItemId;
+            var slotString = (string)request.slot;
+
+            Console.WriteLine($"CharacterId: {characterId}, InventoryItemId: {inventoryItemId}, Slot: {slotString}");
+
+            // Validação manual dos parâmetros
+            if (characterId <= 0)
+            {
+                return BadRequest(new { message = "CharacterId inválido" });
+            }
+            
+            if (inventoryItemId <= 0)
+            {
+                return BadRequest(new { message = "InventoryItemId inválido" });
+            }
+
+            if (string.IsNullOrWhiteSpace(slotString))
+            {
+                return BadRequest(new { message = "Slot inválido" });
+            }
+
+            // Converter string para enum
+            if (!Enum.TryParse<EquipmentSlot>(slotString, true, out var slot))
+            {
+                return BadRequest(new { message = $"Slot inválido: {slotString}" });
+            }
+
+            var success = await _inventoryService.EquipItemAsync(characterId, inventoryItemId, slot);
             if (!success)
             {
-                return BadRequest(new { message = "Não foi possível equipar o item" });
+                return BadRequest(new { message = "Não foi possível equipar o item. Verifique se o item existe e é compatível com o slot." });
             }
 
             return Ok(new { message = "Item equipado com sucesso" });
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Erro em EquipItem: {ex.Message}");
             return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
         }
     }
@@ -131,7 +185,18 @@ public class InventoryController : ControllerBase
     {
         try
         {
-            var success = await _inventoryService.UnequipItemAsync(request.CharacterId, request.Slot);
+            // Converter string para enum
+            EquipmentSlot slot;
+            try
+            {
+                slot = request.GetEquipmentSlot();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+
+            var success = await _inventoryService.UnequipItemAsync(request.CharacterId, slot);
             if (!success)
             {
                 return BadRequest(new { message = "Nenhum item equipado neste slot" });

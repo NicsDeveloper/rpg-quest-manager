@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using RpgQuestManager.Api.Models;
 using RpgQuestManager.Api.Services;
 
@@ -6,10 +8,21 @@ namespace RpgQuestManager.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class QuestsController : ControllerBase
 {
     private readonly QuestService _questService;
     public QuestsController(QuestService questService) { _questService = questService; }
+
+    private int GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(userIdClaim, out var userId))
+        {
+            return userId;
+        }
+        throw new UnauthorizedAccessException("Usuário não autenticado");
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -18,11 +31,29 @@ public class QuestsController : ControllerBase
         return Ok(data);
     }
 
-    [HttpGet("available/{characterLevel}")]
-    public async Task<IActionResult> GetAvailable(int characterLevel)
+    [HttpGet("available/{characterId}")]
+    public async Task<IActionResult> GetAvailable(int characterId)
     {
-        var data = await _questService.GetAvailableQuestsAsync(characterLevel);
-        return Ok(data);
+        try
+        {
+            var userId = GetCurrentUserId();
+            // Verificar se o characterId pertence ao usuário autenticado
+            if (characterId != userId)
+            {
+                return Forbid("Você só pode acessar suas próprias missões");
+            }
+            
+            var data = await _questService.GetAvailableQuestsAsync(characterId);
+            return Ok(data);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+        }
     }
 
     [HttpGet("recommended/{level}")]
@@ -57,7 +88,8 @@ public class QuestsController : ControllerBase
     {
         try
         {
-            var quest = await _questService.StartQuestAsync(id, 1); // Default character ID 1
+            var userId = GetCurrentUserId();
+            var quest = await _questService.StartQuestAsync(id, userId);
             return Ok(quest);
         }
         catch (ArgumentException ex)
@@ -67,6 +99,10 @@ public class QuestsController : ControllerBase
         catch (InvalidOperationException ex)
         {
             return BadRequest(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
         }
     }
 
@@ -75,7 +111,8 @@ public class QuestsController : ControllerBase
     {
         try
         {
-            var quest = await _questService.CompleteQuestAsync(id, 1); // Default character ID 1
+            var userId = GetCurrentUserId();
+            var quest = await _questService.CompleteQuestAsync(id, userId);
             return Ok(quest);
         }
         catch (ArgumentException ex)
@@ -86,6 +123,10 @@ public class QuestsController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
     }
 
     [HttpPost("{id}/fail")]
@@ -93,12 +134,42 @@ public class QuestsController : ControllerBase
     {
         try
         {
-            var quest = await _questService.FailQuestAsync(id, 1); // Default character ID 1
+            var userId = GetCurrentUserId();
+            var quest = await _questService.FailQuestAsync(id, userId);
             return Ok(quest);
         }
         catch (ArgumentException ex)
         {
             return NotFound(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+    }
+
+    [HttpGet("completed/{characterId}")]
+    public async Task<IActionResult> GetCompleted(int characterId)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            // Verificar se o characterId pertence ao usuário autenticado
+            if (characterId != userId)
+            {
+                return Forbid("Você só pode acessar suas próprias missões");
+            }
+            
+            var data = await _questService.GetCompletedQuestsAsync(characterId);
+            return Ok(data);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
         }
     }
 }

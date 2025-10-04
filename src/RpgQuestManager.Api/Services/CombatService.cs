@@ -13,6 +13,8 @@ public class CombatService : ICombatService
     private readonly LevelUpService _levelUpService;
     private readonly ISpecialAbilityService _specialAbilityService;
     private readonly IAchievementService _achievementService;
+    private readonly QuestService _questService;
+    private readonly DropService _dropService;
 
     public CombatService(
         ApplicationDbContext db, 
@@ -21,7 +23,9 @@ public class CombatService : ICombatService
         StatusEffectService statusEffectService,
         LevelUpService levelUpService,
         ISpecialAbilityService specialAbilityService,
-        IAchievementService achievementService)
+        IAchievementService achievementService,
+        QuestService questService,
+        DropService dropService)
     {
         _db = db;
         _diceService = diceService;
@@ -30,6 +34,8 @@ public class CombatService : ICombatService
         _levelUpService = levelUpService;
         _specialAbilityService = specialAbilityService;
         _achievementService = achievementService;
+        _questService = questService;
+        _dropService = dropService;
     }
 
     public async Task<CombatResult> StartCombatAsync(int characterId, int monsterId)
@@ -45,7 +51,24 @@ public class CombatService : ICombatService
         
         return new CombatResult(
             hero, monster, 0, 0, false, false, false, false, 0, 
-            "Combate iniciado!", new List<StatusEffectType>(), heroMoraleLevel);
+            "Combate iniciado!", new List<StatusEffectType>(), heroMoraleLevel, 0);
+    }
+
+    private async Task CompleteActiveQuestAsync(int characterId)
+    {
+        try
+        {
+            var activeQuest = await _questService.GetActiveQuestAsync(characterId);
+            if (activeQuest != null)
+            {
+                await _questService.CompleteQuestAsync(activeQuest.Id, characterId);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the combat
+            Console.WriteLine($"Erro ao completar missão: {ex.Message}");
+        }
     }
 
     public async Task<CombatResult> AttackAsync(int characterId, int monsterId)
@@ -67,7 +90,7 @@ public class CombatService : ICombatService
             
             var stunnedMoraleLevel = _moraleService.GetMoraleLevel(hero.Morale);
             return new CombatResult(hero, monster, 0, 0, false, false, false, false, 0, 
-                "Herói está atordoado e perdeu o turno!", new List<StatusEffectType>(), stunnedMoraleLevel);
+                "Herói está atordoado e perdeu o turno!", new List<StatusEffectType>(), stunnedMoraleLevel, 0);
         }
 
         // Calcular dano do herói
@@ -81,12 +104,36 @@ public class CombatService : ICombatService
         bool victory = combatEnded;
         int experienceGained = 0;
         
+        int goldReward = 0;
         if (victory)
         {
             experienceGained = _levelUpService.CalculateExperienceReward(monster, hero.Level);
             hero.Experience += experienceGained;
             hero.Morale = _moraleService.AdjustMorale(hero.Morale, MoraleEvent.Victory);
-            await _levelUpService.CheckAndProcessLevelUpAsync(hero);
+            
+            // Dar recompensas de ouro
+            goldReward = await _dropService.CalculateGoldRewardAsync(monster.Id, hero.Level);
+            hero.Gold += goldReward;
+            
+            // Processar drops do monstro
+            var droppedItems = await _dropService.RollMonsterDropsAsync(monster.Id, hero.Level);
+            if (droppedItems.Any())
+            {
+                await _dropService.GiveDropsToCharacterAsync(hero.Id, droppedItems);
+            }
+            
+            // Trigger achievements
+            await _achievementService.UpdateAchievementProgressAsync(hero.UserId, AchievementType.Combat, 1);
+            
+            // Verificar level up
+            var leveledUp = await _levelUpService.CheckAndProcessLevelUpAsync(hero);
+            if (leveledUp)
+            {
+                await _achievementService.UpdateAchievementProgressAsync(hero.UserId, AchievementType.Progression, hero.Level);
+            }
+            
+            // Completar missão ativa se houver
+            await CompleteActiveQuestAsync(hero.Id);
         }
         else
         {
@@ -121,7 +168,7 @@ public class CombatService : ICombatService
         var actionDescription = isCritical ? "Ataque crítico!" : isFumble ? "Ataque falhou!" : "Ataque normal";
         
         return new CombatResult(hero, monster, damageToMonster, 0, isCritical, isFumble, 
-            combatEnded, victory, experienceGained, actionDescription, new List<StatusEffectType>(), heroMoraleLevel);
+            combatEnded, victory, experienceGained, actionDescription, new List<StatusEffectType>(), heroMoraleLevel, goldReward);
     }
 
     private Task ProcessStatusEffectsAtTurnStart(Character hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
@@ -267,14 +314,14 @@ public class CombatService : ICombatService
         {
             return new CombatResult(
                 hero, monster, 0, 0, false, false, false, false, 0, 
-                "Habilidade não encontrada ou não equipada!", heroEffects.Select(e => e.Type).ToList(), heroMoraleLevel);
+                "Habilidade não encontrada ou não equipada!", heroEffects.Select(e => e.Type).ToList(), heroMoraleLevel, 0);
         }
 
         if (hero.Morale < ability.Ability.ManaCost)
         {
             return new CombatResult(
                 hero, monster, 0, 0, false, false, false, false, 0, 
-                "Mana insuficiente para usar esta habilidade!", heroEffects.Select(e => e.Type).ToList(), heroMoraleLevel);
+                "Mana insuficiente para usar esta habilidade!", heroEffects.Select(e => e.Type).ToList(), heroMoraleLevel, 0);
         }
 
         // Usar a habilidade
@@ -284,7 +331,7 @@ public class CombatService : ICombatService
         {
             return new CombatResult(
                 hero, monster, 0, 0, false, false, false, false, 0, 
-                message, heroEffects.Select(e => e.Type).ToList(), heroMoraleLevel);
+                message, heroEffects.Select(e => e.Type).ToList(), heroMoraleLevel, 0);
         }
 
         // Aplicar efeitos da habilidade
@@ -340,7 +387,7 @@ public class CombatService : ICombatService
 
         return new CombatResult(
             hero, monster, abilityDamage, 0, monsterDied, false, false, false, experienceGained, 
-            resultMessage, newHeroEffects, heroMoraleLevel);
+            resultMessage, newHeroEffects, heroMoraleLevel, 0);
     }
 
     public Task<CombatResult> UseItemAsync(int characterId, int monsterId, string itemName)

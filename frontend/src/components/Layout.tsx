@@ -12,9 +12,6 @@ import {
   Map, 
   LogOut,
   User,
-  Coins,
-  Heart,
-  Shield,
   Star,
   Users,
   Volume2,
@@ -71,31 +68,6 @@ export function Layout({ children }: LayoutProps) {
               </div>
             </div>
 
-            {/* Character Stats */}
-            {character && (
-              <div className="hidden md:flex items-center space-x-6">
-                <div className="stat-card flex items-center space-x-2">
-                  <User className="h-5 w-5 text-blue-400" />
-                  <span className="font-bold text-gray-100">{character.name}</span>
-                  <span className="text-sm text-gray-400">Nível {character.level}</span>
-                </div>
-                
-                <div className="stat-card flex items-center space-x-2">
-                  <Heart className="h-5 w-5 text-red-400" />
-                  <span className="font-bold text-gray-100">{character.health}/{character.maxHealth}</span>
-                </div>
-                
-                <div className="stat-card flex items-center space-x-2">
-                  <Coins className="h-5 w-5 text-amber-400" />
-                  <span className="font-bold text-gray-100">{character.gold}</span>
-                </div>
-                
-                <div className="stat-card flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-green-400" />
-                  <span className="font-bold text-gray-100">{character.morale}/100</span>
-                </div>
-              </div>
-            )}
 
             <div className="flex items-center space-x-4" data-tutorial="settings">
               <span className="text-sm text-gray-400">

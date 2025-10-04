@@ -84,8 +84,13 @@ public class InventoryService
             .Include(ii => ii.Item)
             .FirstOrDefaultAsync(ii => ii.Id == inventoryItemId && ii.CharacterId == characterId);
 
-        if (inventoryItem == null || inventoryItem.Item.Type != ItemType.Weapon && 
-            inventoryItem.Item.Type != ItemType.Armor && inventoryItem.Item.Type != ItemType.Accessory)
+        if (inventoryItem == null)
+            return false;
+
+        // Verificar se o item pode ser equipado
+        if (inventoryItem.Item.Type != ItemType.Weapon && 
+            inventoryItem.Item.Type != ItemType.Armor && 
+            inventoryItem.Item.Type != ItemType.Accessory)
             return false;
 
         // Verificar se o slot é compatível com o tipo do item

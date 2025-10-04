@@ -1,7 +1,5 @@
-import axios from 'axios';
+import { api } from './api';
 import { cacheService } from './cache';
-
-const API_BASE_URL = 'http://localhost:5000/api';
 
 export interface Character {
   id: number;
@@ -30,10 +28,12 @@ export interface CharacterStats {
 
 class CharacterService {
   async getCharacter(characterId: number): Promise<Character> {
+    console.log(`[CharacterService] Getting character with ID: ${characterId}`);
     return await cacheService.cached(
       `character:${characterId}`,
       async () => {
-        const response = await axios.get(`${API_BASE_URL}/characters/${characterId}`);
+        console.log(`[CharacterService] Fetching character ${characterId} from API`);
+        const response = await api.get(`/characters/${characterId}`);
         return response.data;
       },
       2 * 60 * 1000 // 2 minutos
@@ -41,12 +41,12 @@ class CharacterService {
   }
 
   async getCharacterStats(characterId: number): Promise<CharacterStats> {
-    const response = await axios.get(`${API_BASE_URL}/inventory/bonuses/${characterId}`);
+    const response = await api.get(`/inventory/bonuses/${characterId}`);
     return response.data.bonuses;
   }
 
   async updateCharacter(characterId: number, updates: Partial<Character>): Promise<Character> {
-    const response = await axios.put(`${API_BASE_URL}/characters/${characterId}`, updates);
+    const response = await api.put(`/characters/${characterId}`, updates);
     return response.data;
   }
 }

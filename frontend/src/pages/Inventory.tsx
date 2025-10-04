@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCharacter } from '../contexts/CharacterContext';
+import { useInventory } from '../contexts/InventoryContext';
 import { inventoryService, type InventoryItem, type EquipmentSlot } from '../services/inventory';
 import { FadeIn, SlideIn } from '../components/animations';
 import { useToast } from '../components/Toast';
@@ -18,47 +19,27 @@ import {
 } from 'lucide-react';
 
 export default function Inventory() {
-  const { character, refreshCharacter } = useCharacter();
+  const { character } = useCharacter();
+  const { inventory, refreshInventory, equipItem } = useInventory();
   const { showToast } = useToast();
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [, setEquipment] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
   const [draggedItem, setDraggedItem] = useState<InventoryItem | null>(null);
 
   useEffect(() => {
     if (character) {
-      loadInventory();
+      refreshInventory();
     }
-  }, [character]);
-
-  const loadInventory = async () => {
-    if (!character) return;
-    
-    try {
-      setLoading(true);
-      const [inventoryData, equipmentData] = await Promise.all([
-        inventoryService.getInventory(character.id),
-        inventoryService.getEquipment(character.id)
-      ]);
-      
-      setInventory(inventoryData);
-      setEquipment(equipmentData);
-    } catch (error) {
-      console.error('Erro ao carregar inventário:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [character, refreshInventory]);
 
   const handleEquipItem = async (item: InventoryItem, slot: EquipmentSlot) => {
     if (!character) return;
     
     try {
       await inventoryService.equipItem(character.id, item.id, slot);
-      await loadInventory();
-      await refreshCharacter();
+      
+      // Atualizar estado local em tempo real
+      equipItem(item, slot);
       showToast({
         type: 'success',
         title: 'Item equipado!',
@@ -79,8 +60,7 @@ export default function Inventory() {
     
     try {
       await inventoryService.unequipItem(character.id, slot);
-      await loadInventory();
-      await refreshCharacter();
+      await refreshInventory();
       showToast({
         type: 'success',
         title: 'Item removido!',
@@ -101,8 +81,7 @@ export default function Inventory() {
     
     try {
       await inventoryService.useItem(character.id, item.id);
-      await loadInventory();
-      await refreshCharacter();
+      await refreshInventory();
       setShowItemModal(false);
       showToast({
         type: 'success',
@@ -122,6 +101,21 @@ export default function Inventory() {
   const handleDragStart = (e: React.DragEvent, item: InventoryItem) => {
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify(item));
+    
+    // Criar um elemento fantasma personalizado
+    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+    dragImage.style.transform = 'rotate(5deg)';
+    dragImage.style.opacity = '0.8';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    
+    // Remover o elemento fantasma após um pequeno delay
+    setTimeout(() => {
+      if (document.body.contains(dragImage)) {
+        document.body.removeChild(dragImage);
+      }
+    }, 0);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -211,7 +205,7 @@ export default function Inventory() {
     }
   };
 
-  if (loading) {
+  if (!inventory) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
@@ -324,9 +318,17 @@ export default function Inventory() {
                           equippedItem 
                             ? 'border-amber-500/50 bg-amber-900/20 group-hover:border-amber-400/70' 
                             : 'border-gray-700/50 bg-gray-900/20 group-hover:border-gray-600/70'
-                        } ${draggedItem && canItemBeEquippedInSlot(draggedItem, slot as EquipmentSlot) ? 'border-blue-500/50 bg-blue-900/20' : ''}`}
+                        } ${draggedItem && canItemBeEquippedInSlot(draggedItem, slot as EquipmentSlot) ? 'border-blue-500/50 bg-blue-900/20 ring-2 ring-blue-400/50' : ''}`}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, slot as EquipmentSlot)}
+                        onDragEnter={(e) => {
+                          if (draggedItem && canItemBeEquippedInSlot(draggedItem, slot as EquipmentSlot)) {
+                            e.currentTarget.classList.add('ring-2', 'ring-blue-400/50');
+                          }
+                        }}
+                        onDragLeave={(e) => {
+                          e.currentTarget.classList.remove('ring-2', 'ring-blue-400/50');
+                        }}
                       >
                         <div className="flex flex-col items-center text-center space-y-3">
                           <div className={`p-3 rounded-lg transition-transform group-hover:scale-110 ${
@@ -366,7 +368,7 @@ export default function Inventory() {
           <SlideIn direction="right" delay={600}>
             <div className="card backdrop-blur-sm bg-black/20">
               <h3 className="text-xl font-bold text-gradient mb-6">Itens do Inventário</h3>
-              <div className="max-h-96 overflow-y-auto space-y-3">
+              <div className="max-h-96 overflow-y-auto space-y-3 scrollbar-hide">
                 {inventory.map((item) => {
                   const ItemIcon = getItemTypeIcon(item.type);
                   const rarityColor = getRarityColor(item.rarity);
@@ -374,16 +376,20 @@ export default function Inventory() {
                   return (
                     <div
                       key={item.id}
-                      className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer group hover:scale-[1.02] ${
+                      className={`p-4 rounded-xl border transition-all duration-300 cursor-grab group hover:scale-[1.02] ${
                         item.isEquipped 
                           ? 'border-amber-500/50 bg-amber-900/20 hover:border-amber-400/70' 
                           : 'border-gray-700/50 bg-gray-900/20 hover:border-gray-600/70'
                       } ${draggedItem?.id === item.id ? 'opacity-50' : ''}`}
                       draggable
                       onDragStart={(e) => handleDragStart(e, item)}
+                      onDragEnd={() => setDraggedItem(null)}
                       onClick={() => {
-                        setSelectedItem(item);
-                        setShowItemModal(true);
+                        // Só abre o modal se não estiver arrastando
+                        if (!draggedItem) {
+                          setSelectedItem(item);
+                          setShowItemModal(true);
+                        }
                       }}
                     >
                       <div className="flex items-center space-x-4">

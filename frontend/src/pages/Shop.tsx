@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCharacter } from '../contexts/CharacterContext';
+import { useInventory } from '../contexts/InventoryContext';
 import { shopService, type ShopItem, type ShopType, type Rarity } from '../services/shop';
 import { FadeIn, SlideIn } from '../components/animations';
 import { useToast } from '../components/Toast';
@@ -16,7 +17,8 @@ import {
 } from 'lucide-react';
 
 export default function Shop() {
-  const { character, refreshCharacter } = useCharacter();
+  const { character, updateCharacterGold } = useCharacter();
+  const { addItemToInventory } = useInventory();
   const { showToast } = useToast();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [shopTypes, setShopTypes] = useState<ShopType[]>([]);
@@ -102,8 +104,16 @@ export default function Shop() {
 
     try {
       setBuying(true);
-      await shopService.buyItem(character.id, item.id, 1);
-      await refreshCharacter();
+      const result = await shopService.buyItem(character.id, item.id, 1);
+      
+      // Atualizar ouro em tempo real
+      updateCharacterGold(character.gold - item.shopPrice);
+      
+      // Adicionar item ao inventário em tempo real
+      if (result.inventoryItem) {
+        addItemToInventory(result.inventoryItem);
+      }
+      
       setShowItemModal(false);
       showToast({
         type: 'success',

@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { CharacterProvider } from './contexts/CharacterContext'
+import { InventoryProvider } from './contexts/InventoryContext'
+import { QuestProvider } from './contexts/QuestContext'
 import { Layout } from './components/Layout'
 import { Tutorial } from './components/Tutorial'
 import { ToastProvider } from './components/Toast'
@@ -72,32 +74,36 @@ function AppRoutes() {
 
   return (
     <CharacterProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/character" element={<Dashboard />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/quests" element={<Quests />} />
-          <Route path="/combat" element={<Combat />} />
-          <Route path="/bosses" element={<BossesByEnvironment />} />
-          <Route path="/achievements" element={<Achievements />} />
-          <Route path="/parties" element={<Parties />} />
-        </Routes>
-      </Layout>
-      {showTutorial && (
-        <Tutorial 
-          isOpen={showTutorial}
-          onClose={() => {
-            setShowTutorial(false);
-            localStorage.setItem('hasSeenTutorial', 'true');
-          }}
-          onComplete={() => {
-            setShowTutorial(false);
-            localStorage.setItem('hasSeenTutorial', 'true');
-          }}
-        />
-      )}
+      <InventoryProvider>
+        <QuestProvider>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/character" element={<Dashboard />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/quests" element={<Quests />} />
+              <Route path="/combat" element={<Combat />} />
+              <Route path="/bosses" element={<BossesByEnvironment />} />
+              <Route path="/achievements" element={<Achievements />} />
+              <Route path="/parties" element={<Parties />} />
+            </Routes>
+          </Layout>
+          {showTutorial && (
+            <Tutorial 
+              isOpen={showTutorial}
+              onClose={() => {
+                setShowTutorial(false);
+                localStorage.setItem('hasSeenTutorial', 'true');
+              }}
+              onComplete={() => {
+                setShowTutorial(false);
+                localStorage.setItem('hasSeenTutorial', 'true');
+              }}
+            />
+          )}
+        </QuestProvider>
+      </InventoryProvider>
     </CharacterProvider>
   );
 }

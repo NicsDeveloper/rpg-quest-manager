@@ -318,3 +318,26 @@
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: #f59e0b;
 }
+
+/* Hide scrollbar for drag and drop areas */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Drag and drop styles */
+.drag-over {
+  @apply border-blue-500/50 bg-blue-900/20 ring-2 ring-blue-400/50;
+}
+
+.dragging {
+  @apply opacity-50 scale-95;
+}
+
+.drag-ghost {
+  @apply opacity-30;
+}

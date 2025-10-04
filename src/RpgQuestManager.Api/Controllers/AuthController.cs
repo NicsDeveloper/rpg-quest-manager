@@ -24,6 +24,22 @@ public class AuthController : ControllerBase
     {
         try
         {
+            // Validação manual
+            if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
+            {
+                return BadRequest(new { message = "Nome de usuário deve ter pelo menos 3 caracteres" });
+            }
+            
+            if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains("@"))
+            {
+                return BadRequest(new { message = "Email inválido" });
+            }
+            
+            if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
+            {
+                return BadRequest(new { message = "Senha deve ter pelo menos 6 caracteres" });
+            }
+
             var user = await _authService.RegisterAsync(request.Username, request.Email, request.Password);
             if (user == null)
             {
@@ -81,12 +97,18 @@ public class AuthController : ControllerBase
         }
     }
 
-    [HttpPost("validate")]
-    public async Task<IActionResult> ValidateToken([FromBody] TokenRequest request)
+    [HttpGet("validate")]
+    public async Task<IActionResult> ValidateToken()
     {
         try
         {
-            var user = await _authService.ValidateTokenAsync(request.Token);
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "Token não fornecido" });
+            }
+
+            var user = await _authService.ValidateTokenAsync(token);
             if (user == null)
             {
                 return Unauthorized(new { message = "Token inválido ou expirado" });

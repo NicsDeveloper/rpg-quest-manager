@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { achievementService, type Achievement, type UserAchievement } from '../services/achievements';
+import { achievementService, type Achievement, type UserAchievement, AchievementType, AchievementCategory } from '../services/achievements';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { ProgressBar } from '../components/ui/ProgressBar';
 import { 
   Trophy, 
-  Star, 
   Award, 
   Crown, 
   Gem, 
-  Target,
-  CheckCircle,
-  Clock,
-  Gift
+  Gift,
+  Medal,
+  Zap,
+  Sword,
+  Book,
+  Compass,
+  Users,
+  TrendingUp
 } from 'lucide-react';
 
 export default function Achievements() {
@@ -27,7 +29,7 @@ export default function Achievements() {
     if (user) {
       loadAchievements();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const loadAchievements = async () => {
     if (!user) return;
@@ -39,10 +41,12 @@ export default function Achievements() {
         achievementService.getUserAchievements(user.id)
       ]);
       
-      setAchievements(allAchievements);
-      setUserAchievements(userAchievementsData);
+      setAchievements(allAchievements || []);
+      setUserAchievements(userAchievementsData || []);
     } catch (error) {
       console.error('Erro ao carregar conquistas:', error);
+      setAchievements([]);
+      setUserAchievements([]);
     } finally {
       setLoading(false);
     }
@@ -56,43 +60,69 @@ export default function Achievements() {
       await loadAchievements();
     } catch (error) {
       console.error('Erro ao reivindicar recompensa:', error);
+      alert('Erro ao reivindicar recompensa. Tente novamente.');
     }
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'bronze': return Trophy;
-      case 'silver': return Star;
-      case 'gold': return Award;
-      case 'platinum': return Crown;
-      case 'legendary': return Gem;
-      case 'mythic': return Target;
+  const getCategoryIcon = (category: number) => {
+    switch (category) {
+      case AchievementCategory.Bronze: return Medal;
+      case AchievementCategory.Silver: return Award;
+      case AchievementCategory.Gold: return Trophy;
+      case AchievementCategory.Platinum: return Crown;
+      case AchievementCategory.Legendary: return Gem;
+      case AchievementCategory.Mythic: return Zap;
       default: return Trophy;
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'bronze': return 'bg-amber-100 text-amber-800';
-      case 'silver': return 'bg-gray-100 text-gray-800';
-      case 'gold': return 'bg-yellow-100 text-yellow-800';
-      case 'platinum': return 'bg-blue-100 text-blue-800';
-      case 'legendary': return 'bg-purple-100 text-purple-800';
-      case 'mythic': return 'bg-pink-100 text-pink-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getCategoryColor = (category: number) => {
+    switch (category) {
+      case AchievementCategory.Bronze: return 'from-amber-500 to-orange-600';
+      case AchievementCategory.Silver: return 'from-gray-400 to-gray-600';
+      case AchievementCategory.Gold: return 'from-yellow-500 to-amber-600';
+      case AchievementCategory.Platinum: return 'from-blue-500 to-indigo-600';
+      case AchievementCategory.Legendary: return 'from-purple-500 to-violet-600';
+      case AchievementCategory.Mythic: return 'from-pink-500 to-rose-600';
+      default: return 'from-gray-500 to-gray-600';
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'combat': return Target;
-      case 'quest': return Star;
-      case 'exploration': return Gem;
-      case 'collection': return Trophy;
-      case 'social': return Crown;
-      case 'progression': return Award;
-      case 'special': return Gift;
+  const getTypeIcon = (type: number) => {
+    switch (type) {
+      case AchievementType.Combat: return Sword;
+      case AchievementType.Quest: return Book;
+      case AchievementType.Exploration: return Compass;
+      case AchievementType.Collection: return Trophy;
+      case AchievementType.Social: return Users;
+      case AchievementType.Progression: return TrendingUp;
+      case AchievementType.Special: return Gift;
       default: return Trophy;
+    }
+  };
+
+  const getCategoryName = (category: number): string => {
+    switch (category) {
+      case AchievementCategory.Bronze: return 'Bronze';
+      case AchievementCategory.Silver: return 'Silver';
+      case AchievementCategory.Gold: return 'Gold';
+      case AchievementCategory.Platinum: return 'Platinum';
+      case AchievementCategory.Legendary: return 'Legendary';
+      case AchievementCategory.Mythic: return 'Mythic';
+      default: return 'Unknown';
+    }
+  };
+
+  const getTypeName = (type: number): string => {
+    switch (type) {
+      case AchievementType.Combat: return 'Combate';
+      case AchievementType.Quest: return 'Missão';
+      case AchievementType.Exploration: return 'Exploração';
+      case AchievementType.Collection: return 'Coleção';
+      case AchievementType.Social: return 'Social';
+      case AchievementType.Progression: return 'Progressão';
+      case AchievementType.Special: return 'Especial';
+      default: return 'Geral';
     }
   };
 
@@ -119,41 +149,46 @@ export default function Achievements() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-500 mb-4"></div>
+          <p className="text-gray-400">Carregando conquistas...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Conquistas</h1>
-        <p className="text-gray-600 mt-2">Complete objetivos e desbloqueie recompensas</p>
+    <div className="container mx-auto px-6 py-8">
+      <div className="mb-8 text-center">
+        <h1 className="text-5xl font-black mb-2 hero-title animate-float">🏆 Conquistas</h1>
+        <p className="text-gray-400 text-xl">Complete objetivos épicos e desbloqueie recompensas lendárias</p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="mb-8">
+        <div className="flex flex-wrap justify-center gap-4">
           {[
-            { id: 'all', name: 'Todas', count: achievements.length },
-            { id: 'available', name: 'Disponíveis', count: achievements.filter(a => !getUserAchievement(a.id)).length },
-            { id: 'completed', name: 'Completadas', count: userAchievements.filter(ua => ua.isCompleted && !ua.isClaimed).length },
-            { id: 'claimed', name: 'Reivindicadas', count: userAchievements.filter(ua => ua.isClaimed).length }
+            { id: 'all', name: 'Todas', count: achievements.length, icon: '🏆' },
+            { id: 'available', name: 'Disponíveis', count: achievements.filter(a => !getUserAchievement(a.id)).length, icon: '⭐' },
+            { id: 'completed', name: 'Completadas', count: userAchievements.filter(ua => ua.isCompleted && !ua.isClaimed).length, icon: '✅' },
+            { id: 'claimed', name: 'Reivindicadas', count: userAchievements.filter(ua => ua.isClaimed).length, icon: '🎁' }
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105 ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/50 animate-glow'
+                  : 'bg-gradient-to-r from-gray-800/50 to-gray-900/50 text-gray-300 border border-gray-700/50 hover:border-amber-500/30'
               }`}
             >
-              {tab.name} ({tab.count})
+              <span className="text-2xl">{tab.icon}</span>
+              <span>{tab.name}</span>
+              <span className="bg-white/20 px-3 py-1 rounded-full text-sm">{tab.count}</span>
             </button>
           ))}
-        </nav>
+        </div>
       </div>
 
       {/* Achievements Grid */}
@@ -166,92 +201,106 @@ export default function Achievements() {
           const progress = userAchievement?.progress || 0;
           const isCompleted = userAchievement?.isCompleted || false;
           const isClaimed = userAchievement?.isClaimed || false;
+          const progressPercentage = (progress / achievement.requiredValue) * 100;
 
           return (
-            <Card key={achievement.id} className="relative">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <CategoryIcon className="h-6 w-6 text-gray-600" />
-                  <TypeIcon className="h-5 w-5 text-gray-500" />
+            <Card key={achievement.id} variant="epic" className="hover:scale-[1.02] transition-all relative overflow-hidden">
+              {/* Header com ícones e categoria */}
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-xl border border-gray-700/50">
+                    <CategoryIcon className="h-6 w-6 text-amber-400" />
+                  </div>
+                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-gray-700/80 to-gray-800/80 rounded-lg">
+                    <TypeIcon className="h-5 w-5 text-blue-400" />
+                  </div>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${categoryColor}`}>
-                  {achievement.category}
+                <span className={`px-4 py-2 rounded-full text-white text-sm font-bold bg-gradient-to-r ${categoryColor} shadow-lg`}>
+                  {getCategoryName(achievement.category)}
                 </span>
               </div>
 
-              <h3 className="font-semibold text-gray-900 mb-2">{achievement.name}</h3>
-              <p className="text-sm text-gray-600 mb-4">{achievement.description}</p>
+              {/* Título e Descrição */}
+              <div className="mb-4">
+                <h3 className="text-2xl font-bold text-blue-400 mb-2">{achievement.name}</h3>
+                <p className="text-gray-300 text-sm leading-relaxed">{achievement.description}</p>
+              </div>
+
+              {/* Tipo */}
+              <div className="mb-4">
+                <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700/30">
+                  <p className="text-xs text-gray-400 mb-1">Tipo</p>
+                  <p className="font-semibold text-purple-400">{getTypeName(achievement.type)}</p>
+                </div>
+              </div>
 
               {/* Progress */}
               <div className="mb-4">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-medium text-gray-700">Progresso</span>
-                  <span className="text-sm text-gray-600">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-400">Progresso</span>
+                  <span className="text-sm text-gray-300 font-bold">
                     {progress}/{achievement.requiredValue}
                   </span>
                 </div>
-                <ProgressBar 
-                  value={progress} 
-                  max={achievement.requiredValue} 
-                  color={isCompleted ? 'green' : 'blue'}
-                  showPercentage={false}
-                />
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${progressPercentage}%` }} />
+                </div>
               </div>
 
               {/* Rewards */}
-              <div className="bg-gray-50 p-3 rounded-lg mb-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Recompensas</h4>
-                <div className="space-y-1 text-sm">
+              <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-lg p-4 mb-4 border border-amber-700/30">
+                <p className="text-xs text-amber-500 font-semibold mb-2">🎁 Recompensas</p>
+                <div className="flex gap-4 text-sm">
                   {achievement.experienceReward > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Experiência:</span>
-                      <span className="font-medium text-blue-600">+{achievement.experienceReward}</span>
-                    </div>
+                    <span className="flex items-center gap-1 text-purple-400 font-bold">
+                      <span>⭐</span> {achievement.experienceReward} XP
+                    </span>
                   )}
                   {achievement.goldReward > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Ouro:</span>
-                      <span className="font-medium text-yellow-600">+{achievement.goldReward}</span>
-                    </div>
+                    <span className="flex items-center gap-1 text-amber-400 font-bold">
+                      <span>💰</span> {achievement.goldReward}
+                    </span>
                   )}
                   {achievement.itemRewardId && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Item:</span>
-                      <span className="font-medium text-purple-600">Especial</span>
-                    </div>
+                    <span className="flex items-center gap-1 text-green-400 font-bold">
+                      <span>🎁</span> Item Especial
+                    </span>
                   )}
                 </div>
               </div>
 
               {/* Status and Actions */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  {isCompleted && (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  )}
-                  {isClaimed && (
-                    <Gift className="h-5 w-5 text-purple-500" />
-                  )}
-                  {!isCompleted && (
-                    <Clock className="h-5 w-5 text-gray-400" />
-                  )}
-                </div>
-
+              <div className="space-y-2">
                 {isCompleted && !isClaimed && (
-                  <Button
-                    size="sm"
+                  <Button 
+                    variant="primary" 
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 font-bold shadow-lg shadow-green-500/30 animate-pulse"
                     onClick={() => handleClaimReward(achievement.id)}
                   >
-                    Reivindicar
+                    🎁 Reivindicar Recompensa
                   </Button>
+                )}
+                
+                {isCompleted && isClaimed && (
+                  <div className="w-full bg-gradient-to-r from-purple-600 to-violet-600 text-white text-center py-3 rounded-xl font-bold shadow-lg shadow-purple-500/30">
+                    ✅ Recompensa Reivindicada
+                  </div>
+                )}
+
+                {!isCompleted && (
+                  <div className="text-center py-2">
+                    <p className="text-xs text-gray-400">
+                      {progress === 0 ? '🔒 Ainda não iniciada' : '⏳ Em progresso'}
+                    </p>
+                  </div>
                 )}
               </div>
 
               {/* Completion Badge */}
               {isCompleted && (
                 <div className="absolute top-4 right-4">
-                  <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                    {isClaimed ? 'Reivindicada' : 'Completa'}
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg shadow-green-500/30 animate-glow">
+                    {isClaimed ? '🎁 Reivindicada' : '✅ Completa'}
                   </div>
                 </div>
               )}
@@ -261,15 +310,21 @@ export default function Achievements() {
       </div>
 
       {filteredAchievements.length === 0 && (
-        <div className="text-center py-12">
-          <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">
+        <Card className="text-center py-16">
+          <div className="text-6xl mb-4">🏆</div>
+          <h3 className="text-2xl font-bold text-gray-300 mb-2">
             {activeTab === 'all' 
               ? 'Nenhuma conquista encontrada'
               : `Nenhuma conquista ${activeTab} encontrada`
             }
+          </h3>
+          <p className="text-gray-400">
+            {activeTab === 'all' 
+              ? 'As conquistas aparecerão aqui quando estiverem disponíveis.'
+              : 'Continue jogando para desbloquear mais conquistas!'
+            }
           </p>
-        </div>
+        </Card>
       )}
     </div>
   );
