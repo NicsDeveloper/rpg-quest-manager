@@ -113,41 +113,25 @@ public class CombatService : ICombatService
         int goldReward = 0;
         if (victory)
         {
+            // Calcular recompensas (mas não aplicar ainda)
             experienceGained = _levelUpService.CalculateExperienceReward(monster, hero.Level);
-            hero.Experience += experienceGained;
-            hero.Morale = _moraleService.AdjustMorale(hero.Morale, MoraleEvent.Victory);
-            
-            // Dar recompensas de ouro
             goldReward = await _dropService.CalculateGoldRewardAsync(monster.Id, hero.Level);
-            // O ouro vai para o herói individual
-            hero.Gold += goldReward;
             
-            // Processar drops do monstro
-            var droppedItems = await _dropService.RollMonsterDropsAsync(monster.Id, hero.Level);
-            if (droppedItems.Any())
-            {
-                await _dropService.GiveDropsToHeroAsync(hero.Id, droppedItems);
-            }
+            // Ajustar moral por vitória
+            hero.Morale = _moraleService.AdjustMorale(hero.Morale, MoraleEvent.Victory);
             
             // Trigger achievements
             await _achievementService.UpdateAchievementProgressAsync(hero.UserId ?? 0, AchievementType.Combat, 1);
             
-            // Verificar level up
-            var leveledUp = await _levelUpService.CheckAndProcessLevelUpAsync(hero);
-            if (leveledUp)
-            {
-                await _achievementService.UpdateAchievementProgressAsync(hero.UserId ?? 0, AchievementType.Progression, hero.Level);
-            }
-            
-            // Completar missão ativa se houver
-            await CompleteActiveQuestAsync(hero.Id);
-            
-            // Gerar recompensas de combate
+            // Gerar recompensas de combate (baseadas nos drops reais)
             var activeQuest = await _questService.GetActiveQuestAsync(hero.Id);
             if (activeQuest != null)
             {
                 await _rewardService.GenerateCombatRewardsAsync(hero.Id, activeQuest.Id, monster.Id);
             }
+            
+            // Completar missão ativa se houver (gera recompensas de missão)
+            await CompleteActiveQuestAsync(hero.Id);
         }
         else
         {

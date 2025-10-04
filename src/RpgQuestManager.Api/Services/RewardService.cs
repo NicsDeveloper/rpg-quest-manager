@@ -10,23 +10,26 @@ public class RewardService
     private readonly InventoryService _inventoryService;
     private readonly DiceInventoryService _diceInventoryService;
     private readonly DiceService _diceService;
+    private readonly DropService _dropService;
 
     public RewardService(
         ApplicationDbContext db, 
         InventoryService inventoryService, 
         DiceInventoryService diceInventoryService,
-        DiceService diceService)
+        DiceService diceService,
+        DropService dropService)
     {
         _db = db;
         _inventoryService = inventoryService;
         _diceInventoryService = diceInventoryService;
         _diceService = diceService;
+        _dropService = dropService;
     }
 
     public async Task<CombatRewards> GenerateCombatRewardsAsync(int heroId, int questId, int monsterId)
     {
         var hero = await _db.Heroes.FindAsync(heroId);
-        var monster = await _db.Monsters.FindAsync(heroId);
+        var monster = await _db.Monsters.FindAsync(monsterId);
         var quest = await _db.Quests.FindAsync(questId);
 
         if (hero == null || monster == null || quest == null)
@@ -44,19 +47,20 @@ public class RewardService
 
         var rewards = new List<CombatReward>();
 
-        // Recompensas fixas de combate
-        var goldReward = CalculateGoldReward(monster, quest);
+        // Ouro baseado no drop do monstro (usando DropService)
+        var goldReward = await _dropService.CalculateGoldRewardAsync(monsterId, hero.Level);
         rewards.Add(new CombatReward
         {
             Type = RewardType.Gold,
             Name = "Ouro",
-            Description = $"Ouro ganho derrotando {monster.Name}",
+            Description = $"Ouro dropado por {monster.Name}",
             GoldAmount = goldReward,
             Quantity = goldReward,
             Icon = "💰"
         });
 
-        var expReward = CalculateExperienceReward(monster, quest);
+        // Experiência baseada no monstro (usando valor real do monstro)
+        var expReward = monster.ExperienceReward;
         rewards.Add(new CombatReward
         {
             Type = RewardType.Experience,
@@ -67,11 +71,23 @@ public class RewardService
             Icon = "⭐"
         });
 
-        // Drops aleatórios de itens
-        var itemDrops = await GenerateItemDropsAsync(monster);
-        rewards.AddRange(itemDrops);
+        // Drops reais de itens do monstro (usando DropService)
+        var itemDrops = await _dropService.RollMonsterDropsAsync(monsterId, hero.Level);
+        foreach (var item in itemDrops)
+        {
+            rewards.Add(new CombatReward
+            {
+                Type = RewardType.Item,
+                Name = item.Name,
+                Description = $"Item dropado por {monster.Name}",
+                ItemId = item.Id,
+                Quantity = 1,
+                Rarity = item.Rarity,
+                Icon = GetItemIcon(item.Type)
+            });
+        }
 
-        // Drops aleatórios de dados
+        // Drops de dados (chance pequena baseada no monstro)
         var diceDrops = GenerateDiceDrops(monster);
         rewards.AddRange(diceDrops);
 
@@ -102,17 +118,19 @@ public class RewardService
 
         var rewards = new List<QuestReward>();
 
-        // Recompensas fixas da missão
+        // Ouro da missão (usando DropService para cálculo correto)
+        var questGold = await _dropService.CalculateQuestGoldRewardAsync(questId, hero.Level);
         rewards.Add(new QuestReward
         {
             Type = RewardType.Gold,
             Name = "Ouro da Missão",
             Description = $"Recompensa em ouro por completar: {quest.Title}",
-            GoldAmount = quest.GoldReward,
-            Quantity = quest.GoldReward,
+            GoldAmount = questGold,
+            Quantity = questGold,
             Icon = "🏆"
         });
 
+        // Experiência da missão (valor real da missão)
         rewards.Add(new QuestReward
         {
             Type = RewardType.Experience,
@@ -123,9 +141,21 @@ public class RewardService
             Icon = "🎯"
         });
 
-        // Itens especiais da missão (se houver)
-        var questItems = await GenerateQuestItemRewardsAsync(quest);
-        rewards.AddRange(questItems);
+        // Itens de recompensa da missão (usando DropService)
+        var questItemRewards = await _dropService.RollQuestRewardsAsync(questId, hero.Level);
+        foreach (var item in questItemRewards)
+        {
+            rewards.Add(new QuestReward
+            {
+                Type = RewardType.Item,
+                Name = item.Name,
+                Description = $"Recompensa de missão: {quest.Title}",
+                ItemId = item.Id,
+                Quantity = 1,
+                Rarity = item.Rarity,
+                Icon = GetItemIcon(item.Type)
+            });
+        }
 
         questRewards.Rewards = rewards;
         
@@ -248,54 +278,6 @@ public class RewardService
             .ToListAsync();
     }
 
-    private int CalculateGoldReward(Monster monster, Quest quest)
-    {
-        // Ouro base do monstro + bônus da missão
-        var baseGold = monster.Level * 10 + _diceService.RollDice(20);
-        var questBonus = quest.GoldReward / 4; // 25% do ouro da missão como bônus de combate
-        return baseGold + questBonus;
-    }
-
-    private int CalculateExperienceReward(Monster monster, Quest quest)
-    {
-        // Experiência base do monstro + bônus da missão
-        var baseExp = monster.Level * 15 + _diceService.RollDice(10);
-        var questBonus = quest.ExperienceReward / 3; // 33% da exp da missão como bônus de combate
-        return baseExp + questBonus;
-    }
-
-    private async Task<List<CombatReward>> GenerateItemDropsAsync(Monster monster)
-    {
-        var drops = new List<CombatReward>();
-        
-        // Chance base de drop de item (15%)
-        if (_diceService.RollPercentage(15))
-        {
-            // Buscar itens que podem ser dropados por este tipo de monstro
-            var availableItems = await _db.Items
-                .Where(i => i.DroppedBy.Contains(monster.Type))
-                .ToListAsync();
-
-            if (availableItems.Any())
-            {
-                var randomItem = availableItems[_diceService.RollDice(availableItems.Count) - 1];
-                var quantity = randomItem.StackSize > 1 ? _diceService.RollDice(randomItem.StackSize) : 1;
-                
-                drops.Add(new CombatReward
-                {
-                    Type = RewardType.Item,
-                    Name = randomItem.Name,
-                    Description = $"Item dropado por {monster.Name}",
-                    ItemId = randomItem.Id,
-                    Quantity = quantity,
-                    Rarity = randomItem.Rarity,
-                    Icon = GetItemIcon(randomItem.Type)
-                });
-            }
-        }
-
-        return drops;
-    }
 
     private List<CombatReward> GenerateDiceDrops(Monster monster)
     {
@@ -342,47 +324,6 @@ public class RewardService
         return drops;
     }
 
-    private async Task<List<QuestReward>> GenerateQuestItemRewardsAsync(Quest quest)
-    {
-        var rewards = new List<QuestReward>();
-        
-        // Missões mais difíceis têm chance de dar itens especiais
-        var itemChance = quest.Difficulty switch
-        {
-            QuestDifficulty.Easy => 5,
-            QuestDifficulty.Medium => 15,
-            QuestDifficulty.Hard => 30,
-            QuestDifficulty.Epic => 50,
-            QuestDifficulty.Legendary => 70,
-            _ => 10
-        };
-
-        if (_diceService.RollPercentage(itemChance))
-        {
-            // Buscar itens especiais baseados na categoria da missão
-            var specialItems = await _db.Items
-                .Where(i => i.Rarity >= ItemRarity.Rare)
-                .ToListAsync();
-
-            if (specialItems.Any())
-            {
-                var randomItem = specialItems[_diceService.RollDice(specialItems.Count) - 1];
-                
-                rewards.Add(new QuestReward
-                {
-                    Type = RewardType.Item,
-                    Name = randomItem.Name,
-                    Description = $"Item especial ganho completando: {quest.Title}",
-                    ItemId = randomItem.Id,
-                    Quantity = 1,
-                    Rarity = randomItem.Rarity,
-                    Icon = GetItemIcon(randomItem.Type)
-                });
-            }
-        }
-
-        return rewards;
-    }
 
     private string GetItemIcon(ItemType itemType)
     {
