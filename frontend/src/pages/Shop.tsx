@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useCharacter } from '../contexts/CharacterContext';
+import { heroService, type Hero } from '../services/heroService';
 import { useInventory } from '../contexts/InventoryContext';
 import { shopService, type ShopItem, type ShopType, type Rarity } from '../services/shop';
 import { FadeIn, SlideIn } from '../components/animations';
@@ -17,9 +17,10 @@ import {
 } from 'lucide-react';
 
 export default function Shop() {
-  const { character, updateCharacterGold } = useCharacter();
   const { addItemToInventory } = useInventory();
   const { showToast } = useToast();
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [selectedHero, setSelectedHero] = useState<Hero | null>(null);
   const [items, setItems] = useState<ShopItem[]>([]);
   const [shopTypes, setShopTypes] = useState<ShopType[]>([]);
   const [rarities, setRarities] = useState<Rarity[]>([]);
@@ -34,13 +35,31 @@ export default function Shop() {
 
   useEffect(() => {
     loadShopData();
+    loadUserProfile();
   }, []);
 
   useEffect(() => {
-    if (character) {
+    if (userProfile && selectedHero) {
       loadItems();
     }
-  }, [character, selectedShopType, selectedRarity, selectedType]);
+  }, [userProfile, selectedHero, selectedShopType, selectedRarity, selectedType]);
+
+  const loadUserProfile = async () => {
+    try {
+      const profile = await heroService.getUserProfile();
+      setUserProfile(profile);
+      
+      // Se não há herói selecionado, seleciona o primeiro da party ativa
+      if (!selectedHero && profile.activePartyCount > 0) {
+        const activeParty = await heroService.getActiveParty();
+        if (activeParty.length > 0) {
+          setSelectedHero(activeParty[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar perfil do usuário:', error);
+    }
+  };
 
   const loadShopData = async () => {
     try {
@@ -57,11 +76,11 @@ export default function Shop() {
   };
 
   const loadItems = async () => {
-    if (!character) return;
+    if (!selectedHero) return;
     
     try {
       setLoading(true);
-      const response = await shopService.getShopItemsByLevel(character.level, selectedShopType);
+      const response = await shopService.getShopItemsByLevel(selectedHero?.level || 1, selectedShopType);
       let filteredItems = response.items;
 
       // Filter by rarity
@@ -91,9 +110,9 @@ export default function Shop() {
   };
 
   const handleBuyItem = async (item: ShopItem) => {
-    if (!character) return;
+    if (!selectedHero || !userProfile) return;
     
-    if (character.gold < item.shopPrice) {
+    if (userProfile.gold < item.shopPrice) {
       showToast({
         type: 'error',
         title: 'Ouro insuficiente!',
@@ -104,10 +123,10 @@ export default function Shop() {
 
     try {
       setBuying(true);
-      const result = await shopService.buyItem(character.id, item.id, 1);
+      const result = await shopService.buyItem(selectedHero.id, item.id, 1);
       
       // Atualizar ouro em tempo real
-      updateCharacterGold(character.gold - item.shopPrice);
+      setUserProfile({ ...userProfile, gold: userProfile.gold - item.shopPrice });
       
       // Adicionar item ao inventário em tempo real
       if (result.inventoryItem) {
@@ -154,7 +173,7 @@ export default function Shop() {
   };
 
   const canAfford = (price: number) => {
-    return character ? character.gold >= price : false;
+    return userProfile ? userProfile.gold >= price : false;
   };
 
   if (loading) {
@@ -196,7 +215,7 @@ export default function Shop() {
         </FadeIn>
 
         {/* Character Gold */}
-        {character && (
+        {selectedHero && (
           <SlideIn direction="up" delay={100}>
             <div className="card backdrop-blur-sm bg-black/20">
               <div className="flex items-center justify-center space-x-4">
@@ -205,8 +224,45 @@ export default function Shop() {
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-gray-400 mb-1">Ouro Disponível</p>
-                  <p className="text-4xl font-black text-gradient">{character.gold}</p>
+                  <p className="text-4xl font-black text-gradient">{userProfile?.gold || 0}</p>
                 </div>
+              </div>
+            </div>
+          </SlideIn>
+        )}
+
+        {/* Hero Selection */}
+        {userProfile && (
+          <SlideIn direction="right" delay={150}>
+            <div className="card backdrop-blur-sm bg-black/20">
+              <h3 className="text-xl font-bold text-gradient mb-4">Herói Selecionado</h3>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  {selectedHero ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">{selectedHero.name.charAt(0)}</span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">{selectedHero.name}</p>
+                        <p className="text-sm text-gray-400">{selectedHero.class} - Nível {selectedHero.level}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-400">Nenhum herói selecionado</p>
+                  )}
+                </div>
+                {userProfile.activePartyCount === 0 && (
+                  <div className="text-center">
+                    <p className="text-sm text-red-400 mb-2">Nenhum herói na party</p>
+                    <button
+                      onClick={() => window.location.href = '/heroes'}
+                      className="btn-primary text-sm"
+                    >
+                      Criar Herói
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </SlideIn>

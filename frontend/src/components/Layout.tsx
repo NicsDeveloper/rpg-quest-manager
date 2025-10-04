@@ -11,7 +11,6 @@ import {
   Backpack, 
   Map, 
   LogOut,
-  User,
   Star,
   Users,
   Volume2,
@@ -32,13 +31,13 @@ export function Layout({ children }: LayoutProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
-    { name: 'Personagem', href: '/character', icon: User },
+    { name: 'Heróis', href: '/heroes', icon: Users },
     { name: 'Inventário', href: '/inventory', icon: Backpack },
     { name: 'Loja', href: '/shop', icon: ShoppingBag },
     { name: 'Missões', href: '/quests', icon: Map },
     { name: 'Combate', href: '/combat', icon: Sword },
     { name: 'Conquistas', href: '/achievements', icon: Star },
-    { name: 'Grupos', href: '/parties', icon: Users },
+    { name: 'Grupos', href: '/parties', icon: Crown },
   ];
 
   const isActive = (href: string) => {

@@ -157,7 +157,7 @@ public class AchievementService : IAchievementService
                 {
                     var inventoryItem = new InventoryItem
                     {
-                        CharacterId = character.Id,
+                        HeroId = character.Id,
                         ItemId = userAchievement.Achievement.ItemRewardId.Value,
                         Quantity = 1,
                         IsEquipped = false

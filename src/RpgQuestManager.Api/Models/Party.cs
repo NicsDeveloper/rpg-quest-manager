@@ -23,7 +23,7 @@ public class PartyMember
     public int Id { get; set; }
     public int PartyId { get; set; }
     public int UserId { get; set; }
-    public int CharacterId { get; set; }
+    public int HeroId { get; set; }
     public PartyRole Role { get; set; } = PartyRole.Member;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
     public DateTime LastActiveAt { get; set; } = DateTime.UtcNow;
@@ -31,7 +31,7 @@ public class PartyMember
     // Relacionamentos
     public Party Party { get; set; } = null!;
     public User User { get; set; } = null!;
-    public Character Character { get; set; } = null!;
+    public Hero Hero { get; set; } = null!;
 }
 
 public class PartyInvite

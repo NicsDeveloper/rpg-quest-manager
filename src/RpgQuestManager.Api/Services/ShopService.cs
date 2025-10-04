@@ -59,7 +59,7 @@ public class ShopService
 
     public async Task<bool> BuyItemAsync(int characterId, int itemId, int quantity = 1)
     {
-        var character = await _db.Characters.FindAsync(characterId);
+        var character = await _db.Heroes.FindAsync(characterId);
         var item = await _db.Items.FindAsync(itemId);
 
         if (character == null || item == null || !item.AvailableInShop)
@@ -91,12 +91,12 @@ public class ShopService
     {
         var inventoryItem = await _db.InventoryItems
             .Include(ii => ii.Item)
-            .FirstOrDefaultAsync(ii => ii.Id == inventoryItemId && ii.CharacterId == characterId);
+            .FirstOrDefaultAsync(ii => ii.Id == inventoryItemId && ii.HeroId == characterId);
 
         if (inventoryItem == null || !inventoryItem.Item.IsSellable)
             return false;
 
-        var character = await _db.Characters.FindAsync(characterId);
+        var character = await _db.Heroes.FindAsync(characterId);
         if (character == null) return false;
 
         // Verificar se o item está equipado

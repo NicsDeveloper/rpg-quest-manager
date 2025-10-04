@@ -1,29 +1,62 @@
-import { useCharacter } from '../contexts/CharacterContext';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { heroService, type Hero, type UserProfile } from '../services/heroService';
 import { soundService } from '../services/sound';
+import { Card } from '../components/ui/Card';
 import { 
-  User, 
-  Heart, 
-  Shield, 
   Sword, 
   Coins, 
   Target,
-  ShoppingBag
+  ShoppingBag,
+  Users,
+  Crown,
+  TrendingUp,
+  Plus,
+  Star
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { character, stats, isLoading, error } = useCharacter();
+  const navigate = useNavigate();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [heroes, setHeroes] = useState<Hero[]>([]);
+  const [activeParty, setActiveParty] = useState<Hero[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [profileRes, heroesRes, partyRes] = await Promise.all([
+        heroService.getUserProfile(),
+        heroService.getMyHeroes(),
+        heroService.getActiveParty()
+      ]);
+      setUserProfile(profileRes);
+      setHeroes(heroesRes);
+      setActiveParty(partyRes);
+    } catch (err: any) {
+      console.error('Error loading dashboard data:', err);
+      setError(err.response?.data?.message || 'Erro ao carregar dados do dashboard.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNavigation = (path: string) => {
+    soundService.playSound('click');
+    navigate(path);
+  };
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-6 py-8 flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block p-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full shadow-lg shadow-amber-500/50 animate-pulse mb-4">
-            <svg className="w-16 h-16 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </div>
-          <p className="text-gray-400 text-lg">Carregando Aventura...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-gray-300 text-xl">Carregando dashboard...</p>
         </div>
       </div>
     );
@@ -31,238 +64,330 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="card bg-gradient-to-br from-red-900/20 to-red-800/20 border-red-700/30">
-          <div className="text-center">
-            <div className="inline-block p-4 bg-red-600/20 rounded-full mb-4">
-              <svg className="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-            </div>
-            <p className="text-red-400 text-lg">{error}</p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Erro ao carregar</h2>
+          <p className="text-gray-300 mb-4">{error}</p>
+          <button
+            onClick={fetchData}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+          >
+            Tentar novamente
+          </button>
         </div>
       </div>
     );
   }
 
-  if (!character) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="text-center py-12">
-          <div className="inline-block p-4 bg-gray-800/50 rounded-full mb-4">
-            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-            </svg>
-          </div>
-          <p className="text-gray-400 text-lg">Nenhum personagem encontrado</p>
-        </div>
-      </div>
-    );
-  }
+  const strongestHeroes = [...heroes].sort((a, b) => b.level - a.level).slice(0, 3);
+  const totalExperience = heroes.reduce((sum, hero) => sum + hero.experience, 0);
 
-  const moraleColor = character.morale >= 70 ? 'green' : character.morale >= 40 ? 'yellow' : 'red';
+  const getClassIcon = (className: string) => {
+    const icons: { [key: string]: string } = {
+      'Guerreiro': '⚔️',
+      'Mago': '🔮',
+      'Arqueiro': '🏹',
+      'Ladino': '🗡️',
+      'Paladino': '🛡️',
+      'Clérigo': '✨',
+      'Bárbaro': '🔥',
+      'Bruxo': '👹',
+      'Druida': '🌿',
+      'Monge': '🥋'
+    };
+    return icons[className] || '⚔️';
+  };
+
+  const getClassGradient = (className: string) => {
+    const gradients: { [key: string]: string } = {
+      'Guerreiro': 'from-red-500 to-red-600',
+      'Mago': 'from-blue-500 to-blue-600',
+      'Arqueiro': 'from-green-500 to-green-600',
+      'Ladino': 'from-purple-500 to-purple-600',
+      'Paladino': 'from-yellow-500 to-yellow-600',
+      'Clérigo': 'from-pink-500 to-pink-600',
+      'Bárbaro': 'from-orange-500 to-orange-600',
+      'Bruxo': 'from-indigo-500 to-indigo-600',
+      'Druida': 'from-emerald-500 to-emerald-600',
+      'Monge': 'from-teal-500 to-teal-600'
+    };
+    return gradients[className] || 'from-gray-500 to-gray-600';
+  };
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="mb-12 text-center">
-        <h1 className="text-6xl font-black mb-4 hero-title animate-float">Dashboard</h1>
-        <p className="text-gray-400 text-lg">Bem-vindo de volta, {character.name}!</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
+      <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+      <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <div className="stat-card group">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
-              <User className="w-8 h-8 text-white" />
-            </div>
-            <span className="text-4xl font-black text-gradient">{character.level}</span>
+      <div className="relative z-10 container mx-auto px-6 py-8">
+        <div className="mb-12 text-center">
+          <div className="inline-block relative">
+            <h1 className="text-7xl font-black mb-4 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-pulse">
+              Dashboard
+            </h1>
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-lg blur opacity-30 animate-pulse"></div>
           </div>
-          <h3 className="text-gray-400 text-sm font-medium">Nível</h3>
+          <p className="text-gray-300 text-xl font-medium">
+            Bem-vindo de volta, <span className="text-amber-400 font-bold">{userProfile?.username}</span>!
+          </p>
+          <p className="text-gray-400 text-sm mt-2">Gerencie seus heróis e embarque em aventuras épicas</p>
         </div>
 
-        <div className="stat-card group">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
-              <Heart className="w-8 h-8 text-white" />
-            </div>
-            <span className="text-4xl font-black text-gradient">{character.health}</span>
-          </div>
-          <h3 className="text-gray-400 text-sm font-medium">Vida</h3>
-        </div>
-
-        <div className="stat-card group">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform animate-glow">
-              <Coins className="w-8 h-8 text-white" />
-            </div>
-            <span className="text-4xl font-black text-gradient">{character.gold}</span>
-          </div>
-          <h3 className="text-gray-400 text-sm font-medium">Ouro</h3>
-        </div>
-
-        <div className="stat-card group">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
-            <span className="text-4xl font-black text-gradient">{character.morale}</span>
-          </div>
-          <h3 className="text-gray-400 text-sm font-medium">Moral</h3>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div className="card-hero hover:scale-[1.02] transition-transform">
-          <h2 className="text-3xl font-bold text-gradient mb-6">Estatísticas do Personagem</h2>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/30">
-              <span className="text-gray-300 font-medium">Ataque</span>
-              <span className="text-amber-400 font-bold text-lg">
-                {character.attack + (stats?.attack || 0)}
-                {stats?.attack ? ` (+${stats.attack})` : ''}
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/30">
-              <span className="text-gray-300 font-medium">Defesa</span>
-              <span className="text-amber-400 font-bold text-lg">
-                {character.defense + (stats?.defense || 0)}
-                {stats?.defense ? ` (+${stats.defense})` : ''}
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/30">
-              <span className="text-gray-300 font-medium">Vida Máxima</span>
-              <span className="text-amber-400 font-bold text-lg">
-                {character.maxHealth + (stats?.health || 0)}
-                {stats?.health ? ` (+${stats.health})` : ''}
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/30">
-              <span className="text-gray-300 font-medium">Moral Máxima</span>
-              <span className="text-amber-400 font-bold text-lg">
-                100 + (stats?.morale || 0)
-                {stats?.morale ? ` (+${stats.morale})` : ''}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card-quest hover:scale-[1.02] transition-transform">
-          <h2 className="text-3xl font-bold text-gradient mb-6">Progressão</h2>
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-300 font-medium">Experiência</span>
-                <span className="text-gray-400 text-sm">
-                  {character.experience}/{character.nextLevelExperience}
-                </span>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-black/40 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-6 group-hover:border-blue-400/40 transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-right">
+                  <span className="text-4xl font-black bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+                    {userProfile?.totalHeroes || 0}
+                  </span>
+                </div>
               </div>
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${(character.experience / character.nextLevelExperience) * 100}%` }}
-                ></div>
-              </div>
+              <h3 className="text-blue-300 text-sm font-semibold uppercase tracking-wide">Total de Heróis</h3>
+              <p className="text-gray-400 text-xs mt-1">Heróis criados</p>
             </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-300 font-medium">Vida</span>
-                <span className="text-gray-400 text-sm">
-                  {character.health}/{character.maxHealth}
-                </span>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-black/40 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-6 group-hover:border-purple-400/40 transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-right">
+                  <span className="text-4xl font-black bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
+                    {userProfile?.activePartyCount || 0}
+                  </span>
+                  <span className="text-gray-400 text-lg">/3</span>
+                </div>
               </div>
-              <div className="progress-bar">
-                <div 
-                  className="h-full bg-gradient-to-r from-red-400 via-red-500 to-red-600 rounded-full transition-all duration-500 shadow-lg shadow-red-500/50" 
-                  style={{ width: `${(character.health / character.maxHealth) * 100}%` }}
-                ></div>
-              </div>
+              <h3 className="text-purple-300 text-sm font-semibold uppercase tracking-wide">Party Ativa</h3>
+              <p className="text-gray-400 text-xs mt-1">Heróis em ação</p>
             </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-300 font-medium">Moral</span>
-                <span className="text-gray-400 text-sm">
-                  {character.morale}/100
-                </span>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-black/40 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-6 group-hover:border-amber-400/40 transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                  <Coins className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-right">
+                  <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-600 bg-clip-text text-transparent">
+                    {userProfile?.gold || 0}
+                  </span>
+                </div>
               </div>
-              <div className="progress-bar">
-                <div 
-                  className={`h-full rounded-full transition-all duration-500 shadow-lg ${
-                    moraleColor === 'green' ? 'bg-gradient-to-r from-green-400 via-green-500 to-green-600 shadow-green-500/50' :
-                    moraleColor === 'yellow' ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-yellow-500/50' :
-                    'bg-gradient-to-r from-red-400 via-red-500 to-red-600 shadow-red-500/50'
-                  }`}
-                  style={{ width: `${character.morale}%` }}
-                ></div>
+              <h3 className="text-amber-300 text-sm font-semibold uppercase tracking-wide">Ouro Total</h3>
+              <p className="text-gray-400 text-xs mt-1">Moeda do reino</p>
+            </div>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-black/40 backdrop-blur-sm border border-green-500/20 rounded-2xl p-6 group-hover:border-green-400/40 transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-right">
+                  <span className="text-4xl font-black bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
+                    {totalExperience.toLocaleString()}
+                  </span>
+                </div>
               </div>
+              <h3 className="text-green-300 text-sm font-semibold uppercase tracking-wide">XP Total</h3>
+              <p className="text-gray-400 text-xs mt-1">Experiência acumulada</p>
             </div>
           </div>
         </div>
-      </div>
 
-      {character.statusEffects.length > 0 && (
-        <div className="card mb-8">
-          <h2 className="text-3xl font-bold text-gradient mb-6">Efeitos Ativos</h2>
-          <div className="flex flex-wrap gap-2">
-            {character.statusEffects.map((effect, index) => (
-              <span 
-                key={index}
-                className="badge badge-info"
-              >
-                {effect}
-              </span>
-            ))}
+        {/* Main Content Sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Active Party */}
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-black/40 backdrop-blur-sm border border-purple-500/20 rounded-3xl p-8 group-hover:border-purple-400/40 transition-all duration-300">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-2xl">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    Party Ativa
+                  </h2>
+                  <p className="text-gray-300 font-medium">{activeParty.length}/3 heróis</p>
+                </div>
+              </div>
+
+              {activeParty.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="relative mx-auto w-24 h-24 mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-xl"></div>
+                    <div className="relative p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-full border border-gray-700/30">
+                      <Users className="w-12 h-12 text-gray-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-200 mb-3">Nenhum herói na party</h3>
+                  <p className="text-gray-400 mb-6 max-w-sm mx-auto">Crie e adicione heróis à sua party para começar as aventuras épicas!</p>
+                  <button
+                    onClick={() => handleNavigation('/heroes')}
+                    className="relative group inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                    <Plus className="w-5 h-5 mr-2 relative z-10" />
+                    <span className="relative z-10">Gerenciar Heróis</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {activeParty.map((hero) => (
+                    <div key={hero.id} className="group relative">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-300"></div>
+                      <div className="relative flex items-center gap-4 p-5 bg-gray-800/50 rounded-2xl border border-gray-700/30 group-hover:border-gray-600/50 transition-all duration-300">
+                        <div className="relative">
+                          <div className={`p-4 bg-gradient-to-br ${getClassGradient(hero.class)} rounded-2xl shadow-lg`}>
+                            <span className="text-2xl">{getClassIcon(hero.class)}</span>
+                          </div>
+                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                            {hero.partySlot}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-xl text-white mb-1">{hero.name}</h3>
+                          <p className="text-gray-300 font-medium">{hero.class} • Nível {hero.level}</p>
+                          <div className="flex gap-4 mt-2 text-sm">
+                            <span className="text-red-400">❤️ {hero.currentHealth}/{hero.maxHealth}</span>
+                            <span className="text-blue-400">⚔️ {hero.strength}</span>
+                            <span className="text-purple-400">🧠 {hero.intelligence}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => handleNavigation('/heroes')}
+                    className="w-full mt-6 relative group inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-gray-700 to-gray-600 text-white font-semibold rounded-xl hover:from-gray-600 hover:to-gray-500 transition-all duration-300 transform hover:scale-105"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-gray-700 to-gray-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                    <span className="relative z-10">Gerenciar Party</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
 
-      <div className="card">
-        <h2 className="text-3xl font-bold text-gradient mb-6">Ações Rápidas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <button 
-            onClick={() => soundService.playClick()}
-            className="group flex items-center space-x-4 p-6 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/30 hover:border-blue-500/50 transition-all hover:scale-105"
+          {/* Strongest Heroes */}
+          <Card variant="epic" className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg">
+                <Star className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gradient">Heróis Mais Fortes</h2>
+                <p className="text-gray-400">Top 3 por nível</p>
+              </div>
+            </div>
+
+            {strongestHeroes.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl mx-auto w-20 h-20 flex items-center justify-center mb-4">
+                  <Users className="w-10 h-10 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-300 mb-2">Nenhum herói criado</h3>
+                <p className="text-gray-400 mb-4">Crie seu primeiro herói para começar a aventura!</p>
+                <button
+                  onClick={() => handleNavigation('/heroes')}
+                  className="btn btn-primary"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Criar Herói
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {strongestHeroes.map((hero, index) => (
+                  <div key={hero.id} className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700/30">
+                    <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full text-white font-bold text-sm">
+                      {index + 1}
+                    </div>
+                    <div className={`p-2 bg-gradient-to-br ${getClassGradient(hero.class)} rounded-lg`}>
+                      <span className="text-lg">{getClassIcon(hero.class)}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-blue-400">{hero.name}</h3>
+                      <p className="text-sm text-gray-400">{hero.class} • Nível {hero.level}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-400">{hero.experience} XP</div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => handleNavigation('/heroes')}
+                  className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold transition"
+                >
+                  Ver Todos os Heróis
+                </button>
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <button
+            onClick={() => handleNavigation('/heroes')}
+            className="action-card group"
           >
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
-              <Sword className="h-8 w-8 text-white" />
+            <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
+              <Users className="w-8 h-8 text-white" />
             </div>
-            <div>
-              <h3 className="font-bold text-lg text-blue-400 group-hover:text-blue-300">Combate</h3>
-              <p className="text-sm text-gray-400">Lute contra monstros</p>
-            </div>
+            <h3 className="text-gray-400 text-sm font-medium mt-3">Gerenciar Heróis</h3>
           </button>
-          
-          <button 
-            onClick={() => soundService.playClick()}
-            className="group flex items-center space-x-4 p-6 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/30 hover:border-green-500/50 transition-all hover:scale-105"
+
+          <button
+            onClick={() => handleNavigation('/combat')}
+            className="action-card group"
           >
-            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
-              <ShoppingBag className="h-8 w-8 text-white" />
+            <div className="p-4 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
+              <Sword className="w-8 h-8 text-white" />
             </div>
-            <div>
-              <h3 className="font-bold text-lg text-green-400 group-hover:text-green-300">Loja</h3>
-              <p className="text-sm text-gray-400">Compre equipamentos</p>
-            </div>
+            <h3 className="text-gray-400 text-sm font-medium mt-3">Combate</h3>
           </button>
-          
-          <button 
-            onClick={() => soundService.playClick()}
-            className="group flex items-center space-x-4 p-6 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/30 hover:border-purple-500/50 transition-all hover:scale-105"
+
+          <button
+            onClick={() => handleNavigation('/quests')}
+            className="action-card group"
           >
-            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
-              <Target className="h-8 w-8 text-white" />
+            <div className="p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
+              <Target className="w-8 h-8 text-white" />
             </div>
-            <div>
-              <h3 className="font-bold text-lg text-purple-400 group-hover:text-purple-300">Missões</h3>
-              <p className="text-sm text-gray-400">Complete objetivos</p>
+            <h3 className="text-gray-400 text-sm font-medium mt-3">Missões</h3>
+          </button>
+
+          <button
+            onClick={() => handleNavigation('/shop')}
+            className="action-card group"
+          >
+            <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
+              <ShoppingBag className="w-8 h-8 text-white" />
             </div>
+            <h3 className="text-gray-400 text-sm font-medium mt-3">Loja</h3>
           </button>
         </div>
       </div>
     </div>
   );
 }
-
-

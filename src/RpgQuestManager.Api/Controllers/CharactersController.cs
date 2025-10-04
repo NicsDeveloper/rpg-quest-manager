@@ -28,7 +28,7 @@ public class CharactersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var data = await _db.Characters.AsNoTracking().ToListAsync();
+        var data = await _db.Heroes.AsNoTracking().ToListAsync();
         return Ok(data);
     }
 
@@ -39,30 +39,29 @@ public class CharactersController : ControllerBase
         {
             var userId = GetCurrentUserId();
             
-            // Verificar se o personagem pertence ao usuário autenticado
-            var character = await _db.Characters.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
-            if (character == null)
+            // Verificar se o herói pertence ao usuário autenticado
+            var hero = await _db.Heroes.AsNoTracking().FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
+            if (hero == null)
             {
-                return NotFound(new { message = "Personagem não encontrado" });
+                return NotFound(new { message = "Herói não encontrado" });
             }
 
             return Ok(new
             {
-                id = character.Id,
-                userId = character.UserId,
-                name = character.Name,
-                level = character.Level,
-                experience = character.Experience,
-                nextLevelExperience = character.NextLevelExperience,
-                health = character.Health,
-                maxHealth = character.MaxHealth,
-                attack = character.Attack,
-                defense = character.Defense,
-                morale = character.Morale,
-                gold = character.Gold,
-                statusEffects = character.StatusEffects.Select(se => se.ToString()).ToList(),
-                createdAt = character.CreatedAt,
-                lastPlayedAt = character.LastPlayedAt
+                id = hero.Id,
+                userId = hero.UserId,
+                name = hero.Name,
+                @class = hero.Class,
+                level = hero.Level,
+                experience = hero.Experience,
+                strength = hero.Strength,
+                intelligence = hero.Intelligence,
+                dexterity = hero.Dexterity,
+                health = hero.CurrentHealth,
+                maxHealth = hero.MaxHealth,
+                isInActiveParty = hero.IsInActiveParty,
+                partySlot = hero.PartySlot,
+                createdAt = hero.CreatedAt
             });
         }
         catch (UnauthorizedAccessException ex)
@@ -76,56 +75,71 @@ public class CharactersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateCharacter([FromBody] CreateCharacterRequest request)
+    public async Task<IActionResult> CreateHero([FromBody] CreateHeroRequest request)
     {
         try
         {
             var userId = GetCurrentUserId();
             
-            // Verificar se o usuário já tem um personagem
-            var existingCharacter = await _db.Characters.FirstOrDefaultAsync(c => c.UserId == userId);
-            if (existingCharacter != null)
+            // Verificar se já tem pelo menos um herói nível 5+ (não deletado)
+            var heroes = await _db.Heroes.Where(h => h.UserId == userId && !h.IsDeleted).ToListAsync();
+            
+            // Se já tem heróis, verifica se algum está nível 5+
+            if (heroes.Count > 0)
             {
-                return BadRequest(new { message = "Você já possui um personagem" });
+                var hasLevel5Hero = heroes.Any(h => h.Level >= 5);
+                if (!hasLevel5Hero)
+                {
+                    return BadRequest(new { message = "Você precisa ter pelo menos um herói nível 5 ou superior para criar um novo herói." });
+                }
             }
 
-            var character = new Character
+            var hero = new Hero
             {
-                UserId = userId,
                 Name = request.Name,
+                Class = request.Class,
                 Level = 1,
                 Experience = 0,
-                NextLevelExperience = 1000,
-                Health = 100,
-                MaxHealth = 100,
-                Attack = 10,
-                Defense = 5,
-                Morale = 50,
-                Gold = 100,
-                CreatedAt = DateTime.UtcNow,
-                LastPlayedAt = DateTime.UtcNow
+                UnallocatedAttributePoints = 0,
+                Gold = 0,
+                UserId = userId,
+                IsInActiveParty = false,
+                PartySlot = null,
+                CreatedAt = DateTime.UtcNow
             };
+            
+            // Configurar atributos base baseados na classe
+            hero.ConfigureInitialAttributes();
 
-            _db.Characters.Add(character);
+            _db.Heroes.Add(hero);
+            await _db.SaveChangesAsync();
+
+            // Se é o primeiro herói, adiciona automaticamente à party no slot 1
+            var heroCount = await _db.Heroes.CountAsync(h => h.UserId == userId);
+            if (heroCount == 1)
+            {
+                hero.IsInActiveParty = true;
+                hero.PartySlot = 1;
+            }
+
             await _db.SaveChangesAsync();
 
             return Ok(new
             {
-                id = character.Id,
-                userId = character.UserId,
-                name = character.Name,
-                level = character.Level,
-                experience = character.Experience,
-                nextLevelExperience = character.NextLevelExperience,
-                health = character.Health,
-                maxHealth = character.MaxHealth,
-                attack = character.Attack,
-                defense = character.Defense,
-                morale = character.Morale,
-                gold = character.Gold,
-                statusEffects = new List<string>(),
-                createdAt = character.CreatedAt,
-                lastPlayedAt = character.LastPlayedAt
+                id = hero.Id,
+                userId = hero.UserId,
+                name = hero.Name,
+                @class = hero.Class,
+                level = hero.Level,
+                experience = hero.Experience,
+                strength = hero.Strength,
+                intelligence = hero.Intelligence,
+                dexterity = hero.Dexterity,
+                health = hero.CurrentHealth,
+                maxHealth = hero.MaxHealth,
+                isInActiveParty = hero.IsInActiveParty,
+                partySlot = hero.PartySlot,
+                createdAt = hero.CreatedAt
             });
         }
         catch (UnauthorizedAccessException ex)
@@ -138,7 +152,7 @@ public class CharactersController : ControllerBase
         }
     }
 
-    public record CreateCharacterRequest(string Name);
+    public record CreateHeroRequest(string Name, string Class);
 }
 
 

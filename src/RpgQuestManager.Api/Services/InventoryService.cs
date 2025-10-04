@@ -15,9 +15,14 @@ public class InventoryService
 
     public async Task<List<InventoryItem>> GetCharacterInventoryAsync(int characterId)
     {
+        return await GetHeroInventoryAsync(characterId);
+    }
+
+    public async Task<List<InventoryItem>> GetHeroInventoryAsync(int heroId)
+    {
         return await _db.InventoryItems
             .Include(ii => ii.Item)
-            .Where(ii => ii.CharacterId == characterId)
+            .Where(ii => ii.HeroId == heroId)
             .OrderBy(ii => ii.Item.Type)
             .ThenBy(ii => ii.Item.Name)
             .ToListAsync();
@@ -29,7 +34,7 @@ public class InventoryService
         if (item == null) return null;
 
         var existingItem = await _db.InventoryItems
-            .FirstOrDefaultAsync(ii => ii.CharacterId == characterId && ii.ItemId == itemId);
+            .FirstOrDefaultAsync(ii => ii.HeroId == characterId && ii.ItemId == itemId);
 
         if (existingItem != null)
         {
@@ -43,7 +48,7 @@ public class InventoryService
             // Novo item
             var inventoryItem = new InventoryItem
             {
-                CharacterId = characterId,
+                HeroId = characterId,
                 ItemId = itemId,
                 Quantity = quantity,
                 AcquiredAt = DateTime.UtcNow
@@ -61,7 +66,7 @@ public class InventoryService
     public async Task<bool> RemoveItemAsync(int characterId, int itemId, int quantity = 1)
     {
         var inventoryItem = await _db.InventoryItems
-            .FirstOrDefaultAsync(ii => ii.CharacterId == characterId && ii.ItemId == itemId);
+            .FirstOrDefaultAsync(ii => ii.HeroId == characterId && ii.ItemId == itemId);
 
         if (inventoryItem == null) return false;
 
@@ -82,7 +87,7 @@ public class InventoryService
     {
         var inventoryItem = await _db.InventoryItems
             .Include(ii => ii.Item)
-            .FirstOrDefaultAsync(ii => ii.Id == inventoryItemId && ii.CharacterId == characterId);
+            .FirstOrDefaultAsync(ii => ii.Id == inventoryItemId && ii.HeroId == characterId);
 
         if (inventoryItem == null)
             return false;
@@ -115,7 +120,7 @@ public class InventoryService
     public async Task<bool> UnequipItemAsync(int characterId, EquipmentSlot slot)
     {
         var inventoryItem = await _db.InventoryItems
-            .FirstOrDefaultAsync(ii => ii.CharacterId == characterId && ii.EquippedSlot == slot);
+            .FirstOrDefaultAsync(ii => ii.HeroId == characterId && ii.EquippedSlot == slot);
 
         if (inventoryItem == null) return false;
 
@@ -130,14 +135,19 @@ public class InventoryService
         return true;
     }
 
-    public async Task<CharacterEquipment> GetCharacterEquipmentAsync(int characterId)
+    public async Task<HeroEquipment> GetCharacterEquipmentAsync(int characterId)
     {
-        return await GetOrCreateEquipmentAsync(characterId);
+        return await GetHeroEquipmentAsync(characterId);
+    }
+
+    public async Task<HeroEquipment> GetHeroEquipmentAsync(int heroId)
+    {
+        return await GetOrCreateEquipmentAsync(heroId);
     }
 
     public async Task<(int attack, int defense, int health, int morale)> GetEquipmentBonusesAsync(int characterId)
     {
-        var equipment = await _db.CharacterEquipment
+        var equipment = await _db.HeroEquipment
             .Include(ce => ce.Weapon).ThenInclude(ii => ii.Item)
             .Include(ce => ce.Shield).ThenInclude(ii => ii.Item)
             .Include(ce => ce.Helmet).ThenInclude(ii => ii.Item)
@@ -146,7 +156,7 @@ public class InventoryService
             .Include(ce => ce.Boots).ThenInclude(ii => ii.Item)
             .Include(ce => ce.Ring).ThenInclude(ii => ii.Item)
             .Include(ce => ce.Amulet).ThenInclude(ii => ii.Item)
-            .FirstOrDefaultAsync(ce => ce.CharacterId == characterId);
+            .FirstOrDefaultAsync(ce => ce.HeroId == characterId);
 
         if (equipment == null) return (0, 0, 0, 0);
 
@@ -171,7 +181,7 @@ public class InventoryService
     {
         var inventoryItem = await _db.InventoryItems
             .Include(ii => ii.Item)
-            .FirstOrDefaultAsync(ii => ii.Id == inventoryItemId && ii.CharacterId == characterId);
+            .FirstOrDefaultAsync(ii => ii.Id == inventoryItemId && ii.HeroId == characterId);
 
         if (inventoryItem == null || !inventoryItem.Item.IsConsumable)
             return false;
@@ -208,18 +218,18 @@ public class InventoryService
         return true;
     }
 
-    private async Task<CharacterEquipment> GetOrCreateEquipmentAsync(int characterId)
+    private async Task<HeroEquipment> GetOrCreateEquipmentAsync(int characterId)
     {
-        var equipment = await _db.CharacterEquipment
-            .FirstOrDefaultAsync(ce => ce.CharacterId == characterId);
+        var equipment = await _db.HeroEquipment
+            .FirstOrDefaultAsync(ce => ce.HeroId == characterId);
 
         if (equipment == null)
         {
-            equipment = new CharacterEquipment
+            equipment = new HeroEquipment
             {
-                CharacterId = characterId
+                HeroId = characterId
             };
-            _db.CharacterEquipment.Add(equipment);
+            _db.HeroEquipment.Add(equipment);
             await _db.SaveChangesAsync();
         }
 
@@ -238,7 +248,7 @@ public class InventoryService
         };
     }
 
-    private void SetEquipmentSlot(CharacterEquipment equipment, EquipmentSlot slot, int? inventoryItemId)
+    private void SetEquipmentSlot(HeroEquipment equipment, EquipmentSlot slot, int? inventoryItemId)
     {
         switch (slot)
         {
@@ -272,7 +282,7 @@ public class InventoryService
     private async Task UnequipSlotAsync(int characterId, EquipmentSlot slot)
     {
         var inventoryItem = await _db.InventoryItems
-            .FirstOrDefaultAsync(ii => ii.CharacterId == characterId && ii.EquippedSlot == slot);
+            .FirstOrDefaultAsync(ii => ii.HeroId == characterId && ii.EquippedSlot == slot);
 
         if (inventoryItem != null)
         {

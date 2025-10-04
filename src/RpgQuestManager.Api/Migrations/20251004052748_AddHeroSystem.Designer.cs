@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RpgQuestManager.Api.Data;
@@ -11,9 +12,11 @@ using RpgQuestManager.Api.Data;
 namespace RpgQuestManager.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251004052748_AddHeroSystem")]
+    partial class AddHeroSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,9 +99,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Property<int>("Defense")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("EquipmentId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Experience")
                         .HasColumnType("integer");
 
@@ -135,8 +135,6 @@ namespace RpgQuestManager.Api.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("EquipmentId");
 
                     b.HasIndex("UserId");
 
@@ -219,6 +217,65 @@ namespace RpgQuestManager.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("CharacterCombos");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.CharacterEquipment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AmuletId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ArmorId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BootsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CharacterId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("GlovesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("HelmetId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RingId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ShieldId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("WeaponId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AmuletId");
+
+                    b.HasIndex("ArmorId");
+
+                    b.HasIndex("BootsId");
+
+                    b.HasIndex("CharacterId")
+                        .IsUnique();
+
+                    b.HasIndex("GlovesId");
+
+                    b.HasIndex("HelmetId");
+
+                    b.HasIndex("RingId");
+
+                    b.HasIndex("ShieldId");
+
+                    b.HasIndex("WeaponId");
+
+                    b.ToTable("CharacterEquipment");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.Combo", b =>
@@ -335,9 +392,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Property<int>("CurrentHealth")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Defense")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -348,9 +402,6 @@ namespace RpgQuestManager.Api.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("Gold")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Health")
                         .HasColumnType("integer");
 
                     b.Property<int>("Intelligence")
@@ -366,9 +417,6 @@ namespace RpgQuestManager.Api.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("MaxHealth")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Morale")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -392,65 +440,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Heroes");
-                });
-
-            modelBuilder.Entity("RpgQuestManager.Api.Models.HeroEquipment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AmuletId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ArmorId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("BootsId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("GlovesId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("HelmetId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("HeroId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("RingId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ShieldId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("WeaponId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AmuletId");
-
-                    b.HasIndex("ArmorId");
-
-                    b.HasIndex("BootsId");
-
-                    b.HasIndex("GlovesId");
-
-                    b.HasIndex("HelmetId");
-
-                    b.HasIndex("HeroId")
-                        .IsUnique();
-
-                    b.HasIndex("RingId");
-
-                    b.HasIndex("ShieldId");
-
-                    b.HasIndex("WeaponId");
-
-                    b.ToTable("HeroEquipment");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.HeroQuest", b =>
@@ -497,13 +486,10 @@ namespace RpgQuestManager.Api.Migrations
                     b.Property<DateTime>("AcquiredAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("CharacterId")
+                    b.Property<int>("CharacterId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("EquippedSlot")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("HeroId")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsEquipped")
@@ -517,11 +503,9 @@ namespace RpgQuestManager.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CharacterId");
-
                     b.HasIndex("ItemId");
 
-                    b.HasIndex("HeroId", "ItemId")
+                    b.HasIndex("CharacterId", "ItemId")
                         .IsUnique();
 
                     b.ToTable("InventoryItems");
@@ -842,7 +826,7 @@ namespace RpgQuestManager.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("HeroId")
+                    b.Property<int>("CharacterId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("JoinedAt")
@@ -862,7 +846,7 @@ namespace RpgQuestManager.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("HeroId");
+                    b.HasIndex("CharacterId");
 
                     b.HasIndex("UserId");
 
@@ -1196,17 +1180,11 @@ namespace RpgQuestManager.Api.Migrations
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.Character", b =>
                 {
-                    b.HasOne("RpgQuestManager.Api.Models.HeroEquipment", "Equipment")
-                        .WithMany()
-                        .HasForeignKey("EquipmentId");
-
                     b.HasOne("RpgQuestManager.Api.Models.User", "User")
                         .WithMany("Characters")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Equipment");
 
                     b.Navigation("User");
                 });
@@ -1249,6 +1227,65 @@ namespace RpgQuestManager.Api.Migrations
                     b.Navigation("Combo");
                 });
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.CharacterEquipment", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Amulet")
+                        .WithMany()
+                        .HasForeignKey("AmuletId");
+
+                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Armor")
+                        .WithMany()
+                        .HasForeignKey("ArmorId");
+
+                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Boots")
+                        .WithMany()
+                        .HasForeignKey("BootsId");
+
+                    b.HasOne("RpgQuestManager.Api.Models.Character", "Character")
+                        .WithOne("Equipment")
+                        .HasForeignKey("RpgQuestManager.Api.Models.CharacterEquipment", "CharacterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Gloves")
+                        .WithMany()
+                        .HasForeignKey("GlovesId");
+
+                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Helmet")
+                        .WithMany()
+                        .HasForeignKey("HelmetId");
+
+                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Ring")
+                        .WithMany()
+                        .HasForeignKey("RingId");
+
+                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Shield")
+                        .WithMany()
+                        .HasForeignKey("ShieldId");
+
+                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Weapon")
+                        .WithMany()
+                        .HasForeignKey("WeaponId");
+
+                    b.Navigation("Amulet");
+
+                    b.Navigation("Armor");
+
+                    b.Navigation("Boots");
+
+                    b.Navigation("Character");
+
+                    b.Navigation("Gloves");
+
+                    b.Navigation("Helmet");
+
+                    b.Navigation("Ring");
+
+                    b.Navigation("Shield");
+
+                    b.Navigation("Weapon");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.ComboStep", b =>
                 {
                     b.HasOne("RpgQuestManager.Api.Models.SpecialAbility", "Ability")
@@ -1277,65 +1314,6 @@ namespace RpgQuestManager.Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("RpgQuestManager.Api.Models.HeroEquipment", b =>
-                {
-                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Amulet")
-                        .WithMany()
-                        .HasForeignKey("AmuletId");
-
-                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Armor")
-                        .WithMany()
-                        .HasForeignKey("ArmorId");
-
-                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Boots")
-                        .WithMany()
-                        .HasForeignKey("BootsId");
-
-                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Gloves")
-                        .WithMany()
-                        .HasForeignKey("GlovesId");
-
-                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Helmet")
-                        .WithMany()
-                        .HasForeignKey("HelmetId");
-
-                    b.HasOne("RpgQuestManager.Api.Models.Hero", "Hero")
-                        .WithOne("Equipment")
-                        .HasForeignKey("RpgQuestManager.Api.Models.HeroEquipment", "HeroId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Ring")
-                        .WithMany()
-                        .HasForeignKey("RingId");
-
-                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Shield")
-                        .WithMany()
-                        .HasForeignKey("ShieldId");
-
-                    b.HasOne("RpgQuestManager.Api.Models.InventoryItem", "Weapon")
-                        .WithMany()
-                        .HasForeignKey("WeaponId");
-
-                    b.Navigation("Amulet");
-
-                    b.Navigation("Armor");
-
-                    b.Navigation("Boots");
-
-                    b.Navigation("Gloves");
-
-                    b.Navigation("Helmet");
-
-                    b.Navigation("Hero");
-
-                    b.Navigation("Ring");
-
-                    b.Navigation("Shield");
-
-                    b.Navigation("Weapon");
-                });
-
             modelBuilder.Entity("RpgQuestManager.Api.Models.HeroQuest", b =>
                 {
                     b.HasOne("RpgQuestManager.Api.Models.Hero", "Hero")
@@ -1357,13 +1335,9 @@ namespace RpgQuestManager.Api.Migrations
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.InventoryItem", b =>
                 {
-                    b.HasOne("RpgQuestManager.Api.Models.Character", null)
+                    b.HasOne("RpgQuestManager.Api.Models.Character", "Character")
                         .WithMany("Inventory")
-                        .HasForeignKey("CharacterId");
-
-                    b.HasOne("RpgQuestManager.Api.Models.Hero", "Hero")
-                        .WithMany("InventoryItems")
-                        .HasForeignKey("HeroId")
+                        .HasForeignKey("CharacterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1373,7 +1347,7 @@ namespace RpgQuestManager.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Hero");
+                    b.Navigation("Character");
 
                     b.Navigation("Item");
                 });
@@ -1429,9 +1403,9 @@ namespace RpgQuestManager.Api.Migrations
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.PartyMember", b =>
                 {
-                    b.HasOne("RpgQuestManager.Api.Models.Hero", "Hero")
+                    b.HasOne("RpgQuestManager.Api.Models.Character", "Character")
                         .WithMany()
-                        .HasForeignKey("HeroId")
+                        .HasForeignKey("CharacterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1447,7 +1421,7 @@ namespace RpgQuestManager.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Hero");
+                    b.Navigation("Character");
 
                     b.Navigation("Party");
 
@@ -1491,6 +1465,8 @@ namespace RpgQuestManager.Api.Migrations
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.Character", b =>
                 {
+                    b.Navigation("Equipment");
+
                     b.Navigation("Inventory");
                 });
 
@@ -1503,11 +1479,7 @@ namespace RpgQuestManager.Api.Migrations
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.Hero", b =>
                 {
-                    b.Navigation("Equipment");
-
                     b.Navigation("HeroQuests");
-
-                    b.Navigation("InventoryItems");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.Party", b =>

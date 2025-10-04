@@ -44,7 +44,7 @@ public class Item
 public class InventoryItem
 {
     public int Id { get; set; }
-    public int CharacterId { get; set; }
+    public int HeroId { get; set; }
     public int ItemId { get; set; }
     public int Quantity { get; set; } = 1;
     public bool IsEquipped { get; set; } = false;
@@ -52,14 +52,14 @@ public class InventoryItem
     public DateTime AcquiredAt { get; set; } = DateTime.UtcNow;
     
     // Navegação
-    public Character Character { get; set; } = null!;
+    public Hero Hero { get; set; } = null!;
     public Item Item { get; set; } = null!;
 }
 
-public class CharacterEquipment
+public class HeroEquipment
 {
     public int Id { get; set; }
-    public int CharacterId { get; set; }
+    public int HeroId { get; set; }
     public int? WeaponId { get; set; }
     public int? ShieldId { get; set; }
     public int? HelmetId { get; set; }
@@ -70,7 +70,7 @@ public class CharacterEquipment
     public int? AmuletId { get; set; }
     
     // Navegação
-    public Character Character { get; set; } = null!;
+    public Hero Hero { get; set; } = null!;
     public InventoryItem? Weapon { get; set; }
     public InventoryItem? Shield { get; set; }
     public InventoryItem? Helmet { get; set; }

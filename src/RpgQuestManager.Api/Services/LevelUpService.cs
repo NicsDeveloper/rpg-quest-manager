@@ -17,9 +17,14 @@ public class LevelUpService
 
     public async Task<bool> CheckAndProcessLevelUpAsync(Character character)
     {
-        if (character.Experience >= character.NextLevelExperience)
+        return await CheckAndProcessLevelUpAsync(character);
+    }
+
+    public async Task<bool> CheckAndProcessLevelUpAsync(Hero hero)
+    {
+        if (hero.Experience >= GetNextLevelExperience(hero.Level))
         {
-            await ProcessLevelUpAsync(character);
+            await ProcessLevelUpAsync(hero);
             return true;
         }
         return false;
@@ -43,6 +48,30 @@ public class LevelUpService
         character.NextLevelExperience = character.Level * 1000;
         
         await _db.SaveChangesAsync();
+    }
+
+    public async Task ProcessLevelUpAsync(Hero hero)
+    {
+        // Aumenta nível
+        hero.Level++;
+        
+        // Aumenta atributos
+        hero.MaxHealth += 10;
+        hero.CurrentHealth = hero.MaxHealth; // Restaura HP ao máximo
+        hero.Strength += 2;
+        hero.Intelligence += 2;
+        hero.Dexterity += 2;
+        hero.Defense += 1;
+        
+        // Restaura moral ao máximo
+        hero.Morale = 100;
+        
+        await _db.SaveChangesAsync();
+    }
+
+    public int GetNextLevelExperience(int currentLevel)
+    {
+        return currentLevel * 1000;
     }
 
     public int CalculateExperienceReward(Monster monster, int characterLevel)

@@ -16,23 +16,23 @@ public class CombatController : ControllerBase
     private readonly QuestService _questService;
     public CombatController(ApplicationDbContext db, ICombatService combat, QuestService questService) { _db = db; _combat = combat; _questService = questService; }
 
-    public record AttackRequest(int characterId, int monsterId);
-    public record AbilityRequest(int characterId, int monsterId, int abilityId);
-    public record ItemRequest(int characterId, int monsterId, string itemName);
-    public record EscapeRequest(int characterId, int monsterId);
-    public record StartCombatRequest(int characterId, int monsterId);
+    public record AttackRequest(int heroId, int monsterId);
+    public record AbilityRequest(int heroId, int monsterId, int abilityId);
+    public record ItemRequest(int heroId, int monsterId, string itemName);
+    public record EscapeRequest(int heroId, int monsterId);
+    public record StartCombatRequest(int heroId, int monsterId);
 
     [HttpPost("start")]
     public async Task<IActionResult> StartCombat([FromBody] StartCombatRequest request)
     {
-        var result = await _combat.StartCombatAsync(request.characterId, request.monsterId);
+        var result = await _combat.StartCombatAsync(request.heroId, request.monsterId);
         return Ok(FormatCombatResult(result));
     }
 
     [HttpPost("attack")]
     public async Task<IActionResult> Attack([FromBody] AttackRequest request)
     {
-        var result = await _combat.AttackAsync(request.characterId, request.monsterId);
+        var result = await _combat.AttackAsync(request.heroId, request.monsterId);
         return Ok(FormatCombatResult(result));
     }
 
@@ -41,7 +41,7 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var result = await _combat.UseAbilityAsync(request.characterId, request.monsterId, request.abilityId);
+            var result = await _combat.UseAbilityAsync(request.heroId, request.monsterId, request.abilityId);
             return Ok(FormatCombatResult(result));
         }
         catch (Exception ex)
@@ -55,7 +55,7 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var result = await _combat.UseItemAsync(request.characterId, request.monsterId, request.itemName);
+            var result = await _combat.UseItemAsync(request.heroId, request.monsterId, request.itemName);
             return Ok(FormatCombatResult(result));
         }
         catch (NotImplementedException)
@@ -67,14 +67,14 @@ public class CombatController : ControllerBase
     [HttpPost("escape")]
     public async Task<IActionResult> TryEscape([FromBody] EscapeRequest request)
     {
-        var success = await _combat.TryEscapeAsync(request.characterId, request.monsterId);
+        var success = await _combat.TryEscapeAsync(request.heroId, request.monsterId);
         return Ok(new { success, message = success ? "Fuga bem-sucedida!" : "Fuga falhou!" });
     }
 
-    [HttpGet("active-quest/{characterId}")]
-    public async Task<IActionResult> GetActiveQuest(int characterId)
+    [HttpGet("active-quest/{heroId}")]
+    public async Task<IActionResult> GetActiveQuest(int heroId)
     {
-        var quest = await _questService.GetActiveQuestAsync(characterId);
+        var quest = await _questService.GetActiveQuestAsync(heroId);
         if (quest == null)
         {
             return Ok(new { hasActiveQuest = false, quest = (object?)null });
@@ -115,14 +115,14 @@ public class CombatController : ControllerBase
             { 
                 result.Hero.Id, 
                 result.Hero.Name,
+                result.Hero.Class,
                 result.Hero.Level,
                 result.Hero.Experience,
-                result.Hero.NextLevelExperience,
-                result.Hero.Health, 
+                result.Hero.Strength,
+                result.Hero.Intelligence,
+                result.Hero.Dexterity,
+                result.Hero.CurrentHealth, 
                 result.Hero.MaxHealth,
-                result.Hero.Attack,
-                result.Hero.Defense,
-                result.Hero.Morale,
                 moraleLevel = result.HeroMoraleLevel.ToString()
             },
             monster = new 

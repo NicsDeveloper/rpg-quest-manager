@@ -118,6 +118,10 @@ class SoundService {
   }
 
   // Métodos específicos para diferentes ações do jogo
+  async playSound(soundName: string): Promise<void> {
+    await this.play(soundName);
+  }
+
   async playClick(): Promise<void> {
     await this.play('click');
   }

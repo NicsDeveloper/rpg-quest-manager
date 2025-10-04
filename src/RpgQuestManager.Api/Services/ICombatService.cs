@@ -3,7 +3,7 @@ using RpgQuestManager.Api.Models;
 namespace RpgQuestManager.Api.Services;
 
 public record CombatResult(
-    Character Hero, 
+    Hero Hero, 
     Monster Monster, 
     int DamageToMonster, 
     int DamageToHero, 
@@ -20,11 +20,11 @@ public record CombatResult(
 
 public interface ICombatService
 {
-    Task<CombatResult> AttackAsync(int characterId, int monsterId);
-    Task<CombatResult> UseAbilityAsync(int characterId, int monsterId, int abilityId);
-    Task<CombatResult> UseItemAsync(int characterId, int monsterId, string itemName);
-    Task<bool> TryEscapeAsync(int characterId, int monsterId);
-    Task<CombatResult> StartCombatAsync(int characterId, int monsterId);
+    Task<CombatResult> AttackAsync(int heroId, int monsterId);
+    Task<CombatResult> UseAbilityAsync(int heroId, int monsterId, int abilityId);
+    Task<CombatResult> UseItemAsync(int heroId, int monsterId, string itemName);
+    Task<bool> TryEscapeAsync(int heroId, int monsterId);
+    Task<CombatResult> StartCombatAsync(int heroId, int monsterId);
 }
 
 

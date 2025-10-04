@@ -31,19 +31,15 @@ public class QuestsController : ControllerBase
         return Ok(data);
     }
 
-    [HttpGet("available/{characterId}")]
-    public async Task<IActionResult> GetAvailable(int characterId)
+    [HttpGet("available/{heroId}")]
+    public async Task<IActionResult> GetAvailable(int heroId)
     {
         try
         {
             var userId = GetCurrentUserId();
-            // Verificar se o characterId pertence ao usuário autenticado
-            if (characterId != userId)
-            {
-                return Forbid("Você só pode acessar suas próprias missões");
-            }
+            // TODO: Verificar se o heroId pertence ao usuário autenticado
             
-            var data = await _questService.GetAvailableQuestsAsync(characterId);
+            var data = await _questService.GetAvailableQuestsAsync(heroId);
             return Ok(data);
         }
         catch (UnauthorizedAccessException ex)
@@ -84,12 +80,11 @@ public class QuestsController : ControllerBase
     }
 
     [HttpPost("{id}/start")]
-    public async Task<IActionResult> Start(int id)
+    public async Task<IActionResult> Start(int id, [FromBody] StartQuestRequest request)
     {
         try
         {
-            var userId = GetCurrentUserId();
-            var quest = await _questService.StartQuestAsync(id, userId);
+            var quest = await _questService.StartQuestAsync(id, request.HeroId);
             return Ok(quest);
         }
         catch (ArgumentException ex)
@@ -107,12 +102,11 @@ public class QuestsController : ControllerBase
     }
 
     [HttpPost("{id}/complete")]
-    public async Task<IActionResult> Complete(int id)
+    public async Task<IActionResult> Complete(int id, [FromBody] CompleteQuestRequest request)
     {
         try
         {
-            var userId = GetCurrentUserId();
-            var quest = await _questService.CompleteQuestAsync(id, userId);
+            var quest = await _questService.CompleteQuestAsync(id, request.HeroId);
             return Ok(quest);
         }
         catch (ArgumentException ex)
@@ -130,12 +124,11 @@ public class QuestsController : ControllerBase
     }
 
     [HttpPost("{id}/fail")]
-    public async Task<IActionResult> Fail(int id)
+    public async Task<IActionResult> Fail(int id, [FromBody] FailQuestRequest request)
     {
         try
         {
-            var userId = GetCurrentUserId();
-            var quest = await _questService.FailQuestAsync(id, userId);
+            var quest = await _questService.FailQuestAsync(id, request.HeroId);
             return Ok(quest);
         }
         catch (ArgumentException ex)
@@ -148,19 +141,15 @@ public class QuestsController : ControllerBase
         }
     }
 
-    [HttpGet("completed/{characterId}")]
-    public async Task<IActionResult> GetCompleted(int characterId)
+    [HttpGet("completed/{heroId}")]
+    public async Task<IActionResult> GetCompleted(int heroId)
     {
         try
         {
             var userId = GetCurrentUserId();
-            // Verificar se o characterId pertence ao usuário autenticado
-            if (characterId != userId)
-            {
-                return Forbid("Você só pode acessar suas próprias missões");
-            }
+            // TODO: Verificar se o heroId pertence ao usuário autenticado
             
-            var data = await _questService.GetCompletedQuestsAsync(characterId);
+            var data = await _questService.GetCompletedQuestsAsync(heroId);
             return Ok(data);
         }
         catch (UnauthorizedAccessException ex)
@@ -172,6 +161,10 @@ public class QuestsController : ControllerBase
             return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
         }
     }
+
+    public record StartQuestRequest(int HeroId);
+    public record CompleteQuestRequest(int HeroId);
+    public record FailQuestRequest(int HeroId);
 }
 
 

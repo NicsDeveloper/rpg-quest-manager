@@ -10,6 +10,7 @@ import { Tutorial } from './components/Tutorial'
 import { ToastProvider } from './components/Toast'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import { Heroes } from './pages/Heroes'
 import Inventory from './pages/Inventory'
 import Shop from './pages/Shop'
 import Quests from './pages/Quests'
@@ -79,7 +80,7 @@ function AppRoutes() {
           <Layout>
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/character" element={<Dashboard />} />
+              <Route path="/heroes" element={<Heroes />} />
               <Route path="/inventory" element={<Inventory />} />
               <Route path="/shop" element={<Shop />} />
               <Route path="/quests" element={<Quests />} />

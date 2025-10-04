@@ -21,9 +21,12 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime LastLoginAt { get; set; } = DateTime.UtcNow;
     public bool IsActive { get; set; } = true;
+    public bool HasSeenTutorial { get; set; } = false;
+    public int Gold { get; set; } = 100; // Ouro do player (compartilhado entre heróis)
     
     // Relacionamentos
     public List<Character> Characters { get; set; } = new();
+    public List<Hero> Heroes { get; set; } = new();
 }
 
 public class UserSession

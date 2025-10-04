@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useCharacter } from '../contexts/CharacterContext';
+import { heroService, type Hero } from '../services/heroService';
 import { questsService, type Quest } from '../services/quests';
 import { FadeIn, SlideIn } from '../components/animations';
 import { useToast } from '../components/Toast';
@@ -18,9 +18,9 @@ import {
 } from 'lucide-react';
 
 export default function Quests() {
-  const { character, refreshCharacter } = useCharacter();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [selectedHero, setSelectedHero] = useState<Hero | null>(null);
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null);
@@ -30,13 +30,28 @@ export default function Quests() {
   const [startingQuest, setStartingQuest] = useState(false);
 
   useEffect(() => {
-    if (character) {
+    loadHeroes();
+  }, []);
+
+  useEffect(() => {
+    if (selectedHero) {
       loadQuests();
     }
-  }, [character, filter]);
+  }, [selectedHero, filter]);
+
+  const loadHeroes = async () => {
+    try {
+      const activeParty = await heroService.getActiveParty();
+      if (activeParty.length > 0) {
+        setSelectedHero(activeParty[0]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar heróis:', error);
+    }
+  };
 
   const loadQuests = async () => {
-    if (!character) return;
+    if (!selectedHero) return;
     
     try {
       setLoading(true);
@@ -44,13 +59,13 @@ export default function Quests() {
       
       switch (filter) {
         case 'recommended':
-          questsData = await questsService.getRecommendedQuests(character.level);
+          questsData = await questsService.getRecommendedQuests(selectedHero.level);
           break;
         case 'available':
-          questsData = await questsService.getAvailableQuests(character.id);
+          questsData = await questsService.getAvailableQuests(selectedHero.id);
           break;
         case 'completed':
-          questsData = await questsService.getCompletedQuests(character.id);
+          questsData = await questsService.getCompletedQuests(selectedHero.id);
           break;
         default:
           questsData = await questsService.getAllQuests();
@@ -65,12 +80,11 @@ export default function Quests() {
   };
 
   const handleStartQuest = async (quest: Quest) => {
-    if (!character) return;
+    if (!selectedHero) return;
     
     try {
       setStartingQuest(true);
-      await questsService.startQuest(quest.id);
-      await refreshCharacter();
+      await questsService.startQuest(quest.id, selectedHero.id);
       setShowQuestModal(false);
       await loadQuests();
       showToast({
@@ -95,11 +109,10 @@ export default function Quests() {
   };
 
   const handleCompleteQuest = async (quest: Quest) => {
-    if (!character) return;
+    if (!selectedHero) return;
     
     try {
       await questsService.completeQuest(quest.id);
-      await refreshCharacter();
       setShowQuestModal(false);
       await loadQuests();
       showToast({
@@ -209,6 +222,40 @@ export default function Quests() {
             <p className="text-xl text-gray-300">Explore o mundo e complete aventuras épicas</p>
           </div>
         </FadeIn>
+
+        {/* Hero Selection */}
+        {selectedHero && (
+          <SlideIn direction="right" delay={50}>
+            <div className="card backdrop-blur-sm bg-black/20">
+              <h3 className="text-xl font-bold text-gradient mb-4">Herói Selecionado</h3>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">{selectedHero.name.charAt(0)}</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-white">{selectedHero.name}</p>
+                  <p className="text-sm text-gray-400">{selectedHero.class} - Nível {selectedHero.level}</p>
+                </div>
+              </div>
+            </div>
+          </SlideIn>
+        )}
+
+        {!selectedHero && (
+          <SlideIn direction="right" delay={50}>
+            <div className="card backdrop-blur-sm bg-red-900/20 border-red-700/30">
+              <div className="text-center">
+                <p className="text-red-400 mb-4">Nenhum herói na party ativa</p>
+                <button
+                  onClick={() => navigate('/heroes')}
+                  className="btn-primary"
+                >
+                  Criar ou Gerenciar Heróis
+                </button>
+              </div>
+            </div>
+          </SlideIn>
+        )}
 
         {/* Filters */}
         <SlideIn direction="left" delay={100}>

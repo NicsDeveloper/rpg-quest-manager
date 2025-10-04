@@ -108,9 +108,14 @@ public class DropService
 
     public async Task<bool> GiveDropsToCharacterAsync(int characterId, List<Item> items)
     {
+        return await GiveDropsToHeroAsync(characterId, items);
+    }
+
+    public async Task<bool> GiveDropsToHeroAsync(int heroId, List<Item> items)
+    {
         foreach (var item in items)
         {
-            var inventoryItem = await _inventoryService.AddItemAsync(characterId, item.Id, 1);
+            var inventoryItem = await _inventoryService.AddItemAsync(heroId, item.Id, 1);
             if (inventoryItem == null)
                 return false;
         }

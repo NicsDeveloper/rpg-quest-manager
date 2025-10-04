@@ -9,7 +9,7 @@ interface QuestContextType {
   isLoading: boolean;
   error: string | null;
   refreshQuests: () => Promise<void>;
-  startQuest: (questId: number) => Promise<void>;
+  startQuest: (questId: number, heroId: number) => Promise<void>;
   completeQuest: (questId: number) => Promise<void>;
   setActiveQuest: (quest: Quest | null) => void;
 }
@@ -52,11 +52,9 @@ export function QuestProvider({ children }: { children: React.ReactNode }) {
     }
   }, [character]);
 
-  const startQuest = async (questId: number) => {
-    if (!character) return;
-    
+  const startQuest = async (questId: number, heroId: number) => {
     try {
-      await questsService.startQuest(questId);
+      await questsService.startQuest(questId, heroId);
       
       // Atualizar estado local
       const quest = availableQuests.find(q => q.id === questId);

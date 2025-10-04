@@ -15,13 +15,13 @@ public class InventoryController : ControllerBase
         _inventoryService = inventoryService;
     }
 
-    public record AddItemRequest(int CharacterId, int ItemId, int Quantity = 1);
-    public record RemoveItemRequest(int CharacterId, int ItemId, int Quantity = 1);
-    public record UseItemRequest(int CharacterId, int InventoryItemId);
+    public record AddItemRequest(int HeroId, int ItemId, int Quantity = 1);
+    public record RemoveItemRequest(int HeroId, int ItemId, int Quantity = 1);
+    public record UseItemRequest(int HeroId, int InventoryItemId);
     
     public class EquipItemRequest
     {
-        public int CharacterId { get; set; }
+        public int HeroId { get; set; }
         public int InventoryItemId { get; set; }
         public string Slot { get; set; } = string.Empty;
         
@@ -33,7 +33,7 @@ public class InventoryController : ControllerBase
     
     public class UnequipItemRequest
     {
-        public int CharacterId { get; set; }
+        public int HeroId { get; set; }
         public string Slot { get; set; } = string.Empty;
         
         public EquipmentSlot GetEquipmentSlot()
@@ -42,15 +42,15 @@ public class InventoryController : ControllerBase
         }
     }
 
-    [HttpGet("{characterId}")]
-    public async Task<IActionResult> GetInventory(int characterId)
+    [HttpGet("{heroId}")]
+    public async Task<IActionResult> GetInventory(int heroId)
     {
         try
         {
-            var inventory = await _inventoryService.GetCharacterInventoryAsync(characterId);
+            var inventory = await _inventoryService.GetHeroInventoryAsync(heroId);
             return Ok(new
             {
-                characterId,
+                heroId,
                 items = inventory.Select(ii => new
                 {
                     id = ii.Id,
@@ -84,7 +84,7 @@ public class InventoryController : ControllerBase
     {
         try
         {
-            var inventoryItem = await _inventoryService.AddItemAsync(request.CharacterId, request.ItemId, request.Quantity);
+            var inventoryItem = await _inventoryService.AddItemAsync(request.HeroId, request.ItemId, request.Quantity);
             if (inventoryItem == null)
             {
                 return BadRequest(new { message = "Item não encontrado" });
@@ -114,7 +114,7 @@ public class InventoryController : ControllerBase
     {
         try
         {
-            var success = await _inventoryService.RemoveItemAsync(request.CharacterId, request.ItemId, request.Quantity);
+            var success = await _inventoryService.RemoveItemAsync(request.HeroId, request.ItemId, request.Quantity);
             if (!success)
             {
                 return BadRequest(new { message = "Item não encontrado no inventário" });
@@ -137,16 +137,16 @@ public class InventoryController : ControllerBase
             Console.WriteLine($"EquipItem - Request: {request}");
 
             // Extrair dados do request dinâmico
-            var characterId = (int)request.characterId;
+            var heroId = (int)request.heroId;
             var inventoryItemId = (int)request.inventoryItemId;
             var slotString = (string)request.slot;
 
-            Console.WriteLine($"CharacterId: {characterId}, InventoryItemId: {inventoryItemId}, Slot: {slotString}");
+            Console.WriteLine($"HeroId: {heroId}, InventoryItemId: {inventoryItemId}, Slot: {slotString}");
 
             // Validação manual dos parâmetros
-            if (characterId <= 0)
+            if (heroId <= 0)
             {
-                return BadRequest(new { message = "CharacterId inválido" });
+                return BadRequest(new { message = "HeroId inválido" });
             }
             
             if (inventoryItemId <= 0)
@@ -165,7 +165,7 @@ public class InventoryController : ControllerBase
                 return BadRequest(new { message = $"Slot inválido: {slotString}" });
             }
 
-            var success = await _inventoryService.EquipItemAsync(characterId, inventoryItemId, slot);
+            var success = await _inventoryService.EquipItemAsync(heroId, inventoryItemId, slot);
             if (!success)
             {
                 return BadRequest(new { message = "Não foi possível equipar o item. Verifique se o item existe e é compatível com o slot." });
@@ -196,7 +196,7 @@ public class InventoryController : ControllerBase
                 return BadRequest(new { message = ex.Message });
             }
 
-            var success = await _inventoryService.UnequipItemAsync(request.CharacterId, slot);
+            var success = await _inventoryService.UnequipItemAsync(request.HeroId, slot);
             if (!success)
             {
                 return BadRequest(new { message = "Nenhum item equipado neste slot" });
@@ -210,15 +210,15 @@ public class InventoryController : ControllerBase
         }
     }
 
-    [HttpGet("equipment/{characterId}")]
-    public async Task<IActionResult> GetEquipment(int characterId)
+    [HttpGet("equipment/{heroId}")]
+    public async Task<IActionResult> GetEquipment(int heroId)
     {
         try
         {
-            var equipment = await _inventoryService.GetCharacterEquipmentAsync(characterId);
+            var equipment = await _inventoryService.GetHeroEquipmentAsync(heroId);
             return Ok(new
             {
-                characterId,
+                heroId,
                 equipment = new
                 {
                     weaponId = equipment.WeaponId,
@@ -238,15 +238,15 @@ public class InventoryController : ControllerBase
         }
     }
 
-    [HttpGet("bonuses/{characterId}")]
-    public async Task<IActionResult> GetEquipmentBonuses(int characterId)
+    [HttpGet("bonuses/{heroId}")]
+    public async Task<IActionResult> GetEquipmentBonuses(int heroId)
     {
         try
         {
-            var bonuses = await _inventoryService.GetEquipmentBonusesAsync(characterId);
+            var bonuses = await _inventoryService.GetEquipmentBonusesAsync(heroId);
             return Ok(new
             {
-                characterId,
+                heroId,
                 bonuses = new
                 {
                     attack = bonuses.attack,
@@ -267,7 +267,7 @@ public class InventoryController : ControllerBase
     {
         try
         {
-            var success = await _inventoryService.UseItemAsync(request.CharacterId, request.InventoryItemId);
+            var success = await _inventoryService.UseItemAsync(request.HeroId, request.InventoryItemId);
             if (!success)
             {
                 return BadRequest(new { message = "Não foi possível usar o item" });

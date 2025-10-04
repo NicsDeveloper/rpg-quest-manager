@@ -43,8 +43,8 @@ export const questsService = {
     return data;
   },
 
-  async startQuest(questId: number): Promise<void> {
-    await api.post(`/quests/${questId}/start`);
+  async startQuest(questId: number, heroId: number): Promise<void> {
+    await api.post(`/quests/${questId}/start`, { heroId });
   },
 
   async completeQuest(questId: number): Promise<void> {

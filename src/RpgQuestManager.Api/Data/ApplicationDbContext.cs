@@ -12,6 +12,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<UserSession> UserSessions => Set<UserSession>();
     public DbSet<Character> Characters => Set<Character>();
+    public DbSet<Hero> Heroes => Set<Hero>();
+    public DbSet<HeroQuest> HeroQuests => Set<HeroQuest>();
     public DbSet<Monster> Monsters => Set<Monster>();
     public DbSet<Quest> Quests => Set<Quest>();
     public DbSet<StatusEffectState> StatusEffects => Set<StatusEffectState>();
@@ -19,7 +21,7 @@ public class ApplicationDbContext : DbContext
     // Sistema de itens
     public DbSet<Item> Items => Set<Item>();
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
-    public DbSet<CharacterEquipment> CharacterEquipment => Set<CharacterEquipment>();
+    public DbSet<HeroEquipment> HeroEquipment => Set<HeroEquipment>();
     
     // Sistema de conquistas
     public DbSet<Achievement> Achievements => Set<Achievement>();
@@ -50,20 +52,39 @@ public class ApplicationDbContext : DbContext
             .WithMany(u => u.Characters)
             .HasForeignKey(c => c.UserId);
             
+        modelBuilder.Entity<Hero>()
+            .HasOne(h => h.User)
+            .WithMany(u => u.Heroes)
+            .HasForeignKey(h => h.UserId);
+            
+        modelBuilder.Entity<HeroQuest>()
+            .HasOne(hq => hq.Hero)
+            .WithMany(h => h.HeroQuests)
+            .HasForeignKey(hq => hq.HeroId);
+            
+        modelBuilder.Entity<HeroQuest>()
+            .HasOne(hq => hq.Quest)
+            .WithMany()
+            .HasForeignKey(hq => hq.QuestId);
+            
+        modelBuilder.Entity<HeroQuest>()
+            .HasIndex(hq => new { hq.HeroId, hq.QuestId })
+            .IsUnique();
+            
         modelBuilder.Entity<InventoryItem>()
-            .HasOne(ii => ii.Character)
-            .WithMany(c => c.Inventory)
-            .HasForeignKey(ii => ii.CharacterId);
+            .HasOne(ii => ii.Hero)
+            .WithMany(h => h.InventoryItems)
+            .HasForeignKey(ii => ii.HeroId);
             
         modelBuilder.Entity<InventoryItem>()
             .HasOne(ii => ii.Item)
             .WithMany()
             .HasForeignKey(ii => ii.ItemId);
             
-        modelBuilder.Entity<CharacterEquipment>()
-            .HasOne(ce => ce.Character)
-            .WithOne(c => c.Equipment)
-            .HasForeignKey<CharacterEquipment>(ce => ce.CharacterId);
+        modelBuilder.Entity<HeroEquipment>()
+            .HasOne(he => he.Hero)
+            .WithOne(h => h.Equipment)
+            .HasForeignKey<HeroEquipment>(he => he.HeroId);
             
         modelBuilder.Entity<UserSession>()
             .HasOne(us => us.User)
@@ -84,7 +105,7 @@ public class ApplicationDbContext : DbContext
             .IsUnique();
             
         modelBuilder.Entity<InventoryItem>()
-            .HasIndex(ii => new { ii.CharacterId, ii.ItemId })
+            .HasIndex(ii => new { ii.HeroId, ii.ItemId })
             .IsUnique();
             
         // Configurações de conquistas
@@ -119,9 +140,9 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(pm => pm.UserId);
             
         modelBuilder.Entity<PartyMember>()
-            .HasOne(pm => pm.Character)
+            .HasOne(pm => pm.Hero)
             .WithMany()
-            .HasForeignKey(pm => pm.CharacterId);
+            .HasForeignKey(pm => pm.HeroId);
             
         modelBuilder.Entity<PartyMember>()
             .HasIndex(pm => new { pm.PartyId, pm.UserId })

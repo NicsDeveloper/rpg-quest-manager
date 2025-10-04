@@ -47,7 +47,7 @@ public class PartyService : IPartyService
             .Include(p => p.Members)
             .ThenInclude(m => m.User)
             .Include(p => p.Members)
-            .ThenInclude(m => m.Character)
+            .ThenInclude(m => m.Hero)
             .FirstOrDefaultAsync(p => p.Id == partyId);
     }
 
@@ -58,7 +58,7 @@ public class PartyService : IPartyService
             .Include(p => p.Members)
             .ThenInclude(m => m.User)
             .Include(p => p.Members)
-            .ThenInclude(m => m.Character)
+            .ThenInclude(m => m.Hero)
             .FirstOrDefaultAsync(p => p.Members.Any(m => m.UserId == userId) || p.LeaderId == userId);
     }
 
@@ -98,7 +98,7 @@ public class PartyService : IPartyService
             {
                 PartyId = party.Id,
                 UserId = userId,
-                CharacterId = character.Id,
+                HeroId = character.Id,
                 Role = PartyRole.Leader,
                 JoinedAt = DateTime.UtcNow,
                 LastActiveAt = DateTime.UtcNow
@@ -147,7 +147,7 @@ public class PartyService : IPartyService
             {
                 PartyId = partyId,
                 UserId = userId,
-                CharacterId = character.Id,
+                HeroId = character.Id,
                 Role = PartyRole.Member,
                 JoinedAt = DateTime.UtcNow,
                 LastActiveAt = DateTime.UtcNow

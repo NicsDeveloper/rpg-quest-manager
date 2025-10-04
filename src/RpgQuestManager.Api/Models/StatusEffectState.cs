@@ -3,7 +3,8 @@ namespace RpgQuestManager.Api.Models;
 public enum EffectTargetKind
 {
     Character = 0,
-    Monster = 1
+    Monster = 1,
+    Hero = 2
 }
 
 public class StatusEffectState

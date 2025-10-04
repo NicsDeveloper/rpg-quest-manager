@@ -21,7 +21,7 @@ public class Character
     // Relacionamentos
     public User User { get; set; } = null!;
     public List<InventoryItem> Inventory { get; set; } = new();
-    public CharacterEquipment? Equipment { get; set; }
+    public HeroEquipment? Equipment { get; set; }
 }
 
 

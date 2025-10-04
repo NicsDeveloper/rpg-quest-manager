@@ -15,17 +15,17 @@ public class QuestService
         _monsterService = monsterService;
     }
 
-    public async Task<List<Quest>> GetAvailableQuestsAsync(int characterLevel)
+    public async Task<List<Quest>> GetAvailableQuestsAsync(int heroLevel)
     {
         return await _db.Quests
             .Where(q => q.Status == QuestStatus.NotStarted && 
-                       (q.RequiredLevel == null || q.RequiredLevel <= characterLevel))
+                       (q.RequiredLevel == null || q.RequiredLevel <= heroLevel))
             .OrderBy(q => q.RequiredLevel)
             .ThenBy(q => q.Difficulty)
             .ToListAsync();
     }
 
-    public async Task<List<Quest>> GetCompletedQuestsAsync(int characterId)
+    public async Task<List<Quest>> GetCompletedQuestsAsync(int heroId)
     {
         return await _db.Quests
             .Where(q => q.Status == QuestStatus.Completed)
@@ -50,9 +50,9 @@ public class QuestService
             .ToListAsync();
     }
 
-    public async Task<List<Quest>> GetRecommendedQuestsAsync(int characterLevel)
+    public async Task<List<Quest>> GetRecommendedQuestsAsync(int heroLevel)
     {
-        var levelRange = GetLevelRange(characterLevel);
+        var levelRange = GetLevelRange(heroLevel);
         
         return await _db.Quests
             .Where(q => q.Status == QuestStatus.NotStarted && 
@@ -63,7 +63,7 @@ public class QuestService
             .ToListAsync();
     }
 
-    public async Task<Quest> StartQuestAsync(int questId, int characterId)
+    public async Task<Quest> StartQuestAsync(int questId, int heroId)
     {
         var quest = await _db.Quests.FirstOrDefaultAsync(q => q.Id == questId);
         if (quest == null) throw new ArgumentException("Quest not found");
@@ -77,7 +77,7 @@ public class QuestService
         return quest;
     }
 
-    public async Task<Quest> CompleteQuestAsync(int questId, int characterId)
+    public async Task<Quest> CompleteQuestAsync(int questId, int heroId)
     {
         var quest = await _db.Quests.FirstOrDefaultAsync(q => q.Id == questId);
         if (quest == null) throw new ArgumentException("Quest not found");
@@ -91,7 +91,7 @@ public class QuestService
         return quest;
     }
 
-    public async Task<Quest> FailQuestAsync(int questId, int characterId)
+    public async Task<Quest> FailQuestAsync(int questId, int heroId)
     {
         var quest = await _db.Quests.FirstOrDefaultAsync(q => q.Id == questId);
         if (quest == null) throw new ArgumentException("Quest not found");
@@ -102,7 +102,7 @@ public class QuestService
         return quest;
     }
 
-    public async Task<Quest?> GetActiveQuestAsync(int characterId)
+    public async Task<Quest?> GetActiveQuestAsync(int heroId)
     {
         return await _db.Quests
             .FirstOrDefaultAsync(q => q.Status == QuestStatus.InProgress);
@@ -173,9 +173,9 @@ public class QuestService
         };
     }
 
-    private (int min, int max) GetLevelRange(int characterLevel)
+    private (int min, int max) GetLevelRange(int heroLevel)
     {
-        return characterLevel switch
+        return heroLevel switch
         {
             <= 5 => (1, 5),
             <= 15 => (6, 15),

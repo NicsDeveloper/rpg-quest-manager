@@ -38,9 +38,9 @@ public class CombatService : ICombatService
         _dropService = dropService;
     }
 
-    public async Task<CombatResult> StartCombatAsync(int characterId, int monsterId)
+    public async Task<CombatResult> StartCombatAsync(int heroId, int monsterId)
     {
-        var hero = await _db.Characters.FirstOrDefaultAsync(x => x.Id == characterId) ?? throw new InvalidOperationException("Hero not found");
+        var hero = await _db.Heroes.FirstOrDefaultAsync(x => x.Id == heroId) ?? throw new InvalidOperationException("Hero not found");
         var monster = await _db.Monsters.FirstOrDefaultAsync(x => x.Id == monsterId) ?? throw new InvalidOperationException("Monster not found");
 
         // Aplicar efeitos de status iniciais
@@ -54,14 +54,14 @@ public class CombatService : ICombatService
             "Combate iniciado!", new List<StatusEffectType>(), heroMoraleLevel, 0);
     }
 
-    private async Task CompleteActiveQuestAsync(int characterId)
+    private async Task CompleteActiveQuestAsync(int heroId)
     {
         try
         {
-            var activeQuest = await _questService.GetActiveQuestAsync(characterId);
+            var activeQuest = await _questService.GetActiveQuestAsync(heroId);
             if (activeQuest != null)
             {
-                await _questService.CompleteQuestAsync(activeQuest.Id, characterId);
+                await _questService.CompleteQuestAsync(activeQuest.Id, heroId);
             }
         }
         catch (Exception ex)
@@ -71,12 +71,12 @@ public class CombatService : ICombatService
         }
     }
 
-    public async Task<CombatResult> AttackAsync(int characterId, int monsterId)
+    public async Task<CombatResult> AttackAsync(int heroId, int monsterId)
     {
-        var hero = await _db.Characters.FirstOrDefaultAsync(x => x.Id == characterId) ?? throw new InvalidOperationException("Hero not found");
+        var hero = await _db.Heroes.FirstOrDefaultAsync(x => x.Id == heroId) ?? throw new InvalidOperationException("Hero not found");
         var monster = await _db.Monsters.FirstOrDefaultAsync(x => x.Id == monsterId) ?? throw new InvalidOperationException("Monster not found");
         
-        var heroEffects = await _statusEffectService.GetActiveEffectsAsync(EffectTargetKind.Character, hero.Id);
+        var heroEffects = await _statusEffectService.GetActiveEffectsAsync(EffectTargetKind.Hero, hero.Id);
         var monsterEffects = await _statusEffectService.GetActiveEffectsAsync(EffectTargetKind.Monster, monster.Id);
 
         // Processar efeitos de status no início do turno
@@ -113,23 +113,24 @@ public class CombatService : ICombatService
             
             // Dar recompensas de ouro
             goldReward = await _dropService.CalculateGoldRewardAsync(monster.Id, hero.Level);
+            // O ouro vai para o herói individual
             hero.Gold += goldReward;
             
             // Processar drops do monstro
             var droppedItems = await _dropService.RollMonsterDropsAsync(monster.Id, hero.Level);
             if (droppedItems.Any())
             {
-                await _dropService.GiveDropsToCharacterAsync(hero.Id, droppedItems);
+                await _dropService.GiveDropsToHeroAsync(hero.Id, droppedItems);
             }
             
             // Trigger achievements
-            await _achievementService.UpdateAchievementProgressAsync(hero.UserId, AchievementType.Combat, 1);
+            await _achievementService.UpdateAchievementProgressAsync(hero.UserId ?? 0, AchievementType.Combat, 1);
             
             // Verificar level up
             var leveledUp = await _levelUpService.CheckAndProcessLevelUpAsync(hero);
             if (leveledUp)
             {
-                await _achievementService.UpdateAchievementProgressAsync(hero.UserId, AchievementType.Progression, hero.Level);
+                await _achievementService.UpdateAchievementProgressAsync(hero.UserId ?? 0, AchievementType.Progression, hero.Level);
             }
             
             // Completar missão ativa se houver
@@ -171,7 +172,7 @@ public class CombatService : ICombatService
             combatEnded, victory, experienceGained, actionDescription, new List<StatusEffectType>(), heroMoraleLevel, goldReward);
     }
 
-    private Task ProcessStatusEffectsAtTurnStart(Character hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
+    private Task ProcessStatusEffectsAtTurnStart(Hero hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
     {
         // Aplicar dano de veneno/sangramento
         foreach (var effect in heroEffects)
@@ -194,13 +195,13 @@ public class CombatService : ICombatService
         return Task.CompletedTask;
     }
 
-    private Task<(int damage, bool isCritical, bool isFumble)> CalculateHeroDamage(Character hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
+    private Task<(int damage, bool isCritical, bool isFumble)> CalculateHeroDamage(Hero hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
     {
         var heroMoraleLevel = _moraleService.GetMoraleLevel(hero.Morale);
         var (damageMultiplier, defenseMultiplier, criticalMultiplier) = _moraleService.GetMoraleModifiers(heroMoraleLevel);
         
         // Calcular dano base
-        var baseDamage = Math.Max(1, hero.Attack - monster.Defense);
+        var baseDamage = Math.Max(1, hero.Strength - monster.Defense);
         
         // Aplicar modificadores de status effects
         var (statusAttackMultiplier, statusDefenseMultiplier) = _statusEffectService.GetStatusEffectModifiers(heroEffects);
@@ -227,7 +228,7 @@ public class CombatService : ICombatService
         return Task.FromResult((baseDamage, isCritical, isFumble));
     }
 
-    private async Task<(int damage, string action)> CalculateMonsterDamage(Character hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
+    private async Task<(int damage, string action)> CalculateMonsterDamage(Hero hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)
     {
         // Verificar se monstro está atordoado
         if (monsterEffects.Any(e => e.Type == StatusEffectType.Stunned))
@@ -290,24 +291,24 @@ public class CombatService : ICombatService
         return (baseDamage, $"Monstro atacou!{(appliedEffects.Any() ? $" Aplicou: {string.Join(", ", appliedEffects)}" : "")}");
     }
 
-    public Task<CombatResult> UseAbilityAsync(int characterId, int monsterId, string abilityName)
+    public Task<CombatResult> UseAbilityAsync(int heroId, int monsterId, string abilityName)
     {
         // TODO: Implementar sistema de habilidades
         throw new NotImplementedException("Sistema de habilidades ainda não implementado");
     }
 
-    public async Task<CombatResult> UseAbilityAsync(int characterId, int monsterId, int abilityId)
+    public async Task<CombatResult> UseAbilityAsync(int heroId, int monsterId, int abilityId)
     {
-        var hero = await _db.Characters.FirstOrDefaultAsync(x => x.Id == characterId) ?? throw new InvalidOperationException("Hero not found");
+        var hero = await _db.Heroes.FirstOrDefaultAsync(x => x.Id == heroId) ?? throw new InvalidOperationException("Hero not found");
         var monster = await _db.Monsters.FirstOrDefaultAsync(x => x.Id == monsterId) ?? throw new InvalidOperationException("Monster not found");
 
-        var heroEffects = await _statusEffectService.GetActiveEffectsAsync(EffectTargetKind.Character, hero.Id);
+        var heroEffects = await _statusEffectService.GetActiveEffectsAsync(EffectTargetKind.Hero, hero.Id);
         var monsterEffects = await _statusEffectService.GetActiveEffectsAsync(EffectTargetKind.Monster, monster.Id);
 
         var heroMoraleLevel = _moraleService.GetMoraleLevel(hero.Morale);
 
         // Verificar se a habilidade está disponível
-        var characterAbilities = await _specialAbilityService.GetCharacterAbilitiesAsync(characterId);
+        var characterAbilities = await _specialAbilityService.GetCharacterAbilitiesAsync(heroId);
         var ability = characterAbilities.FirstOrDefault(ca => ca.AbilityId == abilityId && ca.IsEquipped);
 
         if (ability == null)
@@ -325,7 +326,7 @@ public class CombatService : ICombatService
         }
 
         // Usar a habilidade
-        var (success, message) = await _specialAbilityService.UseAbilityAsync(characterId, abilityId, monsterId);
+        var (success, message) = await _specialAbilityService.UseAbilityAsync(heroId, abilityId, monsterId);
         
         if (!success)
         {
@@ -368,13 +369,13 @@ public class CombatService : ICombatService
             hero.Morale = Math.Min(100, hero.Morale + 10); // Bonus de moral por vitória
 
             // Trigger de conquista
-            await _achievementService.UpdateAchievementProgressAsync(hero.UserId, AchievementType.Combat, 1);
+            await _achievementService.UpdateAchievementProgressAsync(hero.UserId ?? 0, AchievementType.Combat, 1);
 
             // Verificar level up
             var leveledUp = await _levelUpService.CheckAndProcessLevelUpAsync(hero);
             if (leveledUp)
             {
-                await _achievementService.UpdateAchievementProgressAsync(hero.UserId, AchievementType.Progression, hero.Level);
+                await _achievementService.UpdateAchievementProgressAsync(hero.UserId ?? 0, AchievementType.Progression, hero.Level);
             }
         }
 
@@ -390,15 +391,15 @@ public class CombatService : ICombatService
             resultMessage, newHeroEffects, heroMoraleLevel, 0);
     }
 
-    public Task<CombatResult> UseItemAsync(int characterId, int monsterId, string itemName)
+    public Task<CombatResult> UseItemAsync(int heroId, int monsterId, string itemName)
     {
         // TODO: Implementar sistema de itens
         throw new NotImplementedException("Sistema de itens ainda não implementado");
     }
 
-    public async Task<bool> TryEscapeAsync(int characterId, int monsterId)
+    public async Task<bool> TryEscapeAsync(int heroId, int monsterId)
     {
-        var hero = await _db.Characters.FirstOrDefaultAsync(x => x.Id == characterId) ?? throw new InvalidOperationException("Hero not found");
+        var hero = await _db.Heroes.FirstOrDefaultAsync(x => x.Id == heroId) ?? throw new InvalidOperationException("Hero not found");
         var monster = await _db.Monsters.FirstOrDefaultAsync(x => x.Id == monsterId) ?? throw new InvalidOperationException("Monster not found");
         
         // Chance de fuga baseada na moral e tipo de monstro
