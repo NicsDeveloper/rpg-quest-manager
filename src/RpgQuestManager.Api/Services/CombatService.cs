@@ -16,6 +16,7 @@ public class CombatService : ICombatService
     private readonly QuestService _questService;
     private readonly DropService _dropService;
     private readonly RewardService _rewardService;
+    private readonly InventoryService _inventoryService;
 
     public CombatService(
         ApplicationDbContext db, 
@@ -27,7 +28,8 @@ public class CombatService : ICombatService
         IAchievementService achievementService,
         QuestService questService,
         DropService dropService,
-        RewardService rewardService)
+        RewardService rewardService,
+        InventoryService inventoryService)
     {
         _db = db;
         _diceService = diceService;
@@ -39,6 +41,7 @@ public class CombatService : ICombatService
         _questService = questService;
         _dropService = dropService;
         _rewardService = rewardService;
+        _inventoryService = inventoryService;
     }
 
     public async Task<CombatResult> StartCombatAsync(int heroId, int monsterId)

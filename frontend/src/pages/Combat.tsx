@@ -65,6 +65,12 @@ type CombatState = {
     actionDescription: string
     appliedEffects: string[]
     goldReward: number
+    droppedItems?: Array<{
+      id: number
+      name: string
+      rarity: string
+      type: string
+    }>
   }
 }
 
