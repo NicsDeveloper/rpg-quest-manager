@@ -20,7 +20,7 @@ public record CombatResult(
 public interface ICombatService
 {
     Task<CombatResult> AttackAsync(int characterId, int monsterId);
-    Task<CombatResult> UseAbilityAsync(int characterId, int monsterId, string abilityName);
+    Task<CombatResult> UseAbilityAsync(int characterId, int monsterId, int abilityId);
     Task<CombatResult> UseItemAsync(int characterId, int monsterId, string itemName);
     Task<bool> TryEscapeAsync(int characterId, int monsterId);
     Task<CombatResult> StartCombatAsync(int characterId, int monsterId);

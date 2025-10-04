@@ -20,6 +20,25 @@ public class ApplicationDbContext : DbContext
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<CharacterEquipment> CharacterEquipment => Set<CharacterEquipment>();
     
+    // Sistema de conquistas
+    public DbSet<Achievement> Achievements => Set<Achievement>();
+    public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
+    
+    // Sistema de grupos
+    public DbSet<Party> Parties => Set<Party>();
+    public DbSet<PartyMember> PartyMembers => Set<PartyMember>();
+    public DbSet<PartyInvite> PartyInvites => Set<PartyInvite>();
+    
+    // Sistema de habilidades especiais
+    public DbSet<SpecialAbility> SpecialAbilities => Set<SpecialAbility>();
+    public DbSet<CharacterAbility> CharacterAbilities => Set<CharacterAbility>();
+    public DbSet<Combo> Combos => Set<Combo>();
+    public DbSet<ComboStep> ComboSteps => Set<ComboStep>();
+    public DbSet<CharacterCombo> CharacterCombos => Set<CharacterCombo>();
+    
+    // Sistema de notificações
+    public DbSet<Notification> Notifications => Set<Notification>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -66,6 +85,109 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<InventoryItem>()
             .HasIndex(ii => new { ii.CharacterId, ii.ItemId })
             .IsUnique();
+            
+        // Configurações de conquistas
+        modelBuilder.Entity<UserAchievement>()
+            .HasOne(ua => ua.User)
+            .WithMany()
+            .HasForeignKey(ua => ua.UserId);
+            
+        modelBuilder.Entity<UserAchievement>()
+            .HasOne(ua => ua.Achievement)
+            .WithMany(a => a.UserAchievements)
+            .HasForeignKey(ua => ua.AchievementId);
+            
+        modelBuilder.Entity<UserAchievement>()
+            .HasIndex(ua => new { ua.UserId, ua.AchievementId })
+            .IsUnique();
+            
+        // Configurações de grupos
+        modelBuilder.Entity<Party>()
+            .HasOne(p => p.Leader)
+            .WithMany()
+            .HasForeignKey(p => p.LeaderId);
+            
+        modelBuilder.Entity<PartyMember>()
+            .HasOne(pm => pm.Party)
+            .WithMany(p => p.Members)
+            .HasForeignKey(pm => pm.PartyId);
+            
+        modelBuilder.Entity<PartyMember>()
+            .HasOne(pm => pm.User)
+            .WithMany()
+            .HasForeignKey(pm => pm.UserId);
+            
+        modelBuilder.Entity<PartyMember>()
+            .HasOne(pm => pm.Character)
+            .WithMany()
+            .HasForeignKey(pm => pm.CharacterId);
+            
+        modelBuilder.Entity<PartyMember>()
+            .HasIndex(pm => new { pm.PartyId, pm.UserId })
+            .IsUnique();
+            
+        modelBuilder.Entity<PartyInvite>()
+            .HasOne(pi => pi.Party)
+            .WithMany(p => p.Invites)
+            .HasForeignKey(pi => pi.PartyId);
+            
+        modelBuilder.Entity<PartyInvite>()
+            .HasOne(pi => pi.Inviter)
+            .WithMany()
+            .HasForeignKey(pi => pi.InviterId);
+            
+        modelBuilder.Entity<PartyInvite>()
+            .HasOne(pi => pi.Invitee)
+            .WithMany()
+            .HasForeignKey(pi => pi.InviteeId);
+            
+        // Configurações de habilidades especiais
+        modelBuilder.Entity<CharacterAbility>()
+            .HasOne(ca => ca.Character)
+            .WithMany()
+            .HasForeignKey(ca => ca.CharacterId);
+            
+        modelBuilder.Entity<CharacterAbility>()
+            .HasOne(ca => ca.Ability)
+            .WithMany(sa => sa.CharacterAbilities)
+            .HasForeignKey(ca => ca.AbilityId);
+            
+        modelBuilder.Entity<CharacterAbility>()
+            .HasIndex(ca => new { ca.CharacterId, ca.AbilityId })
+            .IsUnique();
+            
+        modelBuilder.Entity<ComboStep>()
+            .HasOne(cs => cs.Combo)
+            .WithMany(c => c.Steps)
+            .HasForeignKey(cs => cs.ComboId);
+            
+        modelBuilder.Entity<ComboStep>()
+            .HasOne(cs => cs.Ability)
+            .WithMany(sa => sa.ComboSteps)
+            .HasForeignKey(cs => cs.AbilityId);
+            
+        modelBuilder.Entity<CharacterCombo>()
+            .HasOne(cc => cc.Character)
+            .WithMany()
+            .HasForeignKey(cc => cc.CharacterId);
+            
+        modelBuilder.Entity<CharacterCombo>()
+            .HasOne(cc => cc.Combo)
+            .WithMany(c => c.CharacterCombos)
+            .HasForeignKey(cc => cc.ComboId);
+            
+        modelBuilder.Entity<CharacterCombo>()
+            .HasIndex(cc => new { cc.CharacterId, cc.ComboId })
+            .IsUnique();
+            
+        // Configurações de notificações
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId);
+            
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new { n.UserId, n.CreatedAt });
     }
 }
 

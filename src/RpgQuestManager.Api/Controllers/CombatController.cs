@@ -14,7 +14,7 @@ public class CombatController : ControllerBase
     public CombatController(ApplicationDbContext db, ICombatService combat) { _db = db; _combat = combat; }
 
     public record AttackRequest(int characterId, int monsterId);
-    public record AbilityRequest(int characterId, int monsterId, string abilityName);
+    public record AbilityRequest(int characterId, int monsterId, int abilityId);
     public record ItemRequest(int characterId, int monsterId, string itemName);
     public record EscapeRequest(int characterId, int monsterId);
     public record StartCombatRequest(int characterId, int monsterId);
@@ -38,12 +38,12 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var result = await _combat.UseAbilityAsync(request.characterId, request.monsterId, request.abilityName);
+            var result = await _combat.UseAbilityAsync(request.characterId, request.monsterId, request.abilityId);
             return Ok(FormatCombatResult(result));
         }
-        catch (NotImplementedException)
+        catch (Exception ex)
         {
-            return BadRequest("Sistema de habilidades ainda não implementado");
+            return BadRequest($"Erro ao usar habilidade: {ex.Message}");
         }
     }
 

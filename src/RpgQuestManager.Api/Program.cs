@@ -48,6 +48,12 @@ builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<ShopService>();
 builder.Services.AddScoped<DropService>();
 
+// Serviços de conquistas e grupos
+builder.Services.AddScoped<IAchievementService, AchievementService>();
+builder.Services.AddScoped<IPartyService, PartyService>();
+builder.Services.AddScoped<ISpecialAbilityService, SpecialAbilityService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

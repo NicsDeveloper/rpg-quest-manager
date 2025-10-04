@@ -11,19 +11,25 @@ public class CombatService : ICombatService
     private readonly MoraleService _moraleService;
     private readonly StatusEffectService _statusEffectService;
     private readonly LevelUpService _levelUpService;
+    private readonly ISpecialAbilityService _specialAbilityService;
+    private readonly IAchievementService _achievementService;
 
     public CombatService(
         ApplicationDbContext db, 
         DiceService diceService, 
         MoraleService moraleService, 
         StatusEffectService statusEffectService,
-        LevelUpService levelUpService)
+        LevelUpService levelUpService,
+        ISpecialAbilityService specialAbilityService,
+        IAchievementService achievementService)
     {
         _db = db;
         _diceService = diceService;
         _moraleService = moraleService;
         _statusEffectService = statusEffectService;
         _levelUpService = levelUpService;
+        _specialAbilityService = specialAbilityService;
+        _achievementService = achievementService;
     }
 
     public async Task<CombatResult> StartCombatAsync(int characterId, int monsterId)
@@ -241,6 +247,100 @@ public class CombatService : ICombatService
     {
         // TODO: Implementar sistema de habilidades
         throw new NotImplementedException("Sistema de habilidades ainda não implementado");
+    }
+
+    public async Task<CombatResult> UseAbilityAsync(int characterId, int monsterId, int abilityId)
+    {
+        var hero = await _db.Characters.FirstOrDefaultAsync(x => x.Id == characterId) ?? throw new InvalidOperationException("Hero not found");
+        var monster = await _db.Monsters.FirstOrDefaultAsync(x => x.Id == monsterId) ?? throw new InvalidOperationException("Monster not found");
+
+        var heroEffects = await _statusEffectService.GetActiveEffectsAsync(EffectTargetKind.Character, hero.Id);
+        var monsterEffects = await _statusEffectService.GetActiveEffectsAsync(EffectTargetKind.Monster, monster.Id);
+
+        var heroMoraleLevel = _moraleService.GetMoraleLevel(hero.Morale);
+
+        // Verificar se a habilidade está disponível
+        var characterAbilities = await _specialAbilityService.GetCharacterAbilitiesAsync(characterId);
+        var ability = characterAbilities.FirstOrDefault(ca => ca.AbilityId == abilityId && ca.IsEquipped);
+
+        if (ability == null)
+        {
+            return new CombatResult(
+                hero, monster, 0, 0, false, false, false, false, 0, 
+                "Habilidade não encontrada ou não equipada!", heroEffects.Select(e => e.Type).ToList(), heroMoraleLevel);
+        }
+
+        if (hero.Morale < ability.Ability.ManaCost)
+        {
+            return new CombatResult(
+                hero, monster, 0, 0, false, false, false, false, 0, 
+                "Mana insuficiente para usar esta habilidade!", heroEffects.Select(e => e.Type).ToList(), heroMoraleLevel);
+        }
+
+        // Usar a habilidade
+        var (success, message) = await _specialAbilityService.UseAbilityAsync(characterId, abilityId, monsterId);
+        
+        if (!success)
+        {
+            return new CombatResult(
+                hero, monster, 0, 0, false, false, false, false, 0, 
+                message, heroEffects.Select(e => e.Type).ToList(), heroMoraleLevel);
+        }
+
+        // Aplicar efeitos da habilidade
+        var abilityDamage = 0;
+        var abilityHealing = 0;
+        var newHeroEffects = new List<StatusEffectType>(heroEffects.Select(e => e.Type));
+
+        if (ability.Ability.Damage > 0)
+        {
+            abilityDamage = ability.Ability.Damage;
+            monster.Health = Math.Max(0, monster.Health - abilityDamage);
+        }
+
+        if (ability.Ability.Healing > 0)
+        {
+            abilityHealing = ability.Ability.Healing;
+            hero.Health = Math.Min(hero.MaxHealth, hero.Health + abilityHealing);
+        }
+
+        // Aplicar efeitos de status
+        if (ability.Ability.StatusEffects.Any())
+        {
+            newHeroEffects.AddRange(ability.Ability.StatusEffects);
+        }
+
+        // Verificar se o monstro morreu
+        var monsterDied = monster.Health <= 0;
+        var experienceGained = 0;
+
+        if (monsterDied)
+        {
+            experienceGained = monster.ExperienceReward;
+            hero.Experience += experienceGained;
+            hero.Morale = Math.Min(100, hero.Morale + 10); // Bonus de moral por vitória
+
+            // Trigger de conquista
+            await _achievementService.UpdateAchievementProgressAsync(hero.UserId, AchievementType.Combat, 1);
+
+            // Verificar level up
+            var leveledUp = await _levelUpService.CheckAndProcessLevelUpAsync(hero);
+            if (leveledUp)
+            {
+                await _achievementService.UpdateAchievementProgressAsync(hero.UserId, AchievementType.Progression, hero.Level);
+            }
+        }
+
+        await _db.SaveChangesAsync();
+
+        var resultMessage = $"{message}";
+        if (abilityDamage > 0) resultMessage += $" Causou {abilityDamage} de dano!";
+        if (abilityHealing > 0) resultMessage += $" Curou {abilityHealing} de vida!";
+        if (monsterDied) resultMessage += $" {monster.Name} foi derrotado! +{experienceGained} XP";
+
+        return new CombatResult(
+            hero, monster, abilityDamage, 0, monsterDied, false, false, false, experienceGained, 
+            resultMessage, newHeroEffects, heroMoraleLevel);
     }
 
     public Task<CombatResult> UseItemAsync(int characterId, int monsterId, string itemName)

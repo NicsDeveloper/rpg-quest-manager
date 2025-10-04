@@ -23,6 +23,63 @@ namespace RpgQuestManager.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Achievement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ExperienceReward")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GoldReward")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("IconUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRepeatable")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ItemRewardId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RequiredValue")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemRewardId");
+
+                    b.ToTable("Achievements");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.Character", b =>
                 {
                     b.Property<int>("Id")
@@ -82,6 +139,84 @@ namespace RpgQuestManager.Api.Migrations
                     b.ToTable("Characters");
                 });
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.CharacterAbility", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AbilityId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CharacterId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEquipped")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsUnlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UnlockedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AbilityId");
+
+                    b.HasIndex("CharacterId", "AbilityId")
+                        .IsUnique();
+
+                    b.ToTable("CharacterAbilities");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.CharacterCombo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CharacterId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ComboId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsUnlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastStepCompleted")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("LastStepTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Progress")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UnlockedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComboId");
+
+                    b.HasIndex("CharacterId", "ComboId")
+                        .IsUnique();
+
+                    b.ToTable("CharacterCombos");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.CharacterEquipment", b =>
                 {
                     b.Property<int>("Id")
@@ -139,6 +274,84 @@ namespace RpgQuestManager.Api.Migrations
                     b.HasIndex("WeaponId");
 
                     b.ToTable("CharacterEquipment");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Combo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ExperienceReward")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GoldReward")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("IconUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsUnlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RequiredLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Combos");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.ComboStep", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AbilityId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ComboId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("StepOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TimeWindow")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AbilityId");
+
+                    b.HasIndex("ComboId");
+
+                    b.ToTable("ComboSteps");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.InventoryItem", b =>
@@ -349,6 +562,179 @@ namespace RpgQuestManager.Api.Migrations
                     b.ToTable("Monsters");
                 });
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActionUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IconUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Party", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastActivityAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LeaderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxMembers")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeaderId");
+
+                    b.ToTable("Parties");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.PartyInvite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("InviteeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("InviterId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PartyId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InviteeId");
+
+                    b.HasIndex("InviterId");
+
+                    b.HasIndex("PartyId");
+
+                    b.ToTable("PartyInvites");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.PartyMember", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CharacterId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("LastActiveAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PartyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CharacterId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("PartyId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("PartyMembers");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.Quest", b =>
                 {
                     b.Property<int>("Id")
@@ -420,6 +806,99 @@ namespace RpgQuestManager.Api.Migrations
                     b.ToTable("Quests");
                 });
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.SpecialAbility", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AreaOfEffect")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AttackBonus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CooldownTurns")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CriticalChanceBonus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CriticalDamageBonus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Damage")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DefenseBonus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Duration")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ExperienceCost")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GoldCost")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Healing")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("IconUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsPassive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsUltimate")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ManaCost")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Range")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RequiredLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SpeedBonus")
+                        .HasColumnType("integer");
+
+                    b.Property<int[]>("StatusEffects")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.Property<int[]>("StatusEffectsToRemove")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SpecialAbilities");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.StatusEffectState", b =>
                 {
                     b.Property<int>("Id")
@@ -487,6 +966,48 @@ namespace RpgQuestManager.Api.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.UserAchievement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AchievementId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ClaimedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsClaimed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Progress")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AchievementId");
+
+                    b.HasIndex("UserId", "AchievementId")
+                        .IsUnique();
+
+                    b.ToTable("UserAchievements");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.UserSession", b =>
                 {
                     b.Property<int>("Id")
@@ -521,6 +1042,15 @@ namespace RpgQuestManager.Api.Migrations
                     b.ToTable("UserSessions");
                 });
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Achievement", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.Item", "ItemReward")
+                        .WithMany()
+                        .HasForeignKey("ItemRewardId");
+
+                    b.Navigation("ItemReward");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.Character", b =>
                 {
                     b.HasOne("RpgQuestManager.Api.Models.User", "User")
@@ -530,6 +1060,44 @@ namespace RpgQuestManager.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.CharacterAbility", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.SpecialAbility", "Ability")
+                        .WithMany("CharacterAbilities")
+                        .HasForeignKey("AbilityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RpgQuestManager.Api.Models.Character", "Character")
+                        .WithMany()
+                        .HasForeignKey("CharacterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ability");
+
+                    b.Navigation("Character");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.CharacterCombo", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.Character", "Character")
+                        .WithMany()
+                        .HasForeignKey("CharacterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RpgQuestManager.Api.Models.Combo", "Combo")
+                        .WithMany("CharacterCombos")
+                        .HasForeignKey("ComboId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Character");
+
+                    b.Navigation("Combo");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.CharacterEquipment", b =>
@@ -591,6 +1159,25 @@ namespace RpgQuestManager.Api.Migrations
                     b.Navigation("Weapon");
                 });
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.ComboStep", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.SpecialAbility", "Ability")
+                        .WithMany("ComboSteps")
+                        .HasForeignKey("AbilityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RpgQuestManager.Api.Models.Combo", "Combo")
+                        .WithMany("Steps")
+                        .HasForeignKey("ComboId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ability");
+
+                    b.Navigation("Combo");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.InventoryItem", b =>
                 {
                     b.HasOne("RpgQuestManager.Api.Models.Character", "Character")
@@ -610,6 +1197,101 @@ namespace RpgQuestManager.Api.Migrations
                     b.Navigation("Item");
                 });
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Notification", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Party", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.User", "Leader")
+                        .WithMany()
+                        .HasForeignKey("LeaderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Leader");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.PartyInvite", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.User", "Invitee")
+                        .WithMany()
+                        .HasForeignKey("InviteeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RpgQuestManager.Api.Models.User", "Inviter")
+                        .WithMany()
+                        .HasForeignKey("InviterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RpgQuestManager.Api.Models.Party", "Party")
+                        .WithMany("Invites")
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invitee");
+
+                    b.Navigation("Inviter");
+
+                    b.Navigation("Party");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.PartyMember", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.Character", "Character")
+                        .WithMany()
+                        .HasForeignKey("CharacterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RpgQuestManager.Api.Models.Party", "Party")
+                        .WithMany("Members")
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RpgQuestManager.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Character");
+
+                    b.Navigation("Party");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.UserAchievement", b =>
+                {
+                    b.HasOne("RpgQuestManager.Api.Models.Achievement", "Achievement")
+                        .WithMany("UserAchievements")
+                        .HasForeignKey("AchievementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RpgQuestManager.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Achievement");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.UserSession", b =>
                 {
                     b.HasOne("RpgQuestManager.Api.Models.User", "User")
@@ -621,11 +1303,37 @@ namespace RpgQuestManager.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Achievement", b =>
+                {
+                    b.Navigation("UserAchievements");
+                });
+
             modelBuilder.Entity("RpgQuestManager.Api.Models.Character", b =>
                 {
                     b.Navigation("Equipment");
 
                     b.Navigation("Inventory");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Combo", b =>
+                {
+                    b.Navigation("CharacterCombos");
+
+                    b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.Party", b =>
+                {
+                    b.Navigation("Invites");
+
+                    b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("RpgQuestManager.Api.Models.SpecialAbility", b =>
+                {
+                    b.Navigation("CharacterAbilities");
+
+                    b.Navigation("ComboSteps");
                 });
 
             modelBuilder.Entity("RpgQuestManager.Api.Models.User", b =>

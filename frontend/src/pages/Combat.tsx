@@ -1,5 +1,23 @@
-import { useState } from 'react'
-import { api } from '../services/api'
+import { useState } from 'react';
+import { useCharacter } from '../contexts/CharacterContext';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { FadeIn, SlideIn } from '../components/animations';
+import { soundService } from '../services/sound';
+import { api } from '../services/api';
+import { 
+  Sword, 
+  Shield, 
+  Heart, 
+  Zap, 
+  Target, 
+  Skull, 
+  Play, 
+  RotateCcw,
+  AlertTriangle,
+  XCircle
+} from 'lucide-react';
 
 type CombatState = {
   hero: {
@@ -41,68 +59,92 @@ type CombatState = {
 }
 
 export default function Combat() {
-  const [combatState, setCombatState] = useState<CombatState | null>(null)
-  const [log, setLog] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [combatStarted, setCombatStarted] = useState(false)
+  const { character } = useCharacter();
+  const [combatState, setCombatState] = useState<CombatState | null>(null);
+  const [log, setLog] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [combatStarted, setCombatStarted] = useState(false);
+  const [selectedMonster, setSelectedMonster] = useState<number | null>(null);
 
-  const startCombat = async () => {
-    setLoading(true)
+  const startCombat = async (monsterId: number) => {
+    if (!character) return;
+    
+    setLoading(true);
+    soundService.playClick();
     try {
-      const { data } = await api.post('/api/combat/start', { characterId: 1, monsterId: 1 })
-      setCombatState(data)
-      setCombatStarted(true)
-      setLog(prev => ['Combate iniciado!', ...prev])
+      const { data } = await api.post('/api/combat/start', { 
+        characterId: character.id, 
+        monsterId: monsterId 
+      });
+      setCombatState(data);
+      setCombatStarted(true);
+      setLog(prev => ['Combate iniciado!', ...prev]);
+    } catch (error) {
+      console.error('Erro ao iniciar combate:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const attack = async () => {
-    if (!combatState) return
+    if (!combatState || !character) return;
     
-    setLoading(true)
+    setLoading(true);
+    soundService.playClick();
     try {
-      const { data } = await api.post('/api/combat/attack', { characterId: 1, monsterId: 1 })
-      setCombatState(data)
+      const { data } = await api.post('/api/combat/attack', { 
+        characterId: character.id, 
+        monsterId: combatState.monster.id 
+      });
+      setCombatState(data);
       
-      const logEntry = data.combat.actionDescription
+      const logEntry = data.combat.actionDescription;
       if (data.combat.combatEnded) {
-        const result = data.combat.victory ? 'VITÓRIA!' : 'DERROTA!'
-        setLog(prev => [`${result} ${logEntry}`, ...prev])
-        setCombatStarted(false)
+        const result = data.combat.victory ? 'VITÓRIA!' : 'DERROTA!';
+        setLog(prev => [`${result} ${logEntry}`, ...prev]);
+        setCombatStarted(false);
+        if (data.combat.victory) {
+          soundService.playSuccess();
+        } else {
+          soundService.playError();
+        }
       } else {
-        setLog(prev => [logEntry, ...prev])
+        setLog(prev => [logEntry, ...prev]);
       }
+    } catch (error) {
+      console.error('Erro ao atacar:', error);
+      soundService.playError();
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const tryEscape = async () => {
-    if (!combatState) return
+    if (!combatState || !character) return;
     
-    setLoading(true)
+    setLoading(true);
+    soundService.playClick();
     try {
-      const { data } = await api.post('/api/combat/escape', { characterId: 1, monsterId: 1 })
+      const { data } = await api.post('/api/combat/escape', { 
+        characterId: character.id, 
+        monsterId: combatState.monster.id 
+      });
       if (data.success) {
-        setLog(prev => ['Fuga bem-sucedida!', ...prev])
-        setCombatStarted(false)
+        setLog(prev => ['Fuga bem-sucedida!', ...prev]);
+        setCombatStarted(false);
+        soundService.playSuccess();
       } else {
-        setLog(prev => ['Fuga falhou!', ...prev])
+        setLog(prev => ['Fuga falhou!', ...prev]);
+        soundService.playError();
       }
+    } catch (error) {
+      console.error('Erro ao tentar fugir:', error);
+      soundService.playError();
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const getMoraleColor = (morale: number) => {
-    if (morale <= 10) return '#ff4444' // Desespero
-    if (morale <= 30) return '#ff8844' // Baixo
-    if (morale <= 70) return '#ffff44' // Normal
-    if (morale <= 90) return '#88ff44' // Alto
-    return '#44ff44' // Inspirado
-  }
 
   const getMoraleLevelName = (level: string) => {
     switch (level) {
@@ -115,140 +157,292 @@ export default function Combat() {
     }
   }
 
+  if (!character) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+          <p className="text-gray-500">Nenhum personagem encontrado</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Combate</h2>
+    <div className="space-y-6">
+      <FadeIn delay={0}>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Combate</h1>
+          <p className="text-gray-600 mt-2">Enfrente monstros e ganhe experiência</p>
+        </div>
+      </FadeIn>
       
       {!combatStarted ? (
-        <div>
-          <button onClick={startCombat} disabled={loading}>
-            {loading ? 'Iniciando...' : 'Iniciar Combate'}
-          </button>
-        </div>
-      ) : (
-        <div>
-          {combatState && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-              {/* Herói */}
-              <div style={{ border: '2px solid #4CAF50', padding: 15, borderRadius: 8 }}>
-                <h3>🛡️ {combatState.hero.name}</h3>
-                <div>Nível: {combatState.hero.level}</div>
-                <div>XP: {combatState.hero.experience}/{combatState.hero.nextLevelExperience}</div>
-                <div>
-                  HP: {combatState.hero.health}/{combatState.hero.maxHealth}
-                  <div style={{ 
-                    width: '100%', 
-                    height: 10, 
-                    backgroundColor: '#ddd', 
-                    borderRadius: 5,
-                    marginTop: 5
-                  }}>
-                    <div style={{
-                      width: `${(combatState.hero.health / combatState.hero.maxHealth) * 100}%`,
-                      height: '100%',
-                      backgroundColor: combatState.hero.health < 30 ? '#ff4444' : '#4CAF50',
-                      borderRadius: 5
-                    }} />
+        <SlideIn direction="up" delay={100}>
+          <Card title="Selecionar Monstro">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5].map((monsterId) => (
+                <div
+                  key={monsterId}
+                  className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                    selectedMonster === monsterId ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+                  }`}
+                  onClick={() => setSelectedMonster(monsterId)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Skull className="h-8 w-8 text-red-600" />
+                    <div>
+                      <h3 className="font-medium text-gray-900">Monstro {monsterId}</h3>
+                      <p className="text-sm text-gray-600">Nível {monsterId}</p>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  Moral: {combatState.hero.morale} ({getMoraleLevelName(combatState.hero.moraleLevel)})
-                  <div style={{ 
-                    width: '100%', 
-                    height: 10, 
-                    backgroundColor: '#ddd', 
-                    borderRadius: 5,
-                    marginTop: 5
-                  }}>
-                    <div style={{
-                      width: `${combatState.hero.morale}%`,
-                      height: '100%',
-                      backgroundColor: getMoraleColor(combatState.hero.morale),
-                      borderRadius: 5
-                    }} />
-                  </div>
-                </div>
-                <div>ATK: {combatState.hero.attack} | DEF: {combatState.hero.defense}</div>
-              </div>
-
-              {/* Monstro */}
-              <div style={{ border: '2px solid #f44336', padding: 15, borderRadius: 8 }}>
-                <h3>👹 {combatState.monster.name}</h3>
-                <div>Tipo: {combatState.monster.type} | Rank: {combatState.monster.rank}</div>
-                <div>Habitat: {combatState.monster.habitat}</div>
-                <div>
-                  HP: {combatState.monster.health}/{combatState.monster.maxHealth}
-                  <div style={{ 
-                    width: '100%', 
-                    height: 10, 
-                    backgroundColor: '#ddd', 
-                    borderRadius: 5,
-                    marginTop: 5
-                  }}>
-                    <div style={{
-                      width: `${(combatState.monster.health / combatState.monster.maxHealth) * 100}%`,
-                      height: '100%',
-                      backgroundColor: combatState.monster.health < 30 ? '#ff4444' : '#f44336',
-                      borderRadius: 5
-                    }} />
-                  </div>
-                </div>
-                <div>ATK: {combatState.monster.attack} | DEF: {combatState.monster.defense}</div>
-                <div>XP: {combatState.monster.experienceReward}</div>
-              </div>
+              ))}
             </div>
+            
+            <div className="mt-6 flex justify-center">
+              <Button
+                onClick={() => selectedMonster && startCombat(selectedMonster)}
+                disabled={loading || !selectedMonster}
+                loading={loading}
+                size="lg"
+              >
+                <Play className="h-5 w-5 mr-2" />
+                {loading ? 'Iniciando...' : 'Iniciar Combate'}
+              </Button>
+            </div>
+          </Card>
+        </SlideIn>
+      ) : (
+        <div className="space-y-6">
+          {combatState && (
+            <SlideIn direction="up" delay={100}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Herói */}
+                <Card className="border-green-200 bg-green-50">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Shield className="h-8 w-8 text-green-600" />
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{combatState.hero.name}</h3>
+                      <p className="text-sm text-gray-600">Nível {combatState.hero.level}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Vida</span>
+                        <span>{combatState.hero.health}/{combatState.hero.maxHealth}</span>
+                      </div>
+                      <ProgressBar 
+                        value={combatState.hero.health} 
+                        max={combatState.hero.maxHealth}
+                        className="h-3"
+                      />
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Moral ({getMoraleLevelName(combatState.hero.moraleLevel)})</span>
+                        <span>{combatState.hero.morale}/100</span>
+                      </div>
+                      <ProgressBar 
+                        value={combatState.hero.morale} 
+                        max={100}
+                        className="h-3"
+                      />
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Experiência</span>
+                        <span>{combatState.hero.experience}/{combatState.hero.nextLevelExperience}</span>
+                      </div>
+                      <ProgressBar 
+                        value={combatState.hero.experience} 
+                        max={combatState.hero.nextLevelExperience}
+                        className="h-2"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Sword className="h-4 w-4 text-red-600" />
+                        <span>Ataque: {combatState.hero.attack}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Shield className="h-4 w-4 text-blue-600" />
+                        <span>Defesa: {combatState.hero.defense}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Monstro */}
+                <Card className="border-red-200 bg-red-50">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Skull className="h-8 w-8 text-red-600" />
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{combatState.monster.name}</h3>
+                      <p className="text-sm text-gray-600">{combatState.monster.type} • {combatState.monster.rank}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Vida</span>
+                        <span>{combatState.monster.health}/{combatState.monster.maxHealth}</span>
+                      </div>
+                      <ProgressBar 
+                        value={combatState.monster.health} 
+                        max={combatState.monster.maxHealth}
+                        className="h-3"
+                      />
+                    </div>
+                    
+                    <div className="text-sm text-gray-600">
+                      <p>Habitat: {combatState.monster.habitat}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Sword className="h-4 w-4 text-red-600" />
+                        <span>Ataque: {combatState.monster.attack}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Shield className="h-4 w-4 text-blue-600" />
+                        <span>Defesa: {combatState.monster.defense}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 text-sm">
+                      <Target className="h-4 w-4 text-green-600" />
+                      <span>XP: {combatState.monster.experienceReward}</span>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </SlideIn>
           )}
 
           {/* Ações */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-            <button onClick={attack} disabled={loading || !combatState?.combat.combatEnded === false}>
-              {loading ? 'Atacando...' : '⚔️ Atacar'}
-            </button>
-            <button onClick={tryEscape} disabled={loading || !combatState?.combat.combatEnded === false}>
-              {loading ? 'Fugindo...' : '🏃 Fugir'}
-            </button>
-          </div>
+          <SlideIn direction="up" delay={200}>
+            <Card title="Ações de Combate">
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Button
+                  onClick={attack}
+                  disabled={loading || combatState?.combat.combatEnded}
+                  loading={loading}
+                  size="lg"
+                  className="flex-1 min-w-[150px]"
+                >
+                  <Sword className="h-5 w-5 mr-2" />
+                  {loading ? 'Atacando...' : 'Atacar'}
+                </Button>
+                
+                <Button
+                  onClick={tryEscape}
+                  disabled={loading || combatState?.combat.combatEnded}
+                  loading={loading}
+                  variant="secondary"
+                  size="lg"
+                  className="flex-1 min-w-[150px]"
+                >
+                  <RotateCcw className="h-5 w-5 mr-2" />
+                  {loading ? 'Fugindo...' : 'Fugir'}
+                </Button>
+              </div>
+            </Card>
+          </SlideIn>
 
           {/* Log de Combate */}
-          <div style={{ border: '1px solid #ccc', padding: 10, borderRadius: 5, maxHeight: 200, overflowY: 'auto' }}>
-            <h4>Log de Combate:</h4>
-            {log.map((entry, index) => (
-              <div key={index} style={{ 
-                padding: 5, 
-                backgroundColor: index === 0 ? '#e3f2fd' : 'transparent',
-                borderRadius: 3,
-                marginBottom: 2
-              }}>
-                {entry}
+          <SlideIn direction="up" delay={300}>
+            <Card title="Log de Combate">
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {log.map((entry, index) => (
+                  <div 
+                    key={index} 
+                    className={`p-3 rounded-lg text-sm ${
+                      index === 0 
+                        ? 'bg-blue-50 border border-blue-200' 
+                        : 'bg-gray-50'
+                    }`}
+                  >
+                    {entry}
+                  </div>
+                ))}
+                {log.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Target className="h-8 w-8 mx-auto mb-2" />
+                    <p>Nenhuma ação registrada</p>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            </Card>
+          </SlideIn>
 
           {/* Informações do último turno */}
           {combatState && (
-            <div style={{ marginTop: 20, padding: 10, backgroundColor: '#f5f5f5', borderRadius: 5 }}>
-              <h4>Último Turno:</h4>
-              <div>Ação: {combatState.combat.actionDescription}</div>
-              {combatState.combat.damageToMonster > 0 && (
-                <div>Dano ao monstro: {combatState.combat.damageToMonster}</div>
-              )}
-              {combatState.combat.damageToHero > 0 && (
-                <div>Dano recebido: {combatState.combat.damageToHero}</div>
-              )}
-              {combatState.combat.isCritical && <div style={{ color: '#ff6b35' }}>💥 CRÍTICO!</div>}
-              {combatState.combat.isFumble && <div style={{ color: '#666' }}>💥 FALHA!</div>}
-              {combatState.combat.experienceGained > 0 && (
-                <div style={{ color: '#4CAF50' }}>+{combatState.combat.experienceGained} XP</div>
-              )}
-              {combatState.combat.appliedEffects.length > 0 && (
-                <div>Efeitos aplicados: {combatState.combat.appliedEffects.join(', ')}</div>
-              )}
-            </div>
+            <SlideIn direction="up" delay={400}>
+              <Card title="Último Turno">
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-700">
+                    <strong>Ação:</strong> {combatState.combat.actionDescription}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {combatState.combat.damageToMonster > 0 && (
+                      <div className="flex items-center space-x-2 text-red-600">
+                        <Sword className="h-4 w-4" />
+                        <span>Dano ao monstro: {combatState.combat.damageToMonster}</span>
+                      </div>
+                    )}
+                    
+                    {combatState.combat.damageToHero > 0 && (
+                      <div className="flex items-center space-x-2 text-orange-600">
+                        <Heart className="h-4 w-4" />
+                        <span>Dano recebido: {combatState.combat.damageToHero}</span>
+                      </div>
+                    )}
+                    
+                    {combatState.combat.experienceGained > 0 && (
+                      <div className="flex items-center space-x-2 text-green-600">
+                        <Target className="h-4 w-4" />
+                        <span>+{combatState.combat.experienceGained} XP</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {combatState.combat.isCritical && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <Zap className="h-3 w-3 mr-1" />
+                        CRÍTICO!
+                      </span>
+                    )}
+                    
+                    {combatState.combat.isFumble && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        FALHA!
+                      </span>
+                    )}
+                  </div>
+                  
+                  {combatState.combat.appliedEffects.length > 0 && (
+                    <div className="text-sm text-gray-700">
+                      <strong>Efeitos aplicados:</strong> {combatState.combat.appliedEffects.join(', ')}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </SlideIn>
           )}
         </div>
       )}
     </div>
-  )
+  );
 }
 
 

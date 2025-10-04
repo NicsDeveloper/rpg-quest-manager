@@ -79,6 +79,36 @@ public static class DbSeeder
             }
         }
 
+        // Seed Achievements
+        var achievements = AchievementData.GetAllAchievements();
+        foreach (var achievement in achievements)
+        {
+            if (!db.Achievements.Any(x => x.Name == achievement.Name))
+            {
+                db.Achievements.Add(achievement);
+            }
+        }
+
+        // Seed Special Abilities
+        var abilities = SpecialAbilityData.GetAllAbilities();
+        foreach (var ability in abilities)
+        {
+            if (!db.SpecialAbilities.Any(x => x.Name == ability.Name))
+            {
+                db.SpecialAbilities.Add(ability);
+            }
+        }
+
+        // Seed Combos
+        var combos = SpecialAbilityData.GetAllCombos();
+        foreach (var combo in combos)
+        {
+            if (!db.Combos.Any(x => x.Name == combo.Name))
+            {
+                db.Combos.Add(combo);
+            }
+        }
+
         db.SaveChanges();
     }
 }
