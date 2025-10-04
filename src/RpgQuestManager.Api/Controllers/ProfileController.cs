@@ -116,6 +116,7 @@ public class ProfileController : ControllerBase
             Class = hero.Class,
             Level = hero.Level,
             Experience = hero.Experience,
+            NextLevelExperience = (hero.Level + 1) * 1000,
             Strength = hero.GetTotalStrength(),
             Intelligence = hero.GetTotalIntelligence(),
             Dexterity = hero.GetTotalDexterity(),
@@ -159,6 +160,7 @@ public class ProfileController : ControllerBase
             Class = hero.Class,
             Level = hero.Level,
             Experience = hero.Experience,
+            NextLevelExperience = (hero.Level + 1) * 1000,
             Strength = hero.GetTotalStrength(),
             Intelligence = hero.GetTotalIntelligence(),
             Dexterity = hero.GetTotalDexterity(),
@@ -451,6 +453,7 @@ public class HeroDto
     public string Class { get; set; } = string.Empty;
     public int Level { get; set; }
     public int Experience { get; set; }
+    public int NextLevelExperience { get; set; }
     public int Strength { get; set; }
     public int Intelligence { get; set; }
     public int Dexterity { get; set; }

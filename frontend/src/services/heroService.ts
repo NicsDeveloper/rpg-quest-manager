@@ -6,6 +6,7 @@ export interface Hero {
   class: string;
   level: number;
   experience: number;
+  nextLevelExperience: number;
   strength: number;
   intelligence: number;
   dexterity: number;

@@ -19,9 +19,6 @@ public class Hero
     public string Class { get; set; } = string.Empty; // ex: Guerreiro, Mago, Arqueiro
     public int Level { get; set; } = 1;
     public int Experience { get; set; } = 0;
-    public int Strength { get; set; } = 10;
-    public int Intelligence { get; set; } = 10;
-    public int Dexterity { get; set; } = 10;
     public int Gold { get; set; } = 0;
     public int UnallocatedAttributePoints { get; set; } = 0; // Pontos de atributo não alocados
     

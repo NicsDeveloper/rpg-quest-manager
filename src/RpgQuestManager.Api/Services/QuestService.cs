@@ -8,11 +8,13 @@ public class QuestService
 {
     private readonly ApplicationDbContext _db;
     private readonly MonsterService _monsterService;
+    private readonly IAchievementService? _achievementService;
 
-    public QuestService(ApplicationDbContext db, MonsterService monsterService)
+    public QuestService(ApplicationDbContext db, MonsterService monsterService, IAchievementService? achievementService = null)
     {
         _db = db;
         _monsterService = monsterService;
+        _achievementService = achievementService;
     }
 
     public async Task<List<Quest>> GetAvailableQuestsAsync(int heroLevel)
@@ -87,6 +89,15 @@ public class QuestService
 
         quest.Status = QuestStatus.Completed;
         await _db.SaveChangesAsync();
+        
+        if (_achievementService != null)
+        {
+            var hero = await _db.Heroes.FindAsync(heroId);
+            if (hero?.UserId != null)
+            {
+                await _achievementService.UpdateAchievementProgressAsync(hero.UserId.Value, AchievementType.Quest, 1);
+            }
+        }
         
         return quest;
     }

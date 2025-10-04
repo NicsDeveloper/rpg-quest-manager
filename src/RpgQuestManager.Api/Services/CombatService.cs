@@ -219,8 +219,9 @@ public class CombatService : ICombatService
         var (damageMultiplier, defenseMultiplier, criticalMultiplier) = _moraleService.GetMoraleModifiers(heroMoraleLevel);
         
         // Calcular dano base
-        var baseDamage = Math.Max(1, hero.Strength - monster.Defense);
-        var details = $"Ataque base: {hero.Strength} - {monster.Defense} = {baseDamage}";
+        var heroStrength = hero.GetTotalStrength();
+        var baseDamage = Math.Max(1, heroStrength - monster.Defense);
+        var details = $"Ataque base: {heroStrength} - {monster.Defense} = {baseDamage}";
         
         // Aplicar modificadores de status effects
         var (statusAttackMultiplier, statusDefenseMultiplier) = _statusEffectService.GetStatusEffectModifiers(heroEffects);

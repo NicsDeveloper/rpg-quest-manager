@@ -56,12 +56,10 @@ public class LevelUpService
         hero.Level++;
         
         // Aumenta atributos
-        hero.MaxHealth += 10;
-        hero.CurrentHealth = hero.MaxHealth; // Restaura HP ao máximo
-        hero.Strength += 2;
-        hero.Intelligence += 2;
-        hero.Dexterity += 2;
-        hero.Defense += 1;
+        hero.UnallocatedAttributePoints += 3;
+        hero.MaxHealth = hero.CalculateMaxHealth();
+        hero.CurrentHealth = hero.MaxHealth;
+        hero.Defense = hero.CalculateDefense();
         
         // Restaura moral ao máximo
         hero.Morale = 100;

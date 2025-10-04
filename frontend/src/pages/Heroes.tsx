@@ -326,6 +326,21 @@ export const Heroes = () => {
                       </div>
                       <span className="text-white font-semibold">{hero.level}</span>
                     </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-400">XP: {hero.experience} / {hero.nextLevelExperience || (hero.level * 1000)}</span>
+                        <span className="text-yellow-400 font-semibold">
+                          {Math.floor((hero.experience / (hero.nextLevelExperience || (hero.level * 1000))) * 100)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                        <div 
+                          className="bg-gradient-to-r from-yellow-400 to-amber-500 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, (hero.experience / (hero.nextLevelExperience || (hero.level * 1000))) * 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

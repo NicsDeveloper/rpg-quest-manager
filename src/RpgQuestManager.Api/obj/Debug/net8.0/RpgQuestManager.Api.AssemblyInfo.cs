@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RpgQuestManager.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fb0e41418c19e64906f4e1c7e6ea1b67d2b075e7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7ef2718adcfd7efda8576177c145c99b013c56af")]
 [assembly: System.Reflection.AssemblyProductAttribute("RpgQuestManager.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RpgQuestManager.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
