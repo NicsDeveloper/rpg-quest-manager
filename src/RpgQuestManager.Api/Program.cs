@@ -85,8 +85,34 @@ app.UseAuthorization();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-    DbSeeder.Seed(db);
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    var maxRetries = 10;
+    var delay = TimeSpan.FromSeconds(5);
+    
+    for (int i = 0; i < maxRetries; i++)
+    {
+        try
+        {
+            logger.LogInformation("Tentando conectar ao banco de dados... Tentativa {Attempt}/{MaxRetries}", i + 1, maxRetries);
+            db.Database.Migrate();
+            DbSeeder.Seed(db);
+            logger.LogInformation("Banco de dados inicializado com sucesso!");
+            break;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning("Falha na conexão com banco de dados (tentativa {Attempt}/{MaxRetries}): {Error}", i + 1, maxRetries, ex.Message);
+            
+            if (i == maxRetries - 1)
+            {
+                logger.LogError("Não foi possível conectar ao banco de dados após {MaxRetries} tentativas", maxRetries);
+                throw;
+            }
+            
+            await Task.Delay(delay);
+        }
+    }
 }
 
 app.MapGet("/health", () => Results.Ok("Healthy"));
