@@ -15,6 +15,12 @@ export interface Hero {
   createdAt: string;
   isInActiveParty: boolean;
   partySlot?: number;
+  
+  // Stats finais incluindo bônus de equipamento
+  finalAttack?: number;
+  finalDefense?: number;
+  finalHealth?: number;
+  finalMorale?: number;
 }
 
 export interface CreateHeroRequest {

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RpgQuestManager.Api.Data;
 using RpgQuestManager.Api.Models;
+using RpgQuestManager.Api.Services;
 using System.Security.Claims;
 
 namespace RpgQuestManager.Api.Controllers;
@@ -147,6 +148,10 @@ public class ProfileController : ControllerBase
             return NotFound("Herói não encontrado.");
         }
 
+        // Obter bônus de equipamento
+        var inventoryService = HttpContext.RequestServices.GetRequiredService<InventoryService>();
+        var equipmentBonuses = await inventoryService.GetEquipmentBonusesAsync(hero.Id);
+
         return Ok(new HeroDto
         {
             Id = hero.Id,
@@ -162,7 +167,12 @@ public class ProfileController : ControllerBase
             CurrentHealth = hero.CurrentHealth,
             CreatedAt = hero.CreatedAt,
             IsInActiveParty = hero.IsInActiveParty,
-            PartySlot = hero.PartySlot
+            PartySlot = hero.PartySlot,
+            // Stats finais incluindo bônus de equipamento
+            FinalAttack = hero.CalculateAttack() + equipmentBonuses.attack,
+            FinalDefense = hero.CalculateDefense() + equipmentBonuses.defense,
+            FinalHealth = hero.MaxHealth + equipmentBonuses.health,
+            FinalMorale = hero.Morale + equipmentBonuses.morale
         });
     }
 
@@ -424,6 +434,12 @@ public class HeroDto
     public DateTime CreatedAt { get; set; }
     public bool IsInActiveParty { get; set; }
     public int? PartySlot { get; set; }
+    
+    // Stats finais incluindo bônus de equipamento
+    public int? FinalAttack { get; set; }
+    public int? FinalDefense { get; set; }
+    public int? FinalHealth { get; set; }
+    public int? FinalMorale { get; set; }
 }
 
 public class CreateHeroRequest

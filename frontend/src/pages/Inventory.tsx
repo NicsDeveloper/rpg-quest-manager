@@ -56,6 +56,10 @@ export default function Inventory() {
       
       // Atualizar estado local em tempo real
       equipItem(item, slot);
+      
+      // Fechar o modal
+      setShowItemModal(false);
+      
       showToast({
         type: 'success',
         title: 'Item equipado!',
@@ -258,6 +262,53 @@ export default function Inventory() {
             <p className="text-xl text-gray-300">Gerencie seus itens e equipamentos</p>
           </div>
         </FadeIn>
+
+        {/* Hero Stats Section */}
+        {currentHero && (
+          <SlideIn direction="up" delay={50}>
+            <div className="card backdrop-blur-sm bg-black/20 mb-8">
+              <h3 className="text-xl font-bold text-gradient mb-6">Stats do Herói</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">
+                    {currentHero.finalAttack || (currentHero.strength + Math.floor(currentHero.dexterity / 2))}
+                  </div>
+                  <div className="text-sm text-gray-400">Ataque</div>
+                  {currentHero.finalAttack && currentHero.finalAttack > (currentHero.strength + Math.floor(currentHero.dexterity / 2)) && (
+                    <div className="text-xs text-green-300">+{currentHero.finalAttack - (currentHero.strength + Math.floor(currentHero.dexterity / 2))} equip</div>
+                  )}
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400">
+                    {currentHero.finalDefense || (Math.floor(currentHero.intelligence / 2) + Math.floor(currentHero.dexterity / 3))}
+                  </div>
+                  <div className="text-sm text-gray-400">Defesa</div>
+                  {currentHero.finalDefense && currentHero.finalDefense > (Math.floor(currentHero.intelligence / 2) + Math.floor(currentHero.dexterity / 3)) && (
+                    <div className="text-xs text-blue-300">+{currentHero.finalDefense - (Math.floor(currentHero.intelligence / 2) + Math.floor(currentHero.dexterity / 3))} equip</div>
+                  )}
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-400">
+                    {currentHero.finalHealth || currentHero.maxHealth}
+                  </div>
+                  <div className="text-sm text-gray-400">Vida</div>
+                  {currentHero.finalHealth && currentHero.finalHealth > currentHero.maxHealth && (
+                    <div className="text-xs text-red-300">+{currentHero.finalHealth - currentHero.maxHealth} equip</div>
+                  )}
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-400">
+                    {currentHero.finalMorale || 100}
+                  </div>
+                  <div className="text-sm text-gray-400">Moral</div>
+                  {currentHero.finalMorale && currentHero.finalMorale > 100 && (
+                    <div className="text-xs text-purple-300">+{currentHero.finalMorale - 100} equip</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </SlideIn>
+        )}
 
         {/* Layout Horizontal - Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
