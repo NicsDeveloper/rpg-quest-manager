@@ -1,4 +1,5 @@
 using RpgQuestManager.Api.Models;
+using System.Security.Cryptography;
 
 namespace RpgQuestManager.Api.Data;
 
@@ -13,7 +14,7 @@ public static class DbSeeder
             {
                 Username = "admin",
                 Email = "admin@rpg.com",
-                PasswordHash = "AQAAAAIAAYagAAAAEKxW8J5YqZ3+Nw3ZxUJ8mBKLZxH5xL3cQ8x5Hv9J5Kx3Jz5Z2Nz5=", // Hash de 'admin123'
+                PasswordHash = HashPassword("admin123"),
                 CreatedAt = DateTime.UtcNow,
                 LastLoginAt = DateTime.UtcNow,
                 IsActive = true
@@ -110,6 +111,22 @@ public static class DbSeeder
         }
 
         db.SaveChanges();
+    }
+
+    private static string HashPassword(string password)
+    {
+        using var rng = RandomNumberGenerator.Create();
+        var salt = new byte[16];
+        rng.GetBytes(salt);
+
+        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
+        var hash = pbkdf2.GetBytes(32);
+
+        var hashBytes = new byte[48];
+        Array.Copy(salt, 0, hashBytes, 0, 16);
+        Array.Copy(hash, 0, hashBytes, 16, 32);
+
+        return Convert.ToBase64String(hashBytes);
     }
 }
 

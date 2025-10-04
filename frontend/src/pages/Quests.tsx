@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCharacter } from '../contexts/CharacterContext';
 import { questsService, type Quest } from '../services/quests';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
-import { ProgressBar } from '../components/ui/ProgressBar';
 import { FadeIn, SlideIn } from '../components/animations';
 import { 
   Map, 
@@ -15,7 +11,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Award
+  Award,
+  X
 } from 'lucide-react';
 
 export default function Quests() {
@@ -135,241 +132,293 @@ export default function Quests() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(15)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-amber-400 rounded-full opacity-30 animate-pulse"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                animationDuration: `${2 + Math.random() * 3}s`
+              }}
+            />
+          ))}
+        </div>
+        <div className="text-center relative z-10">
+          <div className="inline-block p-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full shadow-lg shadow-amber-500/50 animate-pulse mb-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent"></div>
+          </div>
+          <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-500 to-orange-600 mb-2">Carregando Missões...</h2>
+          <p className="text-gray-400 text-lg">Preparando aventuras épicas</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <FadeIn delay={0}>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Missões</h1>
-          <p className="text-gray-600 mt-2">Explore o mundo e complete aventuras épicas</p>
-        </div>
-      </FadeIn>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <FadeIn delay={0}>
+          <div className="text-center">
+            <h1 className="hero-title text-6xl font-black mb-4">Missões</h1>
+            <p className="text-xl text-gray-300">Explore o mundo e complete aventuras épicas</p>
+          </div>
+        </FadeIn>
 
-      {/* Filters */}
-      <SlideIn direction="left" delay={100}>
-        <Card title="Filtros">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Filter Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as any)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Todas</option>
-                <option value="recommended">Recomendadas</option>
-                <option value="available">Disponíveis</option>
-                <option value="completed">Completadas</option>
-              </select>
-            </div>
+        {/* Filters */}
+        <SlideIn direction="left" delay={100}>
+          <div className="card backdrop-blur-sm bg-black/20">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Filter Type */}
+              <div>
+                <label className="label text-amber-400 mb-2">Tipo</label>
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as any)}
+                  className="input w-full"
+                >
+                  <option value="all">Todas</option>
+                  <option value="recommended">Recomendadas</option>
+                  <option value="available">Disponíveis</option>
+                  <option value="completed">Completadas</option>
+                </select>
+              </div>
 
-            {/* Search */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Nome da missão..."
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              {/* Search */}
+              <div>
+                <label className="label text-amber-400 mb-2">Buscar</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-amber-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Nome da missão..."
+                    className="input w-full pl-12"
+                  />
+                </div>
+              </div>
+
+              {/* Refresh Button */}
+              <div className="flex items-end">
+                <button
+                  onClick={loadQuests}
+                  className="btn btn-secondary w-full"
+                >
+                  <Filter className="h-5 w-5 mr-2" />
+                  Atualizar
+                </button>
               </div>
             </div>
-
-            {/* Refresh Button */}
-            <div className="flex items-end">
-              <Button
-                onClick={loadQuests}
-                variant="secondary"
-                className="w-full"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Atualizar
-              </Button>
-            </div>
           </div>
-        </Card>
-      </SlideIn>
+        </SlideIn>
 
-      {/* Quests Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredQuests.map((quest, index) => {
-          const StatusIcon = getStatusIcon(quest.status || 'available');
-          const difficultyColor = getDifficultyColor(quest.difficulty || 'medium');
-          const statusColor = getStatusColor(quest.status || 'available');
-          
-          return (
-            <SlideIn key={quest.id} direction="up" delay={100 + (index * 50)}>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <div
+        {/* Quests Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredQuests.map((quest, index) => {
+            const StatusIcon = getStatusIcon(quest.status || 'available');
+            const difficultyColor = getDifficultyColor(quest.difficulty || 'medium');
+            const statusColor = getStatusColor(quest.status || 'available');
+            
+            return (
+              <SlideIn key={quest.id} direction="up" delay={100 + (index * 50)}>
+                <div 
+                  className="card backdrop-blur-sm bg-black/20 hover:bg-black/30 transition-all duration-300 cursor-pointer group hover:scale-105"
                   onClick={() => {
                     setSelectedQuest(quest);
                     setShowQuestModal(true);
                   }}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <StatusIcon className="h-6 w-6 text-gray-600" />
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-amber-500/50 transition-shadow">
+                      <StatusIcon className="h-6 w-6 text-white" />
+                    </div>
                     <div className="flex space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${difficultyColor}`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${difficultyColor}`}>
                         {quest.difficulty || 'Medium'}
                       </span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>
                         {quest.status || 'Available'}
                       </span>
                     </div>
                   </div>
                   
-                  <h3 className="font-semibold text-gray-900 mb-2">{quest.title}</h3>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{quest.description}</p>
+                  <h3 className="text-xl font-bold text-gradient mb-3">{quest.title}</h3>
+                  <p className="text-gray-300 mb-4 line-clamp-2">{quest.description}</p>
                   
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-3 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Ambiente:</span>
-                      <span className="font-medium">{getEnvironmentName(quest.environment)}</span>
+                      <span className="text-gray-400">Ambiente:</span>
+                      <span className="font-bold text-amber-400">{getEnvironmentName(quest.environment)}</span>
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Nível:</span>
-                      <span className="font-medium">{quest.requiredLevel || 1}</span>
+                      <span className="text-gray-400">Nível:</span>
+                      <span className="font-bold text-blue-400">{quest.requiredLevel || 1}</span>
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500">XP:</span>
-                      <span className="font-medium text-green-600">+{quest.experienceReward}</span>
+                      <span className="text-gray-400">XP:</span>
+                      <span className="font-bold text-green-400">+{quest.experienceReward}</span>
                     </div>
                   </div>
                   
                   {quest.status === 'in_progress' && quest.progress !== undefined && (
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between text-sm text-gray-300 mb-2">
                         <span>Progresso</span>
-                        <span>{quest.progress}%</span>
+                        <span className="font-bold text-amber-400">{quest.progress}%</span>
                       </div>
-                      <ProgressBar value={quest.progress} max={100} />
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${quest.progress}%` }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
-              </Card>
-            </SlideIn>
-          );
-        })}
-      </div>
-
-      {filteredQuests.length === 0 && (
-        <div className="text-center py-12">
-          <Map className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">Nenhuma missão encontrada</p>
+              </SlideIn>
+            );
+          })}
         </div>
-      )}
 
-      {/* Quest Details Modal */}
-      <Modal
-        isOpen={showQuestModal}
-        onClose={() => setShowQuestModal(false)}
-        title={selectedQuest?.title}
-        size="lg"
-      >
-        {selectedQuest && (
-          <div className="space-y-6">
-            <div className="flex items-start space-x-4">
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <Map className="h-8 w-8 text-gray-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(selectedQuest.difficulty || 'medium')}`}>
-                    {selectedQuest.difficulty || 'Medium'}
-                  </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedQuest.status || 'available')}`}>
-                    {selectedQuest.status || 'Available'}
-                  </span>
-                </div>
-                <p className="text-gray-700">{selectedQuest.description}</p>
-              </div>
+        {filteredQuests.length === 0 && (
+          <div className="text-center py-16">
+            <div className="p-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full shadow-lg shadow-amber-500/50 mx-auto w-24 h-24 flex items-center justify-center mb-6">
+              <Map className="h-12 w-12 text-white" />
             </div>
+            <h3 className="text-2xl font-bold text-gradient mb-2">Nenhuma missão encontrada</h3>
+            <p className="text-gray-400">Tente ajustar os filtros ou buscar por outro termo</p>
+          </div>
+        )}
 
-            {/* Quest Details */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-3">Detalhes da Missão</h4>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Ambiente:</span>
-                  <span className="font-medium">{getEnvironmentName(selectedQuest.environment)}</span>
+        {/* Quest Details Modal */}
+        {showQuestModal && selectedQuest && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="card backdrop-blur-sm bg-black/30 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-fadeIn">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg">
+                    <Map className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gradient">
+                      {selectedQuest.title}
+                    </h2>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getDifficultyColor(selectedQuest.difficulty || 'medium')}`}>
+                        {selectedQuest.difficulty || 'Medium'}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(selectedQuest.status || 'available')}`}>
+                        {selectedQuest.status || 'Available'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Nível Requerido:</span>
-                  <span className="font-medium">{selectedQuest.requiredLevel || 1}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Experiência:</span>
-                  <span className="font-medium text-green-600">+{selectedQuest.experienceReward}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Categoria:</span>
-                  <span className="font-medium">{selectedQuest.category || 'Geral'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress */}
-            {selectedQuest.status === 'in_progress' && selectedQuest.progress !== undefined && (
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Progresso</h4>
-                <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                  <span>Completado</span>
-                  <span>{selectedQuest.progress}%</span>
-                </div>
-                <ProgressBar value={selectedQuest.progress} max={100} />
-              </div>
-            )}
-
-            {/* Rewards */}
-            {selectedQuest.goldReward && (
-              <div className="bg-yellow-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Recompensas</h4>
-                <div className="flex items-center space-x-2">
-                  <Award className="h-5 w-5 text-yellow-600" />
-                  <span className="text-sm text-gray-700">
-                    {selectedQuest.goldReward} de ouro
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex space-x-2">
-              {selectedQuest.status === 'available' && (
-                <Button
-                  onClick={() => handleStartQuest(selectedQuest)}
-                  loading={startingQuest}
-                  className="flex-1"
+                <button
+                  onClick={() => setShowQuestModal(false)}
+                  className="text-gray-400 hover:text-amber-400 transition-colors p-2 rounded-lg hover:bg-gray-800/50"
                 >
-                  <Play className="h-4 w-4 mr-2" />
-                  Iniciar Missão
-                </Button>
-              )}
-              
-              {selectedQuest.status === 'in_progress' && selectedQuest.progress === 100 && (
-                <Button
-                  onClick={() => handleCompleteQuest(selectedQuest)}
-                  className="flex-1"
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Completar
-                </Button>
-              )}
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <p className="text-gray-300 leading-relaxed">{selectedQuest.description}</p>
+                </div>
+
+                {/* Quest Details */}
+                <div className="card bg-black/20 backdrop-blur-sm">
+                  <h4 className="text-lg font-bold text-gradient mb-4">Detalhes da Missão</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Ambiente:</span>
+                      <span className="font-bold text-amber-400">{getEnvironmentName(selectedQuest.environment)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Nível Requerido:</span>
+                      <span className="font-bold text-blue-400">{selectedQuest.requiredLevel || 1}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Experiência:</span>
+                      <span className="font-bold text-green-400">+{selectedQuest.experienceReward}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Categoria:</span>
+                      <span className="font-bold text-purple-400">{selectedQuest.category || 'Geral'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress */}
+                {selectedQuest.status === 'in_progress' && selectedQuest.progress !== undefined && (
+                  <div className="card bg-blue-900/20 backdrop-blur-sm">
+                    <h4 className="text-lg font-bold text-gradient mb-3">Progresso</h4>
+                    <div className="flex items-center justify-between text-sm text-gray-300 mb-3">
+                      <span>Completado</span>
+                      <span className="font-bold text-amber-400">{selectedQuest.progress}%</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${selectedQuest.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Rewards */}
+                {selectedQuest.goldReward && (
+                  <div className="card bg-yellow-900/20 backdrop-blur-sm">
+                    <h4 className="text-lg font-bold text-gradient mb-3">Recompensas</h4>
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg">
+                        <Award className="h-6 w-6 text-white" />
+                      </div>
+                      <span className="text-gray-300 font-bold">
+                        {selectedQuest.goldReward} de ouro
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex space-x-3">
+                  {selectedQuest.status === 'available' && (
+                    <button
+                      onClick={() => handleStartQuest(selectedQuest)}
+                      disabled={startingQuest}
+                      className="btn btn-primary flex-1"
+                    >
+                      {startingQuest ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                      ) : (
+                        <Play className="h-5 w-5 mr-2" />
+                      )}
+                      Iniciar Missão
+                    </button>
+                  )}
+                  
+                  {selectedQuest.status === 'in_progress' && selectedQuest.progress === 100 && (
+                    <button
+                      onClick={() => handleCompleteQuest(selectedQuest)}
+                      className="btn btn-primary flex-1"
+                    >
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Completar
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
-      </Modal>
+      </div>
     </div>
   );
 }

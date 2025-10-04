@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'success';
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'epic' | 'legendary';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   children: React.ReactNode;
@@ -16,13 +16,15 @@ export function Button({
   disabled,
   ...props 
 }: ButtonProps) {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500'
+    primary: 'rpg-button',
+    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 border-2 border-gray-700 rounded-lg',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 border-2 border-red-700 rounded-lg',
+    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 border-2 border-green-700 rounded-lg',
+    epic: 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500 border-2 border-purple-700 rounded-lg font-bold shadow-lg shadow-purple-500/25',
+    legendary: 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-yellow-900 hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 focus:ring-yellow-500 border-2 border-yellow-700 rounded-lg font-bold shadow-lg shadow-yellow-500/30 animate-pulse'
   };
   
   const sizeClasses = {

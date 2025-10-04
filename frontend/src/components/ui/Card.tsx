@@ -5,15 +5,27 @@ interface CardProps {
   className?: string;
   title?: string;
   subtitle?: string;
+  variant?: 'default' | 'epic' | 'legendary';
 }
 
-export function Card({ children, className = '', title, subtitle }: CardProps) {
+export function Card({ children, className = '', title, subtitle, variant = 'default' }: CardProps) {
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'epic':
+        return 'rpg-card border-purple-500 shadow-purple-500/20';
+      case 'legendary':
+        return 'rpg-card border-yellow-500 shadow-yellow-500/30 rpg-glow';
+      default:
+        return 'rpg-card';
+    }
+  };
+
   return (
-    <div className={`bg-white rounded-lg shadow-md border border-gray-200 ${className}`}>
+    <div className={`${getVariantClasses()} ${className}`}>
       {(title || subtitle) && (
-        <div className="px-6 py-4 border-b border-gray-200">
-          {title && <h3 className="text-lg font-semibold text-gray-900">{title}</h3>}
-          {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
+        <div className="px-6 py-4 border-b border-gold">
+          {title && <h3 className="text-lg font-bold rpg-title">{title}</h3>}
+          {subtitle && <p className="text-sm rpg-subtitle mt-1">{subtitle}</p>}
         </div>
       )}
       <div className="p-6">

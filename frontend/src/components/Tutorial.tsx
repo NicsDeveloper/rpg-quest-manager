@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Button } from './ui/Button';
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -169,79 +168,74 @@ export function Tutorial({ isOpen, onClose, onComplete }: TutorialProps) {
   const StepIcon = getStepIcon(currentStepData.id);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <StepIcon className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {currentStepData.title}
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Passo {currentStep + 1} de {tutorialSteps.length}
-                </p>
-              </div>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="card w-full max-w-md mx-4 animate-fadeIn">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg">
+              <StepIcon className="h-6 w-6 text-white" />
             </div>
+            <div>
+              <h2 className="text-xl font-bold text-gradient">
+                {currentStepData.title}
+              </h2>
+              <p className="text-sm text-gray-400">
+                Passo {currentStep + 1} de {tutorialSteps.length}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-amber-400 transition-colors p-2 rounded-lg hover:bg-gray-800/50"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="mb-6">
+          <p className="text-gray-300 leading-relaxed">
+            {currentStepData.content}
+          </p>
+        </div>
+
+        <div className="mb-6">
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${((currentStep + 1) / tutorialSteps.length) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex space-x-2">
+            {currentStep > 0 && (
+              <button
+                onClick={prevStep}
+                className="btn btn-secondary text-sm px-4 py-2"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Anterior
+              </button>
+            )}
+          </div>
+
+          <div className="flex space-x-2">
             <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              onClick={skipTutorial}
+              className="btn btn-secondary text-sm px-4 py-2"
             >
-              <X className="h-5 w-5" />
+              Pular
             </button>
-          </div>
-
-          <div className="mb-6">
-            <p className="text-gray-700 leading-relaxed">
-              {currentStepData.content}
-            </p>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mb-6">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentStep + 1) / tutorialSteps.length) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex space-x-2">
-              {currentStep > 0 && (
-                <Button
-                  onClick={prevStep}
-                  variant="secondary"
-                  size="sm"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-1" />
-                  Anterior
-                </Button>
+            <button
+              onClick={nextStep}
+              className="btn btn-primary text-sm px-4 py-2"
+            >
+              {currentStep === tutorialSteps.length - 1 ? 'Concluir' : 'Próximo'}
+              {currentStep < tutorialSteps.length - 1 && (
+                <ArrowRight className="h-4 w-4 ml-1" />
               )}
-            </div>
-
-            <div className="flex space-x-2">
-              <Button
-                onClick={skipTutorial}
-                variant="secondary"
-                size="sm"
-              >
-                Pular
-              </Button>
-              <Button
-                onClick={nextStep}
-                size="sm"
-              >
-                {currentStep === tutorialSteps.length - 1 ? 'Concluir' : 'Próximo'}
-                {currentStep < tutorialSteps.length - 1 && (
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                )}
-              </Button>
-            </div>
+            </button>
           </div>
         </div>
       </div>

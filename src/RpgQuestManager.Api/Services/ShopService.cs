@@ -17,35 +17,44 @@ public class ShopService
 
     public async Task<List<Item>> GetShopItemsAsync(string shopType = "general")
     {
-        return await _db.Items
-            .Where(i => i.AvailableInShop && 
-                       (i.ShopTypes.Contains(shopType) || i.ShopTypes.Contains("general")))
+        var items = await _db.Items
+            .Where(i => i.AvailableInShop)
+            .ToListAsync();
+
+        return items
+            .Where(i => i.ShopTypes.Contains(shopType) || i.ShopTypes.Contains("general"))
             .OrderBy(i => i.Type)
             .ThenBy(i => i.Level)
             .ThenBy(i => i.Rarity)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<List<Item>> GetShopItemsByTypeAsync(ItemType itemType, string shopType = "general")
     {
-        return await _db.Items
-            .Where(i => i.AvailableInShop && i.Type == itemType &&
-                       (i.ShopTypes.Contains(shopType) || i.ShopTypes.Contains("general")))
+        var items = await _db.Items
+            .Where(i => i.AvailableInShop && i.Type == itemType)
+            .ToListAsync();
+
+        return items
+            .Where(i => i.ShopTypes.Contains(shopType) || i.ShopTypes.Contains("general"))
             .OrderBy(i => i.Level)
             .ThenBy(i => i.Rarity)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<List<Item>> GetShopItemsByLevelAsync(int characterLevel, string shopType = "general")
     {
-        return await _db.Items
+        var items = await _db.Items
             .Where(i => i.AvailableInShop && 
-                       (i.RequiredLevel == null || i.RequiredLevel <= characterLevel) &&
-                       (i.ShopTypes.Contains(shopType) || i.ShopTypes.Contains("general")))
+                       (i.RequiredLevel == null || i.RequiredLevel <= characterLevel))
+            .ToListAsync();
+
+        return items
+            .Where(i => i.ShopTypes.Contains(shopType) || i.ShopTypes.Contains("general"))
             .OrderBy(i => i.Type)
             .ThenBy(i => i.Level)
             .ThenBy(i => i.Rarity)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<bool> BuyItemAsync(int characterId, int itemId, int quantity = 1)
@@ -119,11 +128,14 @@ public class ShopService
 
     public async Task<List<string>> GetShopTypesAsync()
     {
-        var shopTypes = await _db.Items
+        var items = await _db.Items
             .Where(i => i.AvailableInShop)
+            .ToListAsync();
+
+        var shopTypes = items
             .SelectMany(i => i.ShopTypes)
             .Distinct()
-            .ToListAsync();
+            .ToList();
 
         return shopTypes;
     }

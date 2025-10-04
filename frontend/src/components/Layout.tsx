@@ -18,7 +18,8 @@ import {
   Star,
   Users,
   Volume2,
-  Save
+  Save,
+  Crown
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -48,66 +49,78 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="glass border-b border-gray-700/50 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Sword className="h-8 w-8 text-blue-600" />
-                <h1 className="text-xl font-bold text-gray-900">RPG Quest Manager</h1>
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <Crown className="h-10 w-10 text-amber-400 animate-pulse" />
+                  <Sword className="h-8 w-8 text-blue-400 absolute -top-1 -right-1" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">
+                    <span className="text-gradient">
+                      RPG Quest Manager
+                    </span>
+                  </h1>
+                  <p className="text-sm text-gray-400">Reino de Aventuras</p>
+                </div>
               </div>
             </div>
 
             {/* Character Stats */}
             {character && (
               <div className="hidden md:flex items-center space-x-6">
-                <div className="flex items-center space-x-2 text-sm">
-                  <User className="h-4 w-4 text-gray-500" />
-                  <span className="font-medium">{character.name}</span>
-                  <span className="text-gray-500">Nível {character.level}</span>
+                <div className="stat-card flex items-center space-x-2">
+                  <User className="h-5 w-5 text-blue-400" />
+                  <span className="font-bold text-gray-100">{character.name}</span>
+                  <span className="text-sm text-gray-400">Nível {character.level}</span>
                 </div>
                 
-                <div className="flex items-center space-x-2 text-sm">
-                  <Heart className="h-4 w-4 text-red-500" />
-                  <span>{character.health}/{character.maxHealth}</span>
+                <div className="stat-card flex items-center space-x-2">
+                  <Heart className="h-5 w-5 text-red-400" />
+                  <span className="font-bold text-gray-100">{character.health}/{character.maxHealth}</span>
                 </div>
                 
-                <div className="flex items-center space-x-2 text-sm">
-                  <Coins className="h-4 w-4 text-yellow-500" />
-                  <span>{character.gold}</span>
+                <div className="stat-card flex items-center space-x-2">
+                  <Coins className="h-5 w-5 text-amber-400" />
+                  <span className="font-bold text-gray-100">{character.gold}</span>
                 </div>
                 
-                <div className="flex items-center space-x-2 text-sm">
-                  <Shield className="h-4 w-4 text-blue-500" />
-                  <span>{character.morale}/100</span>
+                <div className="stat-card flex items-center space-x-2">
+                  <Shield className="h-5 w-5 text-green-400" />
+                  <span className="font-bold text-gray-100">{character.morale}/100</span>
                 </div>
               </div>
             )}
 
             <div className="flex items-center space-x-4" data-tutorial="settings">
-              <span className="text-sm text-gray-600">Olá, {user?.username}</span>
+              <span className="text-sm text-gray-400">
+                Bem-vindo, <span className="text-amber-400 font-bold">{user?.username}</span>
+              </span>
               <button
                 onClick={() => setShowSoundSettings(true)}
-                className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center space-x-1 text-gray-400 hover:text-amber-400 transition-colors duration-300 p-2 rounded-lg hover:bg-gray-800/50"
                 title="Configurações de áudio"
               >
-                <Volume2 className="h-4 w-4" />
+                <Volume2 className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setShowSaveManager(true)}
-                className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center space-x-1 text-gray-400 hover:text-amber-400 transition-colors duration-300 p-2 rounded-lg hover:bg-gray-800/50"
                 title="Gerenciador de saves"
               >
-                <Save className="h-4 w-4" />
+                <Save className="h-5 w-5" />
               </button>
               <button
                 onClick={logout}
-                className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center space-x-1 text-gray-400 hover:text-red-400 transition-colors duration-300 p-2 rounded-lg hover:bg-red-900/20"
               >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sair</span>
+                <LogOut className="h-5 w-5" />
+                <span className="hidden sm:inline text-sm">Sair</span>
               </button>
             </div>
           </div>
@@ -116,23 +129,26 @@ export function Layout({ children }: LayoutProps) {
 
       <div className="flex">
         {/* Sidebar */}
-        <nav className="w-64 bg-white shadow-sm min-h-screen border-r border-gray-200">
-          <div className="p-4">
-            <ul className="space-y-2" data-tutorial="navigation">
+        <nav className="w-64 glass border-r border-gray-700/50 shadow-2xl min-h-screen">
+          <div className="p-6">
+            <h2 className="text-lg font-bold text-gradient mb-6 text-center">
+              🏰 Navegação
+            </h2>
+            <ul className="space-y-3" data-tutorial="navigation">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
                   <li key={item.name}>
                     <Link
                       to={item.href}
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                        isActive(item.href)
-                          ? 'bg-blue-100 text-blue-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
+                      className={`flex items-center space-x-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
+                        isActive(item.href) 
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/50' 
+                          : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800/50'
                       }`}
                     >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.name}</span>
+                      <Icon className="h-6 w-6" />
+                      <span className="font-bold">{item.name}</span>
                     </Link>
                   </li>
                 );
@@ -142,7 +158,7 @@ export function Layout({ children }: LayoutProps) {
         </nav>
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 min-h-screen">
           {children}
         </main>
       </div>
