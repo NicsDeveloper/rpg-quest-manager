@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { heroService, type Hero, type UserProfile } from '../services/heroService';
 import { soundService } from '../services/sound';
-import { Card } from '../components/ui/Card';
 import { 
   Sword, 
   Coins, 
