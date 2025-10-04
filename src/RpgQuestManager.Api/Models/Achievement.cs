@@ -47,6 +47,7 @@ public enum AchievementType
     Collection,     // Coletar X itens
     Social,         // Interações sociais
     Progression,    // Alcançar X nível
+    Equipment,      // Equipar itens
     Special         // Conquistas especiais
 }
 

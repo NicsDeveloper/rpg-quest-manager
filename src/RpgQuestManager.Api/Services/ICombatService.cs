@@ -15,7 +15,8 @@ public record CombatResult(
     string ActionDescription,
     List<StatusEffectType> AppliedEffects,
     MoraleLevel HeroMoraleLevel,
-    int GoldReward = 0
+    int GoldReward = 0,
+    List<Item>? DroppedItems = null
 );
 
 public interface ICombatService

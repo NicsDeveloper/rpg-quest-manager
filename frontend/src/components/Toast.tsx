@@ -47,7 +47,9 @@ export const Toast: React.FC<ToastProps> = ({
       case 'warning':
         return <AlertCircle className="h-5 w-5 text-yellow-400" />;
       case 'info':
-        return <Info className="h-5 w-5 text-blue-400" />;
+        return title.includes('Achievement') || title.includes('🏆') ? 
+          <span className="text-2xl">🏆</span> : 
+          <Info className="h-5 w-5 text-blue-400" />;
       default:
         return <Info className="h-5 w-5 text-blue-400" />;
     }
@@ -62,7 +64,9 @@ export const Toast: React.FC<ToastProps> = ({
       case 'warning':
         return 'bg-yellow-900/20 border-yellow-700/30';
       case 'info':
-        return 'bg-blue-900/20 border-blue-700/30';
+        return title.includes('Achievement') || title.includes('🏆') ?
+          'bg-gradient-to-r from-purple-900/30 to-pink-900/30 border-purple-500/30' :
+          'bg-blue-900/20 border-blue-700/30';
       default:
         return 'bg-blue-900/20 border-blue-700/30';
     }

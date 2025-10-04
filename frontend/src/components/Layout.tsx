@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCharacter } from '../contexts/CharacterContext';
 import { SoundSettings } from './SoundSettings';
 import { SaveManager } from './SaveManager';
+import { useToast } from './Toast';
+import { api } from '../services/api';
 import { 
   Home, 
   Sword, 
@@ -28,6 +30,42 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [showSoundSettings, setShowSoundSettings] = useState(false);
   const [showSaveManager, setShowSaveManager] = useState(false);
+  const [processedNotifications, setProcessedNotifications] = useState<Set<number>>(new Set());
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const checkAchievementNotifications = async () => {
+      try {
+        const { data } = await api.get('/notifications/unread');
+        
+        const achievementNotifications = data.filter((notif: any) => 
+          notif.type === 'Achievement' && !processedNotifications.has(notif.id)
+        );
+
+        for (const notif of achievementNotifications) {
+          showToast({
+            type: 'info',
+            title: '🏆 Achievement Desbloqueado!',
+            message: notif.message,
+            duration: 5000
+          });
+          
+          setProcessedNotifications(prev => new Set([...prev, notif.id]));
+          
+          await api.post(`/notifications/${notif.id}/mark-as-read`);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar notificações:', error);
+      }
+    };
+
+    checkAchievementNotifications();
+    const interval = setInterval(checkAchievementNotifications, 5000);
+
+    return () => clearInterval(interval);
+  }, [user, processedNotifications, showToast]);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },

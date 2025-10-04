@@ -100,7 +100,7 @@ public class CombatService : ICombatService
         }
 
         // Calcular dano do herói
-        var (damageToMonster, isCritical, isFumble, damageDetails) = await CalculateHeroDamage(hero, monster, heroEffects, monsterEffects);
+        var (damageToMonster, isCritical, isFumble, _) = await CalculateHeroDamage(hero, monster, heroEffects, monsterEffects);
         
         // Aplicar dano ao monstro
         monster.Health = Math.Max(0, monster.Health - damageToMonster);
@@ -111,16 +111,31 @@ public class CombatService : ICombatService
         int experienceGained = 0;
         
         int goldReward = 0;
+        List<Item>? droppedItems = null;
         if (victory)
         {
-            // Calcular recompensas (mas não aplicar ainda)
+            // Calcular e aplicar recompensas
             experienceGained = _levelUpService.CalculateExperienceReward(monster, hero.Level);
             goldReward = await _dropService.CalculateGoldRewardAsync(monster.Id, hero.Level);
+            
+            // Aplicar XP e verificar level up
+            hero.Experience += experienceGained;
+            await _levelUpService.CheckAndProcessLevelUpAsync(hero);
+            
+            // Aplicar ouro
+            hero.Gold += goldReward;
+            
+            // Gerar drops de itens
+            droppedItems = await _dropService.RollMonsterDropsAsync(monster.Id, hero.Level);
+            foreach (var item in droppedItems)
+            {
+                await _inventoryService.AddItemAsync(hero.Id, item.Id, 1);
+            }
             
             // Ajustar moral por vitória
             hero.Morale = _moraleService.AdjustMorale(hero.Morale, MoraleEvent.Victory);
             
-            // Trigger achievements
+            // Trigger achievements (notificações são criadas automaticamente)
             await _achievementService.UpdateAchievementProgressAsync(hero.UserId ?? 0, AchievementType.Combat, 1);
             
             // Gerar recompensas de combate (baseadas nos drops reais)
@@ -163,13 +178,13 @@ public class CombatService : ICombatService
         await _db.SaveChangesAsync();
 
         var heroMoraleLevel = _moraleService.GetMoraleLevel(hero.Morale);
-        var actionDescription = $"{hero.Name} atacou {monster.Name} causando {damageToMonster} de dano!";
-        if (isCritical) actionDescription += " CRÍTICO!";
-        if (isFumble) actionDescription += " FALHA!";
-        actionDescription += $" [{damageDetails}]";
+        
+        var actionDescription = $"{hero.Name} causou {damageToMonster} de dano em {monster.Name}";
+        if (isCritical) actionDescription += " 💥 CRÍTICO!";
+        if (isFumble) actionDescription += " ❌ FALHA CRÍTICA!";
         
         return new CombatResult(hero, monster, damageToMonster, 0, isCritical, isFumble, 
-            combatEnded, victory, experienceGained, actionDescription, new List<StatusEffectType>(), heroMoraleLevel, goldReward);
+            combatEnded, victory, experienceGained, actionDescription, new List<StatusEffectType>(), heroMoraleLevel, goldReward, droppedItems);
     }
 
     private Task ProcessStatusEffectsAtTurnStart(Hero hero, Monster monster, List<StatusEffectState> heroEffects, List<StatusEffectState> monsterEffects)

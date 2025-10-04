@@ -7,10 +7,12 @@ namespace RpgQuestManager.Api.Services;
 public class InventoryService
 {
     private readonly ApplicationDbContext _db;
+    private readonly IAchievementService? _achievementService;
 
-    public InventoryService(ApplicationDbContext db)
+    public InventoryService(ApplicationDbContext db, IAchievementService? achievementService = null)
     {
         _db = db;
+        _achievementService = achievementService;
     }
 
     public async Task<List<InventoryItem>> GetCharacterInventoryAsync(int characterId)
@@ -114,6 +116,10 @@ public class InventoryService
         SetEquipmentSlot(equipment, slot, inventoryItemId);
 
         await _db.SaveChangesAsync();
+        
+        // Verificar achievement de todos os slots equipados
+        await CheckFullyEquippedAchievementAsync(characterId);
+        
         return true;
     }
 
@@ -288,6 +294,33 @@ public class InventoryService
         {
             inventoryItem.IsEquipped = false;
             inventoryItem.EquippedSlot = null;
+        }
+    }
+    
+    private async Task CheckFullyEquippedAchievementAsync(int heroId)
+    {
+        if (_achievementService == null) return;
+        
+        var hero = await _db.Heroes.FindAsync(heroId);
+        if (hero == null) return;
+        
+        var equipment = await _db.HeroEquipment
+            .FirstOrDefaultAsync(e => e.HeroId == heroId);
+            
+        if (equipment == null) return;
+        
+        var allSlotsEquipped = equipment.WeaponId.HasValue &&
+                              equipment.ShieldId.HasValue &&
+                              equipment.HelmetId.HasValue &&
+                              equipment.ArmorId.HasValue &&
+                              equipment.GlovesId.HasValue &&
+                              equipment.BootsId.HasValue &&
+                              equipment.RingId.HasValue &&
+                              equipment.AmuletId.HasValue;
+        
+        if (allSlotsEquipped)
+        {
+            await _achievementService.UpdateAchievementProgressAsync(hero.UserId ?? 0, AchievementType.Equipment, 1);
         }
     }
 }

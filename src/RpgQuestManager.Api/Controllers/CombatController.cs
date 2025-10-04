@@ -166,7 +166,15 @@ public class CombatController : ControllerBase
                 result.Victory,
                 result.ExperienceGained,
                 result.ActionDescription,
-                appliedEffects = result.AppliedEffects.Select(e => e.ToString()).ToList()
+                appliedEffects = result.AppliedEffects.Select(e => e.ToString()).ToList(),
+                goldReward = result.GoldReward,
+                droppedItems = result.DroppedItems?.Select(item => new
+                {
+                    item.Id,
+                    item.Name,
+                    item.Rarity,
+                    item.Type
+                }).ToList()
             }
         };
     }

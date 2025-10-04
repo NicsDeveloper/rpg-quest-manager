@@ -262,6 +262,7 @@ export default function Combat() {
             title: 'Vitória!',
             message: 'Você derrotou o monstro e completou a missão!'
           });
+          
           // Recarregar missão ativa para atualizar o status
           setTimeout(() => {
             loadActiveQuest();
@@ -1068,21 +1069,51 @@ export default function Combat() {
                             <span className="text-gray-300 text-sm">Ouro Total:</span>
                             <span className="text-yellow-400 font-bold">{combatState.hero.gold || 0}</span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-300 text-sm">Drops:</span>
-                            <span className="text-green-400 font-bold">🎁 Itens especiais!</span>
-                          </div>
+                          {combatState.combat.droppedItems && combatState.combat.droppedItems.length > 0 && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-300 text-sm">Drops:</span>
+                              <span className="text-green-400 font-bold">
+                                🎁 {combatState.combat.droppedItems.length} {combatState.combat.droppedItems.length === 1 ? 'item' : 'itens'}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Mensagem de Achievement */}
-                    <div className="mt-4 p-3 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-lg border border-purple-500/30">
-                      <div className="flex items-center gap-2 text-purple-300">
-                        <span className="text-lg">🏆</span>
-                        <span className="text-sm font-medium">Achievement desbloqueado: Primeira Vitória!</span>
+                    {/* Itens Dropados */}
+                    {combatState.combat.droppedItems && combatState.combat.droppedItems.length > 0 && (
+                      <div className="mt-4 p-4 bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-lg border border-green-500/30">
+                        <h4 className="text-sm font-bold text-green-400 mb-3 flex items-center gap-2">
+                          <span>🎁</span>
+                          Itens Dropados
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          {combatState.combat.droppedItems.map((item: any, index: number) => (
+                            <div key={index} className="flex items-center gap-2 p-2 bg-black/30 rounded-lg border border-green-500/20">
+                              <span className="text-lg">
+                                {item.type === 'Weapon' ? '⚔️' : 
+                                 item.type === 'Armor' ? '🛡️' : 
+                                 item.type === 'Potion' ? '🧪' : 
+                                 item.type === 'Material' ? '💎' : '📦'}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-white truncate">{item.name}</p>
+                                <p className={`text-xs ${
+                                  item.rarity === 'Legendary' ? 'text-orange-400' :
+                                  item.rarity === 'Epic' ? 'text-purple-400' :
+                                  item.rarity === 'Rare' ? 'text-blue-400' :
+                                  item.rarity === 'Uncommon' ? 'text-green-400' : 'text-gray-400'
+                                }`}>
+                                  {item.rarity}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
+
                   </div>
                 )}
                   
@@ -1101,8 +1132,8 @@ export default function Combat() {
                   }}
                   className="btn btn-primary"
                 >
-                  <Play className="h-5 w-5 mr-2" />
-                  Novo Combate
+                  <Crown className="h-5 w-5 mr-2" />
+                  Resgatar Recompensas
                 </button>
                     </div>
                 </div>
